@@ -2,7 +2,7 @@ import { test, expect, type Page } from "@playwright/test";
 
 // E2E-уровень пирамиды: реальный браузер на живом стенде aiqa.su/pomidorqa.
 // После ДЗ Урока 4: guest2 открывает тот же слот и должен увидеть ошибку.
-// host/guest уже через registerUser; регистрация guest2 пока инлайн — это заготовка к ДЗ Урока 5.
+// host/guest/guest2 регистрация через registerUser.
 //POMIDORQA_BASE_URL=http://localhost:3000 npx playwright test --project=e2e tests/e2e/booking-flow.spec.ts
 
 type TestUser = {
@@ -101,12 +101,7 @@ test("основной путь + гонка за слот: регистраци
   // Важно для разбора ДЗ 4: модалку guest2 открываем ДО confirm у guest.
   // Пока слот в UI ещё свободен — оба «человек открыл и отошёл».
   await test.step("Гость2: регистрируется и тоже открывает окно бронирования на тот же слот", async () => {
-    await guest2Page.goto("/pomidorqa/auth/register");
-    await guest2Page.getByTestId("PomidorqaRegister-name-input").fill(guest2.name);
-    await guest2Page.getByTestId("PomidorqaRegister-email-input").fill(guest2.email);
-    await guest2Page.getByTestId("PomidorqaRegister-password-input").fill(guest2.password);
-    await guest2Page.getByTestId("PomidorqaRegister-submit").click();
-    await expect(guest2Page).toHaveURL(/\/pomidorqa\/?$/);
+    await registerUser(guest2Page, guest2);
 
     await guest2Page.getByTestId("PomidorqaCatalog-filter-input").fill(skillTag);
     await guest2Page.getByTestId("PomidorqaCatalog-filter-submit").click();
