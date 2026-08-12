@@ -4,5 +4,3 @@ test-results/
 .env
 .env.local
 *.log
-tsconfig.json
-package-lock.json
