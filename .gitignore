@@ -4,3 +4,5 @@ test-results/
 .env
 .env.local
 *.log
+package-lock.json
+.idea
