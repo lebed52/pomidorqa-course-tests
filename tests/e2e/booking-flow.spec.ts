@@ -98,16 +98,13 @@ test("основной путь + гонка за слот: регистраци
     await expect(guestPage.getByTestId("BookingConfirmModal-dialog")).toBeVisible();
   });
 
+  await test.step("Гость2: регистрируется отдельным аккаунтом", async () => {
+    await registerUser(guest2Page, guest2);
+  });
+
   // Важно для разбора ДЗ 4: модалку guest2 открываем ДО confirm у guest.
   // Пока слот в UI ещё свободен — оба «человек открыл и отошёл».
-  await test.step("Гость2: регистрируется и тоже открывает окно бронирования на тот же слот", async () => {
-    await guest2Page.goto("/pomidorqa/auth/register");
-    await guest2Page.getByTestId("PomidorqaRegister-name-input").fill(guest2.name);
-    await guest2Page.getByTestId("PomidorqaRegister-email-input").fill(guest2.email);
-    await guest2Page.getByTestId("PomidorqaRegister-password-input").fill(guest2.password);
-    await guest2Page.getByTestId("PomidorqaRegister-submit").click();
-    await expect(guest2Page).toHaveURL(/\/pomidorqa\/?$/);
-
+  await test.step("Гость2: тоже открывает окно бронирования на тот же слот", async () => {
     await guest2Page.getByTestId("PomidorqaCatalog-filter-input").fill(skillTag);
     await guest2Page.getByTestId("PomidorqaCatalog-filter-submit").click();
     await guest2Page.getByTestId("PomidorqaCatalog-card").filter({ hasText: host.name }).click();
