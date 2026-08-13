@@ -101,9 +101,8 @@ test("основной путь + гонка за слот: регистраци
   // Важно для разбора ДЗ 4: модалку guest2 открываем ДО confirm у guest.
   // Пока слот в UI ещё свободен — оба «человек открыл и отошёл».
   await test.step("Гость2: регистрируется и тоже открывает окно бронирования на тот же слот", async () => {
-    await registerUser(guestPage, guest);
-    });
-
+    await registerUser(guest2Page, guest2);
+    
     await guest2Page.getByTestId("PomidorqaCatalog-filter-input").fill(skillTag);
     await guest2Page.getByTestId("PomidorqaCatalog-filter-submit").click();
     await guest2Page.getByTestId("PomidorqaCatalog-card").filter({ hasText: host.name }).click();
