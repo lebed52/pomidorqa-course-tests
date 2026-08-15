@@ -71,6 +71,10 @@ test("основной путь + гонка за слот: регистраци
     await registerUser(guestPage, guest);
   });
 
+  await test.step("Гость2: регистрируется отдельным аккаунтом", async () => {
+    await registerUser(guest2Page, guest2);
+  });
+
   await test.step("Гость: ищет хоста в каталоге по навыку (сценарий 9)", async () => {
     await guestPage.getByTestId("PomidorqaCatalog-filter-input").fill(skillTag);
     await guestPage.getByTestId("PomidorqaCatalog-filter-submit").click();
