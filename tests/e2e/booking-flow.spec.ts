@@ -70,7 +70,7 @@ const guestLocators = {
   personCard: guestPage.getByTestId("person-card"),
   personName: guestPage.getByRole("heading", {level: 1,}),
 
-  calendarDay: guestPage.getByRole("group", {name: "Дни со слотами",}).getByRole("button", {name: "сб, 15 авг",}).first(),
+  calendarDay: guestPage.getByRole("group", {name: "Дни со слотами",}).first(),
   calendarTime: guestPage.getByRole("group", {name: "Время слотов",}).getByRole("button", {name: ":00",}).first(),
   bookingDialog: guestPage.getByRole("dialog"),
   confirmButton: guestPage.getByRole("button", {name: "Подтвердить",}),
@@ -87,7 +87,7 @@ filterInput: guest2Page.getByPlaceholder("Playwright, SQL, собеседова�
   personCard: guest2Page.getByTestId("person-card"),
   personName: guest2Page.getByRole("heading", {level: 1,}),
 
-  calendarDay: guest2Page.getByRole("group", {name: "Дни со слотами",}).getByRole("button", {name: "сб, 15 авг",}).first(),
+  calendarDay: guest2Page.getByRole("group", {name: "Дни со слотами",}).first(),
   calendarTime: guest2Page.getByRole("group", {name: "Время слотов",}).getByRole("button", {name: ":00",}).first(),
   bookingDialog: guest2Page.getByRole("dialog"),
   confirmButton: guest2Page.getByRole("button", {name: "Подтвердить",}),
