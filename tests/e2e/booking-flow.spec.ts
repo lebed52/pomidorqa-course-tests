@@ -126,13 +126,17 @@ test("основной путь + гонка за слот: регистраци
 
     await firstDate(guestPage).click();
     await firstTime(guestPage).click();
-    await expect(confirmDialog((guestPage))).toBeVisible();
+    await expect(confirmDialog(guestPage)).toBeVisible();
   });
 
   // Важно для разбора ДЗ 4: модалку guest2 открываем ДО confirm у guest.
   // Пока слот в UI ещё свободен — оба «человек открыл и отошёл».
   await test.step("Гость2: регистрируется и тоже открывает окно бронирования на тот же слот", async () => {
-    await registerUser(guest2Page, guest2);
+    await guest2Page.goto("/pomidorqa/auth/register");
+    await nameInput(guest2Page).fill(guest2.name);
+    await emailInput(guest2Page).fill(guest2.email);
+    await passwordInput(guest2Page).fill(guest2.password);
+    await registerButton(guest2Page).click();
     await expect(guest2Page).toHaveURL(/\/pomidorqa\/?$/);
 
     await searchInput(guest2Page).fill(skillTag);
