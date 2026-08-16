@@ -3,7 +3,7 @@ import { test, expect, type Page, type Locator } from "@playwright/test";
 // E2E-уровень пирамиды: реальный браузер на живом стенде aiqa.su/pomidorqa.
 // После ДЗ Урока 4: guest2 открывает тот же слот и должен увидеть ошибку.
 // host/guest уже через registerUser; регистрация guest2 пока инлайн — это заготовка к ДЗ Урока 5.
-// POMIDORQA_BASE_URL=http://localhost:3000
+// POMIDORQA_BASE_URL=http://localhost:3000 npx playwright test --project=e2e tests/e2e/booking-flow.spec.ts
 
 
 // ============================================================
