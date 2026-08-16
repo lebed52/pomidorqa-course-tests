@@ -2,24 +2,17 @@ import { test, expect, type Page } from "@playwright/test";
 
 /**
  * @file booking-flow.spec.ts
- * @description Набор E2E-тестов: Основной сценарий бронирования и гонка за слот (concurrency race condition).
- * 
- * Архитектурный обзор и лучшие практики:
+ * @description E2E: основной сценарий бронирования + гонка за слот (race condition).
+ *
+ * Архитектура:
  * ---------------------------------------------------------------------------
- * • Централизованная стратегия локаторов (ДЗ 6): Все элементы интерфейса отделены 
- *   от шагов теста и инкапсулированы в едином реестре `locators` с ленивой 
- *   инициализацией `(page: Page) => Locator`. Устаревшие хрупкие testID полностью 
- *   заменены на устойчивые семантические якоря (`getByRole`, `getByLabel`, 
- *   `getByText`, `getByTestId`, CSS и XPath).
- * • Изоляция в мультиконтекстах: Используются независимые браузерные контексты 
- *   (`browser.newContext()`) для симуляции изолированных сессий пользователей (Хост, 
- *   Гость 1, Гость 2) с целью безопасного тестирования условий гонки (race conditions) 
- *   и разрешения конфликтов параллелизма.
- * • Снижение нестабильности (Flake Mitigation): Применяются автоповторяющиеся ассерты, 
- *   динамические ожидания и циклы повтора при изменениях состояния интерфейса для 
- *   предотвращения ложных срабатываний теста из-за окружения.
- * ---------------------------------------------------------------------------
- * Целевое окружение: Живой E2E-стенд (aiqa.su/pomidorqa)
+ * • Локаторы вынесены в реестр `locators` — единая точка правды для селекторов,
+ *   каждый — `(page: Page) => Locator` с ленивой инициализацией. Шаги теста
+ *   работают только с `locators.*`, без inline-селекторов.
+ * • Три независимых browser context (Хост / Гость 1 / Гость 2) — честная
+ *   симуляция гонки за слот, а не последовательные вызовы в одном контексте.
+ * • Автоповторяющиеся ассерты (`toPass`) и `page.reload()` там, где состояние
+ *   интерфейса может ещё не подтянуться (список слотов, календарь).
  */
 
 const locators = {
@@ -50,20 +43,21 @@ const locators = {
   personCard: (page: Page, hostName: string) =>
     page.getByTestId("person-card").filter({ hasText: hostName }),
 
-  // --- Профиль хоста / календарь (для гостя) ---
+  // --- Профиль хоста / календарь ---
   personHeading: (page: Page, name: string) => page.getByRole("heading", { name }),
   freeDayChip: (page: Page) =>
     page.getByText(/^[а-яё]{2}, \d{1,2} [а-яё]{3,8}\.?$/iu).first(),
-  guestTimeChip: (page: Page) => page.getByRole("button", { name: /^\d{1,2}:\d{2}$/ }).first(),
+  guestTimeChip: (page: Page) =>
+    page.getByRole("button", { name: /^\d{1,2}:\d{2}$/ }).first(),
 
   // --- Модалка подтверждения ---
   dialog: (page: Page) => page.getByRole("dialog"),
   confirmBtn: (page: Page) =>
     page.getByRole("dialog").getByRole("button", { name: /подтверд/i }),
   successMsg: (page: Page) =>
-    page.getByRole("dialog").getByText(/забронировано/i),
+    page.getByRole("dialog").getByText(/забронировано|успешно забронирован/i),
   errorMsg: (page: Page) =>
-    page.getByRole("dialog").getByText(/выбери другой/i),
+    page.getByRole("dialog").getByText(/выбери|уже занят|уже забронирован/i),
 
   // --- Мои встречи ---
   upcomingMeetingsArea: (page: Page) => page.getByTestId("upcoming-meetings"),
@@ -96,7 +90,6 @@ async function registerUser(page: Page, user: TestUser) {
   await expect(page).toHaveURL(/\/pomidorqa\/?$/);
 }
 
-// Вынесенный общий шаг для гостей
 async function openHostSlotAndConfirmModal(page: Page, skillTag: string, hostName: string) {
   await locators.filterInput(page).fill(skillTag);
   await locators.filterSubmit(page).click();
@@ -110,7 +103,7 @@ async function openHostSlotAndConfirmModal(page: Page, skillTag: string, hostNam
     if (!(await dayChip.isVisible().catch(() => false))) {
       await page.reload();
     }
-    await expect(dayChip).toBeVisible();
+      await expect(dayChip).toBeVisible();
   }).toPass({ timeout: 10_000 });
 
   await locators.freeDayChip(page).click();
@@ -168,7 +161,7 @@ test("основной путь + гонка за слот: регистраци
     await registerUser(guestPage, guest);
   });
 
-  await test.step("Гость: ищет хоста в каталоге, открывает карточку и слот (сценарий 9)", async () => {
+  await test.step("Гость: ищет хоста в каталоге, открывает карточку и слот", async () => {
     await openHostSlotAndConfirmModal(guestPage, skillTag, host.name);
   });
 
