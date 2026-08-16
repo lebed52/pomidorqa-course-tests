@@ -409,27 +409,7 @@ test(
     await test.step(
       "Гость2: регистрируется и открывает окно бронирования на тот же слот",
       async () => {
-                await guest2Page.goto(
-          "/pomidorqa/auth/register"
-        );
-
-        await registerNameInput(guest2Page).fill(
-          guest2.name
-        );
-
-        await registerEmailInput(guest2Page).fill(
-          guest2.email
-        );
-
-        await registerPasswordInput(guest2Page).fill(
-          guest2.password
-        );
-
-        await registerSubmitButton(guest2Page).click();
-
-        await expect(guest2Page).toHaveURL(
-          /\/pomidorqa\/?$/
-        );
+        await registerUser(guest2Page, guest2)
 
         await catalogFilterInput(
           guest2Page
