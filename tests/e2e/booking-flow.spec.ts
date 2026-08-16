@@ -62,38 +62,26 @@ const hostLocators = {
   bookingCard: hostPage.getByTestId("upcoming-meetings").getByText(guest.name),
 };
 
-// Локаторы гостя
+// Локаторы гостей
 
-const guestLocators = {
-  filterInput: guestPage.getByPlaceholder("Playwright, SQL, собеседования..."),
-  findButton: guestPage.getByRole("button", {name: "Найти",}),
-  personCard: guestPage.getByTestId("person-card"),
-  personName: guestPage.getByRole("heading", {level: 1,}),
+const makeGuestLocators = (page: Page, hostName: string) => ({
+  filterInput: page.getByPlaceholder("Playwright, SQL, собеседования..."),
+  findButton: page.getByRole("button", {name: "Найти",}),
+  personCard: page.getByTestId("person-card"),
+  personName: page.getByRole("heading", {level: 1,}),
 
-  calendarDay: guestPage.getByRole("group", {name: "Дни со слотами",}).first(),
-  calendarTime: guestPage.getByRole("group", {name: "Время слотов",}).getByRole("button", {name: ":00",}).first(),
-  bookingDialog: guestPage.getByRole("dialog"),
-  confirmButton: guestPage.getByRole("button", {name: "Подтвердить",}),
-  bookingSuccess: guestPage.getByText("Забронировано! Договоритесь о ссылке на звонок — она в разделе «Мои встречи»"),
-  bookingError: guestPage.getByText("Этот слот только что забронировали — выбери другой"),
-  bookingCard: guestPage.getByTestId("upcoming-meetings").getByText(host.name),
-};
+  calendarDay: page.getByRole("group", {name: "Дни со слотами",}).first(),
+  calendarTime: page.getByRole("group", {name: "Время слотов",}).getByRole("button", {name: ":00",}).first(),
+  bookingDialog: page.getByRole("dialog"),
+  confirmButton: page.getByRole("button", {name: "Подтвердить",}),
+  bookingSuccess: page.getByText("Забронировано! Договоритесь о ссылке на звонок — она в разделе «Мои встречи»"),
+  bookingError: page.getByText("Этот слот только что забронировали — выбери другой"),
+  bookingCard: page.getByTestId("upcoming-meetings").getByText(hostName),
+});
 
-// Локаторы гостя2
+const guestLocators = makeGuestLocators(guestPage, host.name);
+const guest2Locators = makeGuestLocators(guest2Page, host.name);
 
-const guest2Locators = {
-filterInput: guest2Page.getByPlaceholder("Playwright, SQL, собеседования..."),
-  findButton: guest2Page.getByRole("button", {name: "Найти",}),
-  personCard: guest2Page.getByTestId("person-card"),
-  personName: guest2Page.getByRole("heading", {level: 1,}),
-
-  calendarDay: guest2Page.getByRole("group", {name: "Дни со слотами",}).first(),
-  calendarTime: guest2Page.getByRole("group", {name: "Время слотов",}).getByRole("button", {name: ":00",}).first(),
-  bookingDialog: guest2Page.getByRole("dialog"),
-  confirmButton: guest2Page.getByRole("button", {name: "Подтвердить",}),
-  bookingSuccess: guest2Page.getByText("Забронировано! Договоритесь о ссылке на звонок — она в разделе «Мои встречи»"),
-  bookingError: guest2Page.getByText("Этот слот только что забронировали — выбери другой"),
-};
 
 
   await test.step("Хост: регистрируется в PomidorQA", async () => {
