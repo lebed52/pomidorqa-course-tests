@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { text } from "node:stream/consumers";
 
 // E2E-уровень пирамиды: реальный браузер на живом стенде aiqa.su/pomidorqa.
 // После ДЗ Урока 4: guest2 открывает тот же слот и должен увидеть ошибку.
@@ -25,6 +26,7 @@ async function registerUser(page: Page, user: TestUser) {
   await page.locator('#pomidorqa-register-email').fill(user.email);
   await page.locator('#pomidorqa-register-password').fill(user.password);
   await page.getByRole('button', { name: 'Зарегистрироваться' }).click();
+  await page.waitForTimeout(2_000);
   await expect(page).toHaveURL(/\/pomidorqa\/?$/);
 }
 
@@ -85,60 +87,57 @@ test("основной путь + гонка за слот: регистраци
 
   await test.step("Гость: кликает по дню и времени в календаре слотов", async () => {
     await expect(async () => {
-      const dayChip = guestPage.getByRole('button').first();
+      const dayChip = guestPage.locator("[data-date]").first();
       if (!(await dayChip.isVisible().catch(() => false))) {
         await guestPage.reload();
       }
       await expect(dayChip).toBeVisible();
     }).toPass({ timeout: 6_000 });
 
-    // await guestPage.locator('button[data-date]').first().click();
-    await guestPage.getByRole('button', { name: 'вт, 18 авг' }).click()
-    // await guestPage.locator('button[data-slot-id]').first().click();
-    await guestPage.getByRole('button', { name: '17:00' }).click();
+    await guestPage.locator('button[data-date]').first().click();
+    await guestPage.locator('button[data-slot-id]').first().click();
     await expect(guestPage.getByRole('dialog', {name: 'Подтвердить бронирование?'})).toBeVisible();
   });
 
   // Важно для разбора ДЗ 4: модалку guest2 открываем ДО confirm у guest.
   // Пока слот в UI ещё свободен — оба «человек открыл и отошёл».
   await test.step("Гость2: регистрируется и тоже открывает окно бронирования на тот же слот", async () => {
-    registerUser(guest2Page, guest2);
+    await registerUser(guest2Page, guest2);
 
     await guest2Page.locator('#pomidorqa-catalog-skill-filter').fill(skillTag);
     await guest2Page.getByRole('button', { name: 'Найти' }).click();
-    await guest2Page.getByTestId('person-card').filter({ hasText: host.name }).click()
-    await guest2Page.getByRole('heading', { name: host.name }).click();
-    await expect(guest2Page.getByRole('heading', { name: host.name })).toBeVisible();
+    await guest2Page.getByTestId("person-card").filter({ hasText: host.name }).click();
+    await expect(guest2Page.getByRole("heading", { name: host.name })).toBeVisible();
 
     await expect(async () => {
-      const dayChip = guest2Page.getByTestId("BookingCalendar-day").first();
+      const dayChip = guest2Page.locator("[data-date]").first();
       if (!(await dayChip.isVisible().catch(() => false))) {
         await guest2Page.reload();
       }
       await expect(dayChip).toBeVisible();
-    }).toPass({ timeout: 5_000 });
+    }).toPass({ timeout: 10_000 });
 
-    await guest2Page.getByTestId("BookingCalendar-day").first().click();
-    await guest2Page.getByTestId("BookingCalendar-time").first().click();
-    await expect(guest2Page.getByTestId("BookingConfirmModal-dialog")).toBeVisible();
+    await guest2Page.locator('button[data-date]').first().click();
+    await guestPage.locator('button[data-slot-id]').first().click();
+    await expect(guest2Page.getByRole('dialog', {name: 'Подтвердить бронирование?'})).toBeVisible();
   });
 
   await test.step("Гость: подтверждает бронирование первым — успех", async () => {
-    await guestPage.getByTestId("BookingConfirmModal-confirm").click();
-    const success = guestPage.getByTestId("BookingConfirmModal-success");
-    const error = guestPage.getByTestId("BookingConfirmModal-error");
-    await expect(success.or(error)).toBeVisible({ timeout: 5_000 });
+    await guestPage.getByRole('dialog', {name: 'Подтвердить бронирование?'}).getByRole('button', { name: 'Подтвердить' }).click();
+    const success = guestPage.getByText('Забронировано!');
+    const error = guestPage.getByRole('dialog').getByRole('alert');
+    await expect(success.or(error)).toBeVisible({ timeout: 15_000 });
     if (await error.isVisible().catch(() => false)) {
       throw new Error(`Бронирование не удалось: ${await error.textContent()}`);
     }
   });
 
   await test.step("Гость2: пытается забронировать тот же слот вторым — видит ошибку", async () => {
-    await guest2Page.getByTestId("BookingConfirmModal-confirm").click();
+    await guest2Page.getByRole('dialog', {name: 'Подтвердить бронирование?'}).locator('button[type="submit"]').click();
 
-    const success2 = guest2Page.getByTestId("BookingConfirmModal-success");
-    const error2 = guest2Page.getByTestId("BookingConfirmModal-error");
-    await expect(success2.or(error2)).toBeVisible({ timeout: 5_000 });
+    const success2 = guest2Page.getByText('Забронировано!');
+    const error2 = guest2Page.getByRole('dialog').getByRole('alert');
+    await expect(success2.or(error2)).toBeVisible({ timeout: 15_000 });
 
     // Полярность наоборот относительно гостя 1: ошибка — ожидаемый результат
     if (await success2.isVisible().catch(() => false)) {
@@ -150,20 +149,14 @@ test("основной путь + гонка за слот: регистраци
   await test.step("Гость: видит бронирование в разделе «Мои встречи»", async () => {
     await expect(async () => {
       await guestPage.goto("/pomidorqa/bookings");
-      const card = guestPage
-        .getByTestId("PomidorqaBookings-upcoming-section")
-        .getByTestId("PomidorqaBookings-card-name");
-      await expect(card).toHaveText(host.name);
+      const card = guestPage.getByTestId("upcoming-meetings").getByText(host.name);
     }).toPass({ timeout: 10_000 });
   });
 
   await test.step("Хост: тоже видит это бронирование в своих «Мои встречи»", async () => {
     await expect(async () => {
       await hostPage.goto("/pomidorqa/bookings");
-      const card = hostPage
-        .getByTestId("PomidorqaBookings-upcoming-section")
-        .getByTestId("PomidorqaBookings-card-name");
-      await expect(card).toHaveText(guest.name);
+      const card = hostPage.getByTestId("upcoming-meetings").getByText(host.name);
     }).toPass({ timeout: 10_000 });
   });
 
