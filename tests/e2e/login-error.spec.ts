@@ -1,8 +1,20 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 
 // E2E-уровень пирамиды, негативный сценарий: сценарий 10 из списка ДЗ Урока 2.
 // requirements.md, п.4: при неверном email ИЛИ пароле участник должен увидеть одну и ту же
 // понятную ошибку, без уточнения, что именно неверно, — из соображений безопасности.
+
+const locators = {
+  nameInput: (page: Page) => page.getByLabel("Имя"),
+  registerEmailInput: (page: Page) => page.getByLabel("Email"),
+  registerPasswordInput: (page: Page) => page.getByLabel("Пароль"),
+  registerButton: (page: Page) =>
+    page.getByRole("button", { name: "Зарегистрироваться" }),
+  loginEmailInput: (page: Page) => page.getByLabel("Email"),
+  loginPasswordInput: (page: Page) => page.getByLabel("Пароль"),
+  loginButton: (page: Page) => page.getByRole("button", { name: "Войти" }),
+  loginError: (page: Page) => page.getByText(/Неверный/),
+};
 
 test("вход с неверными данными — одинаковая ошибка в обоих случаях, без уточнения причины", async ({
   page,
@@ -13,20 +25,20 @@ test("вход с неверными данными — одинаковая о�
 
   await test.step("Заводим реальный аккаунт для проверки", async () => {
     await page.goto("/pomidorqa/auth/register");
-    await page.getByTestId("PomidorqaRegister-name-input").fill("Login Error Check");
-    await page.getByTestId("PomidorqaRegister-email-input").fill(email);
-    await page.getByTestId("PomidorqaRegister-password-input").fill(password);
-    await page.getByTestId("PomidorqaRegister-submit").click();
+    await locators.nameInput(page).fill("Login Error Check");
+    await locators.registerEmailInput(page).fill(email);
+    await locators.registerPasswordInput(page).fill(password);
+    await locators.registerButton(page).click();
     await expect(page).toHaveURL(/\/pomidorqa\/?$/);
   });
 
   let wrongPasswordError = "";
   await test.step("Пробуем войти с верным email, но неверным паролем", async () => {
     await page.goto("/pomidorqa/auth/login");
-    await page.getByTestId("PomidorqaLogin-email-input").fill(email);
-    await page.getByTestId("PomidorqaLogin-password-input").fill("wrong-password");
-    await page.getByTestId("PomidorqaLogin-submit").click();
-    const error = page.getByTestId("PomidorqaLogin-error");
+    await locators.loginEmailInput(page).fill(email);
+    await locators.loginPasswordInput(page).fill("wrong-password");
+    await locators.loginButton(page).click();
+    const error = locators.loginError(page);
     await expect(error).toBeVisible();
     wrongPasswordError = (await error.textContent())?.trim() ?? "";
   });
@@ -34,10 +46,10 @@ test("вход с неверными данными — одинаковая о�
   let unknownEmailError = "";
   await test.step("Пробуем войти с несуществующим email", async () => {
     await page.goto("/pomidorqa/auth/login");
-    await page.getByTestId("PomidorqaLogin-email-input").fill(`no-such-user-${runId}@example.com`);
-    await page.getByTestId("PomidorqaLogin-password-input").fill("any-password-123");
-    await page.getByTestId("PomidorqaLogin-submit").click();
-    const error = page.getByTestId("PomidorqaLogin-error");
+    await locators.loginEmailInput(page).fill(`no-such-user-${runId}@example.com`);
+    await locators.loginPasswordInput(page).fill("any-password-123");
+    await locators.loginButton(page).click();
+    const error = locators.loginError(page);
     await expect(error).toBeVisible();
     unknownEmailError = (await error.textContent())?.trim() ?? "";
   });
