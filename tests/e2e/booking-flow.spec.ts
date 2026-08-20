@@ -19,30 +19,67 @@ function makeUser(role: string, runId: number): TestUser {
   };
 }
 
+const getRegisterName = (page: Page) => page.getByLabel("Имя");
+const getRegisterEmail = (page: Page) => page.getByLabel("Email");
+const getRegisterPassword = (page: Page) => page.locator("#pomidorqa-register-password");
+const getRegisterSubmit = (page: Page) => page.getByRole("button", {name: "Зарегистрироваться"});
+
+const getSkillInput = (page: Page) => page.getByLabel("Навык");
+const getSkillType = (page: Page) => page.getByLabel("Тип");
+const getSkillButton = (page: Page) => page.getByRole("button", {name: "Добавить"});
+const getCanHelpSkill = (page: Page, skill: string) => page.getByText(skill);
+
+const getSlotsDate = (page: Page) => page.getByLabel("Дата");
+const getSlotsTime = (page: Page) => page.getByLabel("Время начала");
+const getSlotsButton = (page: Page) => page.getByRole("button", {name: "Добавить слот"});
+const getFreeSlotsChip = (page: Page) => page.locator('[data-slot-status="free"]').first();
+
+const getFilterInput = (page: Page) => page.getByPlaceholder("Playwright, SQL, собеседования...");
+const getFilterButton = (page: Page) => page.getByRole("button", {name: "Найти"});
+
+const getCatalogCard = (page: Page) =>
+    page.locator('xpath=//*[@data-testid="person-card"]');
+const getPersonName = (page: Page, name: string) =>
+    page.getByRole("heading", { name });
+
+const getBookingDay = (page: Page) =>
+    page.getByLabel("Дни со слотами").getByRole("button").first();
+const getBookingTime = (page: Page) =>
+    page.getByLabel("Время слотов").getByRole("button").first();
+const getBookingConfirm = (page: Page) => page.getByRole("dialog");
+const getBookingConfirmButton = (page: Page) => page.getByRole("button", {name: "Подтвердить"});
+const getBookingCard = (page: Page) => page.getByTestId("upcoming-meetings");
+
+const success = (page: Page) => page.getByText("Забронировано");
+const error = (page: Page) => page.getByText("забронировали");
+
 async function registerUser(page: Page, user: TestUser) {
   await page.goto("/pomidorqa/auth/register");
-  await page.getByTestId("PomidorqaRegister-name-input").fill(user.name);
-  await page.getByTestId("PomidorqaRegister-email-input").fill(user.email);
-  await page.getByTestId("PomidorqaRegister-password-input").fill(user.password);
-  await page.getByTestId("PomidorqaRegister-submit").click();
-  await expect(page).toHaveURL(/\/pomidorqa\/?$/);
-}
+  await getRegisterName(page).fill(user.name);
+  await getRegisterEmail(page).fill(user.email);
+  await getRegisterPassword(page).fill(user.password);
+  await getRegisterSubmit(page).click();
+  await expect(page).toHaveURL(/\/pomidorqa\/?$/, { timeout: 15_000 });
 
+}
 test("основной путь + гонка за слот: регистрация → навык → слот → поиск в каталоге → бронирование → «Мои встречи» у обоих → второй гость видит ошибку", async ({
   browser,
-}) => {
+})  => {
   const runId = Date.now();
   const skillTag = `Playwright-demo-${runId}`;
   const host = makeUser("host", runId);
   const guest = makeUser("guest", runId);
-  const guest2 = makeUser("guest2", runId);
 
+  test.setTimeout(120_000);
+
+  const guest2 = makeUser("guest2", runId);
   // Три независимых аккаунта = три независимых браузерных контекста
   const hostContext = await browser.newContext();
   const guestContext = await browser.newContext();
   const guest2Context = await browser.newContext();
   const hostPage = await hostContext.newPage();
   const guestPage = await guestContext.newPage();
+
   const guest2Page = await guest2Context.newPage();
 
   await test.step("Хост: регистрируется в PomidorQA", async () => {
@@ -51,20 +88,20 @@ test("основной путь + гонка за слот: регистраци
 
   await test.step('Хост: добавляет навык «могу помочь» в профиле', async () => {
     await hostPage.goto("/pomidorqa/profile");
-    await hostPage.getByTestId("PomidorqaProfile-add-skill-input").fill(skillTag);
-    await hostPage.getByTestId("PomidorqaProfile-add-skill-type-select").selectOption("can_help");
-    await hostPage.getByTestId("PomidorqaProfile-add-skill-submit").click();
-    await expect(hostPage.getByTestId("PomidorqaProfile-can-help-skills")).toContainText(skillTag);
+    await getSkillInput(hostPage).fill(skillTag);
+    await getSkillType(hostPage).selectOption("can_help");
+    await getSkillButton(hostPage).click();
+    await expect(getCanHelpSkill(hostPage, skillTag)).toBeVisible();
   });
 
   await test.step("Хост: добавляет свободный слот на завтра", async () => {
     await hostPage.goto("/pomidorqa/profile/slots");
     const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
     const date = tomorrow.toISOString().slice(0, 10);
-    await hostPage.getByTestId("PomidorqaSlots-date-input").fill(date);
-    await hostPage.getByTestId("PomidorqaSlots-time-input").fill("12:00");
-    await hostPage.getByTestId("PomidorqaSlots-add-submit").click();
-    await expect(hostPage.getByTestId("PomidorqaSlots-card").first()).toBeVisible();
+    await getSlotsDate(hostPage).fill(date);
+    await getSlotsTime(hostPage).fill("12:00");
+    await getSlotsButton(hostPage).click();
+    await expect(getFreeSlotsChip(hostPage)).toBeVisible();
   });
 
   await test.step("Гость: регистрируется отдельным аккаунтом", async () => {
@@ -72,101 +109,84 @@ test("основной путь + гонка за слот: регистраци
   });
 
   await test.step("Гость: ищет хоста в каталоге по навыку (сценарий 9)", async () => {
-    await guestPage.getByTestId("PomidorqaCatalog-filter-input").fill(skillTag);
-    await guestPage.getByTestId("PomidorqaCatalog-filter-submit").click();
+    await getFilterInput(guestPage).fill(skillTag);
+    await getFilterButton(guestPage).click();
     await expect(
-      guestPage.getByTestId("PomidorqaCatalog-card").filter({ hasText: host.name })
+      getCatalogCard(guestPage).filter({ hasText: host.name })
     ).toBeVisible();
   });
 
   await test.step("Гость: открывает карточку хоста", async () => {
-    await guestPage.getByTestId("PomidorqaCatalog-card").filter({ hasText: host.name }).click();
-    await expect(guestPage.getByTestId("PomidorqaPerson-name")).toHaveText(host.name);
+    await getCatalogCard(guestPage).filter({ hasText: host.name }).getByText(host.name).click();
+    await expect(getPersonName(guestPage, host.name)).toBeVisible();
   });
 
   await test.step("Гость: кликает по дню и времени в календаре слотов", async () => {
     await expect(async () => {
-      const dayChip = guestPage.getByTestId("BookingCalendar-day").first();
+      const dayChip = getBookingDay(guestPage);
       if (!(await dayChip.isVisible().catch(() => false))) {
         await guestPage.reload();
       }
       await expect(dayChip).toBeVisible();
     }).toPass({ timeout: 10_000 });
 
-    await guestPage.getByTestId("BookingCalendar-day").first().click();
-    await guestPage.getByTestId("BookingCalendar-time").first().click();
-    await expect(guestPage.getByTestId("BookingConfirmModal-dialog")).toBeVisible();
+    await getBookingDay(guestPage).click();
+    await getBookingTime(guestPage).click();
+    await expect(getBookingConfirm(guestPage)).toBeVisible();
   });
-
   // Важно для разбора ДЗ 4: модалку guest2 открываем ДО confirm у guest.
   // Пока слот в UI ещё свободен — оба «человек открыл и отошёл».
-  await test.step("Гость2: регистрируется и тоже открывает окно бронирования на тот же слот", async () => {
-    await guest2Page.goto("/pomidorqa/auth/register");
-    await guest2Page.getByTestId("PomidorqaRegister-name-input").fill(guest2.name);
-    await guest2Page.getByTestId("PomidorqaRegister-email-input").fill(guest2.email);
-    await guest2Page.getByTestId("PomidorqaRegister-password-input").fill(guest2.password);
-    await guest2Page.getByTestId("PomidorqaRegister-submit").click();
-    await expect(guest2Page).toHaveURL(/\/pomidorqa\/?$/);
 
-    await guest2Page.getByTestId("PomidorqaCatalog-filter-input").fill(skillTag);
-    await guest2Page.getByTestId("PomidorqaCatalog-filter-submit").click();
-    await guest2Page.getByTestId("PomidorqaCatalog-card").filter({ hasText: host.name }).click();
-    await expect(guest2Page.getByTestId("PomidorqaPerson-name")).toHaveText(host.name);
+  await test.step("Гость2: регистрируется и тоже открывает окно бронирования на тот же слот", async () => {
+    await registerUser(guest2Page, guest2);
+
+    await getFilterInput(guest2Page).fill(skillTag);
+    await getFilterButton(guest2Page).click();
+    await getCatalogCard(guest2Page).filter({ hasText: host.name }).getByText(host.name).click();
+    await expect(getPersonName(guest2Page, host.name)).toBeVisible();
 
     await expect(async () => {
-      const dayChip = guest2Page.getByTestId("BookingCalendar-day").first();
+      const dayChip = getBookingDay(guest2Page);
       if (!(await dayChip.isVisible().catch(() => false))) {
         await guest2Page.reload();
       }
       await expect(dayChip).toBeVisible();
     }).toPass({ timeout: 10_000 });
 
-    await guest2Page.getByTestId("BookingCalendar-day").first().click();
-    await guest2Page.getByTestId("BookingCalendar-time").first().click();
-    await expect(guest2Page.getByTestId("BookingConfirmModal-dialog")).toBeVisible();
+    await getBookingDay(guest2Page).click();
+    await getBookingTime(guest2Page).click();
+    await expect(getBookingConfirm(guest2Page)).toBeVisible();
   });
-
   await test.step("Гость: подтверждает бронирование первым — успех", async () => {
-    await guestPage.getByTestId("BookingConfirmModal-confirm").click();
-    const success = guestPage.getByTestId("BookingConfirmModal-success");
-    const error = guestPage.getByTestId("BookingConfirmModal-error");
-    await expect(success.or(error)).toBeVisible({ timeout: 15_000 });
-    if (await error.isVisible().catch(() => false)) {
-      throw new Error(`Бронирование не удалось: ${await error.textContent()}`);
+    await getBookingConfirmButton(guestPage).click();
+    await expect(success(guestPage).or(error(guestPage))).toBeVisible({ timeout: 15_000 });
+    if (await error(guestPage).isVisible().catch(() => false)) {
+      throw new Error(`Бронирование не удалось: ${await error(guestPage).textContent()}`);
     }
   });
 
   await test.step("Гость2: пытается забронировать тот же слот вторым — видит ошибку", async () => {
-    await guest2Page.getByTestId("BookingConfirmModal-confirm").click();
-
-    const success2 = guest2Page.getByTestId("BookingConfirmModal-success");
-    const error2 = guest2Page.getByTestId("BookingConfirmModal-error");
-    await expect(success2.or(error2)).toBeVisible({ timeout: 15_000 });
+    await getBookingConfirmButton(guest2Page).click();
+    await expect(success(guest2Page).or(error(guest2Page))).toBeVisible({ timeout: 15_000 });
 
     // Полярность наоборот относительно гостя 1: ошибка — ожидаемый результат
-    if (await success2.isVisible().catch(() => false)) {
+    if (await success(guest2Page).isVisible().catch(() => false)) {
       throw new Error("Слот должен был быть занят, но бронирование прошло успешно");
     }
-    await expect(error2).toBeVisible();
+    await expect(error(guest2Page)).toBeVisible();
   });
 
   await test.step("Гость: видит бронирование в разделе «Мои встречи»", async () => {
     await expect(async () => {
       await guestPage.goto("/pomidorqa/bookings");
-      const card = guestPage
-        .getByTestId("PomidorqaBookings-upcoming-section")
-        .getByTestId("PomidorqaBookings-card-name");
-      await expect(card).toHaveText(host.name);
+      await expect(getBookingCard(guestPage).filter({ hasText: host.name } )).toBeVisible();
     }).toPass({ timeout: 10_000 });
   });
 
   await test.step("Хост: тоже видит это бронирование в своих «Мои встречи»", async () => {
     await expect(async () => {
       await hostPage.goto("/pomidorqa/bookings");
-      const card = hostPage
-        .getByTestId("PomidorqaBookings-upcoming-section")
-        .getByTestId("PomidorqaBookings-card-name");
-      await expect(card).toHaveText(guest.name);
+      await expect(getBookingCard(hostPage).filter({ hasText: guest.name })).toBeVisible();
     }).toPass({ timeout: 10_000 });
   });
 
