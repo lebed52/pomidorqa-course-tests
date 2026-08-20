@@ -25,20 +25,34 @@ test("вход с неверными данными — одинаковая о�
 
   await test.step("Заводим реальный аккаунт для проверки", async () => {
     await page.goto("/pomidorqa/auth/register");
+<<<<<<< HEAD
     await LOCATORS.auth.name(page).fill("Login Error Check");
     await LOCATORS.auth.email(page).fill(email);
     await LOCATORS.auth.password(page).fill(password);
     await LOCATORS.auth.registerSubmit(page).click();
+=======
+    await page.getByLabel("Имя").fill("Login Error Check");
+    await page.getByLabel("Email").fill(email);
+    await page.getByLabel("Пароль").fill(password);
+    await page.getByRole("button", { name: "Зарегистрироваться" }).click();
+>>>>>>> 640194475757926adfcd88a5f4512c06286571b0
     await expect(page).toHaveURL(/\/pomidorqa\/?$/);
   });
 
   let wrongPasswordError = "";
   await test.step("Пробуем войти с верным email, но неверным паролем", async () => {
     await page.goto("/pomidorqa/auth/login");
+<<<<<<< HEAD
     await LOCATORS.auth.email(page).fill(email);
     await LOCATORS.auth.password(page).fill("wrong-password");
     await LOCATORS.auth.loginSubmit(page).click();
     const error = LOCATORS.auth.loginError(page);
+=======
+    await page.getByLabel("Email").fill(email);
+    await page.getByLabel("Пароль").fill("wrong-password");
+    await page.getByRole("button", { name: "Войти" }).click();
+    const error = page.getByText(/Неверный/);
+>>>>>>> 640194475757926adfcd88a5f4512c06286571b0
     await expect(error).toBeVisible();
     wrongPasswordError = (await error.textContent())?.trim() ?? "";
   });
@@ -46,10 +60,17 @@ test("вход с неверными данными — одинаковая о�
   let unknownEmailError = "";
   await test.step("Пробуем войти с несуществующим email", async () => {
     await page.goto("/pomidorqa/auth/login");
+<<<<<<< HEAD
     await LOCATORS.auth.email(page).fill(`no-such-user-${runId}@example.com`);
     await LOCATORS.auth.password(page).fill("any-password-123");
     await LOCATORS.auth.loginSubmit(page).click();
     const error = LOCATORS.auth.loginError(page);
+=======
+    await page.getByLabel("Email").fill(`no-such-user-${runId}@example.com`);
+    await page.getByLabel("Пароль").fill("any-password-123");
+    await page.getByRole("button", { name: "Войти" }).click();
+    const error = page.getByText(/Неверный/);
+>>>>>>> 640194475757926adfcd88a5f4512c06286571b0
     await expect(error).toBeVisible();
     unknownEmailError = (await error.textContent())?.trim() ?? "";
   });
