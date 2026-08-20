@@ -52,7 +52,7 @@ async function registerUser(page: Page, user: TestUser) {
     await expect(page).toHaveURL(/\/pomidorqa\/?$/);
 }
 
-test.describe("свой мир на каждый тест", () => {
+test.describe("Набор тестов", () => {
     let user: TestUser;
     let runId: number;
 
