@@ -86,7 +86,7 @@ test.describe("Набор тестов", () => {
     });
 
     test("добавление слота", async ({page}) => {
-        headerLocators(page).slotsLink.click();
+        await headerLocators(page).slotsLink.click();
 
         const slots = slotsLocators(page);
         const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
