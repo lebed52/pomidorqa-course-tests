@@ -19,7 +19,6 @@ function makeUser(role: string, runId: number): TestUser {
   };
 }
 
-// Якоря: role / label / text там, где UI семантичный; testId — где без них не обойтись.
 const LOCATORS = {
   auth: {
     name: (page: Page) => page.getByLabel("Имя"),
@@ -31,7 +30,7 @@ const LOCATORS = {
   catalog: {
     skillFilter: (page: Page) => page.getByLabel("Навык"),
     search: (page: Page) => page.getByRole("button", { name: "Найти" }),
-    card: (page: Page) => page.getByTestId("PomidorqaCatalog-card"),
+    card: (page: Page) => page.getByTestId("person-card"),
   },
   profile: {
     addSkillInput: (page: Page) => page.getByLabel("Навык"),
@@ -46,17 +45,17 @@ const LOCATORS = {
     cardTime: (page: Page, time: string) => page.getByText(time),
   },
   booking: {
-    day: (page: Page) => page.getByTestId("BookingCalendar-day"),
-    time: (page: Page) => page.getByTestId("BookingCalendar-time"),
+    daysGroup: (page: Page) => page.getByRole("group", { name: "Дни со слотами" }),
+    day: (page: Page) =>
+      page.getByRole("group", { name: "Дни со слотами" }).locator("[data-date]"),
+    timeSlot: (page: Page) => page.locator("[data-slot-id]"),
     dialog: (page: Page) => page.getByRole("dialog"),
     confirm: (page: Page) => page.getByRole("button", { name: "Подтвердить" }),
-    success: (page: Page) => page.getByTestId("BookingConfirmModal-success"),
-    error: (page: Page) => page.getByTestId("BookingConfirmModal-error"),
+    success: (page: Page) => page.getByRole("dialog").getByText("Забронировано!"),
+    error: (page: Page) => page.getByRole("dialog").getByRole("alert"),
   },
   bookings: {
-    upcomingSection: (page: Page) =>
-      page.getByRole("heading", { name: "Предстоящие" }).locator(".."),
-    cardName: (page: Page) => page.getByTestId("PomidorqaBookings-card-name"),
+    upcomingSection: (page: Page) => page.getByTestId("upcoming-meetings"),
     personName: (page: Page) => page.getByRole("heading", { level: 1 }),
   },
 } as const;
@@ -136,7 +135,7 @@ test("основной путь + гонка за слот: регистраци
     }).toPass({ timeout: 10_000 });
 
     await LOCATORS.booking.day(guestPage).first().click();
-    await LOCATORS.booking.time(guestPage).first().click();
+    await LOCATORS.booking.timeSlot(guestPage).first().click();
     await expect(LOCATORS.booking.dialog(guestPage)).toBeVisible();
   });
 
@@ -159,7 +158,7 @@ test("основной путь + гонка за слот: регистраци
     }).toPass({ timeout: 10_000 });
 
     await LOCATORS.booking.day(guest2Page).first().click();
-    await LOCATORS.booking.time(guest2Page).first().click();
+    await LOCATORS.booking.timeSlot(guest2Page).first().click();
     await expect(LOCATORS.booking.dialog(guest2Page)).toBeVisible();
   });
 
@@ -190,20 +189,14 @@ test("основной путь + гонка за слот: регистраци
   await test.step("Гость: видит бронирование в разделе «Мои встречи»", async () => {
     await expect(async () => {
       await guestPage.goto("/pomidorqa/bookings");
-      const card = LOCATORS.bookings
-        .upcomingSection(guestPage)
-        .getByTestId("PomidorqaBookings-card-name");
-      await expect(card).toHaveText(host.name);
+      await expect(LOCATORS.bookings.upcomingSection(guestPage)).toContainText(host.name);
     }).toPass({ timeout: 10_000 });
   });
 
   await test.step("Хост: тоже видит это бронирование в своих «Мои встречи»", async () => {
     await expect(async () => {
       await hostPage.goto("/pomidorqa/bookings");
-      const card = LOCATORS.bookings
-        .upcomingSection(hostPage)
-        .getByTestId("PomidorqaBookings-card-name");
-      await expect(card).toHaveText(guest.name);
+      await expect(LOCATORS.bookings.upcomingSection(hostPage)).toContainText(guest.name);
     }).toPass({ timeout: 10_000 });
   });
 
