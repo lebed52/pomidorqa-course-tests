@@ -36,11 +36,10 @@ const BtnSearch = (page: Page) => page.getByRole('button', { name: 'Найти' 
 const PersonCard = (page: Page) => page.locator('[data-testid="person-card"]');
 const PersonName = (page: Page) => page.locator('h1');
 
-const BookingCalendarDay = (page: Page) => page.locator('.rounded-xl.border.px-3.py-2');
+const BookingCalendarDay = (page: Page) => page.locator('[aria-pressed="true"]');
 const BookingCalendarTime = (page: Page) =>
-  page.locator('.rounded-full.border.border-gray-700.bg-gray-900');
-const BookingConfirmModalDialog = (page: Page) =>
-  page.locator('.w-full.max-w-sm.rounded-2xl.border.border-gray-800.bg-gray-950.p-6');
+  page.getByRole('group', { name: 'Время слотов' }).getByRole('button');
+const BookingConfirmModalDialog = (page: Page) => page.locator('[role="dialog"]');
 
 const BookingConfirmModalConfirm = (page: Page) =>
   page.getByRole('button', { name: 'Подтвердить' });
