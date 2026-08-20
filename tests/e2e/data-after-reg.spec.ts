@@ -61,7 +61,6 @@ test.describe("Набор тестов", () => {
         user = makeUser("user", runId);
         await registerUser(page, user);
         await page.goto("/pomidorqa/profile");
-
     });
 
     test("смена имени в профиле", async ({page}) => {
