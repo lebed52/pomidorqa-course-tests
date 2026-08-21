@@ -1,37 +1,48 @@
 import { test, expect, type Page } from '@playwright/test';
+import { userInfo } from 'os';
 
-const InputName = (page: Page) => page.getByLabel('Имя');
-const InputEmail = (page: Page) => page.getByLabel('Email');
-const InputPassword = (page: Page) => page.getByLabel('Пароль');
-const BtnReg = (page: Page) => page.getByRole('button', { name: 'Зарегистрироваться' });
+const Registr = (page: Page) => ({
+  InputName: () => page.getByLabel('Имя'),
+  InputEmail: () => page.getByLabel('Email'),
+  InputPassword: () => page.getByLabel('Пароль'),
+  BtnReg: () => page.getByRole('button', { name: 'Зарегистрироваться' }),
+});
 
-const InputProfileSkill = (page: Page) => page.locator('#pomidorqa-profile-skill-input');
-const SelectSkillType = (page: Page) => page.locator('#pomidorqa-profile-skill-type');
-const BtnAdd = (page: Page) => page.getByRole('button', { name: 'Добавить' });
-const CanHelpSkill = (page: Page) => page.getByTestId('can-help-skills');
+const Profile = (page: Page) => ({
+  InputProfileSkill: () => page.locator('#pomidorqa-profile-skill-input'),
+  SelectSkillType: () => page.locator('#pomidorqa-profile-skill-type'),
+  BtnAdd: () => page.getByRole('button', { name: 'Добавить' }),
+  CanHelpSkill: () => page.getByTestId('can-help-skills'),
+  InputTelegram: () => page.locator('[placeholder="@username"]'),
+  InputAboutMe: () => page.getByLabel('О себе'),
+});
 
-const SlotDate = (page: Page) => page.locator('#pomidorqa-slots-date');
-const SlotTime = (page: Page) => page.locator('#pomidorqa-slots-time');
-const AddSlot = (page: Page) => page.getByRole('button', { name: 'Добавить' });
-const ListSkill = (page: Page) => page.locator('//div[@data-slot-status ="free"]');
+const Slots = (page: Page) => ({
+  SlotDate: () => page.locator('#pomidorqa-slots-date'),
+  SlotTime: () => page.locator('#pomidorqa-slots-time'),
+  AddSlot: () => page.getByRole('button', { name: 'Добавить слот' }),
+  ListSkill: () => page.locator('//div[@data-slot-status ="free"]'),
+});
 
-const PomidorqaCatalogFilterInput = (page: Page) => page.locator('#pomidorqa-catalog-skill-filter');
-const BtnSearch = (page: Page) => page.getByRole('button', { name: 'Найти' });
-const PersonCard = (page: Page) => page.locator('[data-testid="person-card"]');
-const PersonName = (page: Page) => page.locator('h1');
+const Catalog = (page: Page) => ({
+  FilterInput: () => page.locator('#pomidorqa-catalog-skill-filter'),
+  BtnSearch: () => page.getByRole('button', { name: 'Найти' }),
+  PersonCard: () => page.locator('[data-testid="person-card"]'),
+  PersonName: () => page.locator('h1'),
+});
 
-const BookingCalendarDay = (page: Page) => page.locator('[aria-pressed="true"]');
-const BookingCalendarTime = (page: Page) =>
-  page.getByRole('group', { name: 'Время слотов' }).getByRole('button');
-const BookingConfirmModalDialog = (page: Page) => page.locator('[role="dialog"]');
+const Booking = (page: Page) => ({
+  CalendarDay: () => page.locator('[aria-pressed="true"]'),
+  CalendarTime: () => page.getByRole('group', { name: 'Время слотов' }).getByRole('button'),
+  ConfirmModalDialog: () => page.locator('[role="dialog"]'),
+  ConfirmModalConfirm: () => page.getByRole('button', { name: 'Подтвердить' }),
+  ConfirmModalSuccess: () => page.getByText('Забронировано'),
+  ConfirmModalError: () => page.getByText('Этот слот только что забронировали'),
+});
 
-const BookingConfirmModalConfirm = (page: Page) =>
-  page.getByRole('button', { name: 'Подтвердить' });
-const BookingConfirmModalSuccess = (page: Page) => page.getByText('Забронировано');
-const BookingConfirmModalError = (page: Page) =>
-  page.getByText('Этот слот только что забронировали');
-
-const PomidorqaBookingsUpcomingSection = (page: Page) => page.getByTestId('upcoming-meetings');
+const Bookings = (page: Page) => ({
+  UpcomingSection: () => page.getByTestId('upcoming-meetings'),
+});
 
 type TestUser = {
   name: string;
@@ -47,33 +58,47 @@ function makeUser(role: string, runId: number): TestUser {
   };
 }
 
+function makeUnique(prefix: string) {
+  return `${prefix}-${Date.now()}`;
+}
+const telegramUsername = makeUnique('@student');
+const aboutMe = makeUnique('AQA Junior');
+
 async function registerUser(page: Page, user: TestUser) {
   await page.goto('/pomidorqa/auth/register');
-  await InputName(page).fill(user.name);
-  await InputEmail(page).fill(user.email);
-  await InputPassword(page).fill(user.password);
-  await BtnReg(page).click();
+  const registr = Registr(page);
+  await registr.InputName().fill(user.name);
+  await registr.InputEmail().fill(user.email);
+  await registr.InputPassword().fill(user.password);
+  await registr.BtnReg().click();
   await expect(page).toHaveURL(/\/pomidorqa\/?$/);
 }
 
-test.describe('свой мир на каждый тест', () => {
+test.describe('Ввод данных после регистрации', () => {
   let user: TestUser;
 
   test.beforeEach(async ({ page }) => {
     const runId = Date.now();
-    const user = makeUser('studentDaryaGembar', runId);
-    test.info().annotations.push({ type: 'user', description: user.email });
-
+    user = makeUser('studentDG', runId);
     await registerUser(page, user);
-
-    await page.goto('/pomidorqa/auth/register');
-  });
-
-  test('мир 1:из главной открывается профиль', async ({ page }) => {
     await page.goto('/pomidorqa/profile');
+    await expect(page.getByLabel('Имя')).toHaveValue(user.name);
   });
 
-  test('мир 2:после регистрации виден блок «Мои встречи»', async ({ page }) => {
-    await page.goto('/pomidorqa/bookings');
+  test('Заполнение полей "Telegram" и "О себе" на странице профиля ', async ({ page }) => {
+    const profile = Profile(page);
+    await profile.InputTelegram().fill(telegramUsername);
+    await profile.InputAboutMe().fill(aboutMe);
+    await expect(profile.InputTelegram()).toHaveValue(telegramUsername);
+    await expect(profile.InputAboutMe()).toHaveValue(aboutMe);
+  });
+
+  test('Добавление навыка', async ({ page }) => {
+    const profile = Profile(page);
+    const uniqueskill = makeUnique('skill');
+    await profile.InputProfileSkill().fill(uniqueskill);
+    await profile.SelectSkillType().selectOption('can_help');
+    await profile.BtnAdd().click();
+    await expect(profile.CanHelpSkill()).toContainText(uniqueskill);
   });
 });
