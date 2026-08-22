@@ -13,20 +13,20 @@ test("вход с неверными данными — одинаковая о�
 
   await test.step("Заводим реальный аккаунт для проверки", async () => {
     await page.goto("/pomidorqa/auth/register");
-    await page.getByTestId("PomidorqaRegister-name-input").fill("Login Error Check");
-    await page.getByTestId("PomidorqaRegister-email-input").fill(email);
-    await page.getByTestId("PomidorqaRegister-password-input").fill(password);
-    await page.getByTestId("PomidorqaRegister-submit").click();
+    await page.getByLabel("Имя").fill("Login Error Check");
+    await page.getByLabel("Email").fill(email);
+    await page.getByLabel("Пароль").fill(password);
+    await page.getByRole("button", { name: "Зарегистрироваться" }).click();
     await expect(page).toHaveURL(/\/pomidorqa\/?$/);
   });
 
   let wrongPasswordError = "";
   await test.step("Пробуем войти с верным email, но неверным паролем", async () => {
     await page.goto("/pomidorqa/auth/login");
-    await page.getByTestId("PomidorqaLogin-email-input").fill(email);
-    await page.getByTestId("PomidorqaLogin-password-input").fill("wrong-password");
-    await page.getByTestId("PomidorqaLogin-submit").click();
-    const error = page.getByTestId("PomidorqaLogin-error");
+    await page.getByLabel("Email").fill(email);
+    await page.getByLabel("Пароль").fill("wrong-password");
+    await page.getByRole("button", { name: "Войти" }).click();
+    const error = page.getByText(/Неверный/);
     await expect(error).toBeVisible();
     wrongPasswordError = (await error.textContent())?.trim() ?? "";
   });
@@ -34,10 +34,10 @@ test("вход с неверными данными — одинаковая о�
   let unknownEmailError = "";
   await test.step("Пробуем войти с несуществующим email", async () => {
     await page.goto("/pomidorqa/auth/login");
-    await page.getByTestId("PomidorqaLogin-email-input").fill(`no-such-user-${runId}@example.com`);
-    await page.getByTestId("PomidorqaLogin-password-input").fill("any-password-123");
-    await page.getByTestId("PomidorqaLogin-submit").click();
-    const error = page.getByTestId("PomidorqaLogin-error");
+    await page.getByLabel("Email").fill(`no-such-user-${runId}@example.com`);
+    await page.getByLabel("Пароль").fill("any-password-123");
+    await page.getByRole("button", { name: "Войти" }).click();
+    const error = page.getByText(/Неверный/);
     await expect(error).toBeVisible();
     unknownEmailError = (await error.textContent())?.trim() ?? "";
   });
