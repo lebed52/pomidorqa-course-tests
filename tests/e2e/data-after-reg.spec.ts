@@ -20,7 +20,9 @@ const locators = {
     name: '[name="name"]',
     saveButton: 'Сохранить',
     skillInput: '#pomidorqa-profile-skill-input',
+    skillType: '#pomidorqa-profile-skill-type',
     addSkillButton: 'Добавить',
+    canHelpSkills: '[data-testid="can-help-skills"]',
   },
   // Слоты
   slots: {
@@ -75,10 +77,11 @@ test.describe('Тесты после регистрации', () => {
   test('Добавления навыка', async ({ page }) => {
     // Act
     await page.locator(locators.profile.skillInput).fill(skillTag);
+    await page.locator(locators.profile.skillType).selectOption('can_help');
     await page.getByRole('button', { name: locators.profile.addSkillButton }).click();
 
     // Assert
-    await expect(page.getByText(skillTag)).toBeVisible();
+    await expect(page.locator('[data-testid="can-help-skills"]')).toContainText(skillTag);
   });
 
   test('Добавления слота', async ({ page }) => {
