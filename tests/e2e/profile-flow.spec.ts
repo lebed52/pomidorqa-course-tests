@@ -34,7 +34,7 @@ type TestUser = {
 
 function makeUser(role: string, runId: number): TestUser {
     return {
-        name: `${role} Автотест`,
+        name: `${role}_autotest`,
         email: `${role}-${runId}@example.com`,
         password: "testpass123",
     };
@@ -51,7 +51,7 @@ async function registerUser(page: Page, user: TestUser) {
     await expect(page).toHaveURL(/\/pomidorqa\/?$/);
 }
 
-test.describe("Набор тестов", () => {
+test.describe("Набор тестов для страницы профиля", () => {
     let user: TestUser;
     let runId: number;
 
@@ -134,7 +134,7 @@ test.describe("Набор тестов", () => {
         await profile.skillType.selectOption("want_to_learn");
         await profile.addButton.click();
 
-        const addedSkills = await profile.getSkillsInSection(profile.wantToLearnSkillsSection);
+        const addedSkills = profile.getSkillsInSection(profile.wantToLearnSkillsSection);
         await expect(addedSkills).toHaveCount(1);
         await expect(addedSkills).toHaveText(`${skillTag}×`);
     });
