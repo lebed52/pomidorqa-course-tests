@@ -20,9 +20,9 @@ const profileTimeZoneSelect = (page: Page) => page.getByLabel('Часовой п
 
 //Добавление навыка
 const profileSkillInput = (page: Page) => page.getByLabel('Навык');
-const profileSkillTypeSelect = (page: Page) => page.getByRole('combobox', { name: 'Тип' });
+const profileSkillTypeSelect = (page: Page) => page.getByLabel('Тип');
 const profileSkillSubmit = (page: Page) => page.getByRole('button', { name: 'Добавить' });
-const profileSkillList = (page: Page) => page.locator('[data-testid="can-help-skills"]');
+const profileSkillList = (page: Page) => page.getByTestId('can-help-skills');
 
 //Добавление "О себе"
 const profileAboutMeInput = (page: Page) => page.getByLabel('О себе');
@@ -50,7 +50,7 @@ async function registerUser(page: Page, user: TestUser) {
   await expect(page).toHaveURL(/\/pomidorqa\/?$/);
 }
 
-test.describe("Данные после регистрации", () => {
+test.describe("Профиль: действия", () => {
   let user: TestUser;
 
   test.beforeEach(async ({ page }) => {
