@@ -97,9 +97,22 @@ test.describe("Тесты на профиле после регистрации"
   test("Добавление навыка в профиле", async ({ page }) => {
     await test.step("Добавляем навык Навык и сохраняем изменения", async () => {
       await skillInput(page).fill(skillTag);
-      await skillType(page).selectOption("can_help")
+      await skillType(page).selectOption("can_help");
       await addSkillButton(page).click();
       await expect(canHelpSkills(page)).toContainText(skillTag);
+    });
+  });
+
+  test("Удаление навыка из профиля", async ({ page }) => {
+    await test.step("Удаляем навык Навык и сохраняем изменения", async () => {
+      const skillToDelete = `Skill-To-Delete-$(runId)`;
+
+      await skillInput(page).fill(skillToDelete);
+      await skillType(page).selectOption("can_help")
+      await addSkillButton(page).click();
+      await expect(canHelpSkills(page)).toContainText(skillToDelete);
+      await canHelpSkills(page).getByText(skillToDelete).click();
+      await expect(canHelpSkills(page)).not.toContainText(skillTag);
     });
   });
 });
