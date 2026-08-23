@@ -16,19 +16,6 @@ const canHelpSkills = (page: Page) => page.getByTestId("can-help-skills");
 
 const skillTag = "Навык";
 
-/*
-const slotsDateInput = (page: Page) => page.getByLabel("Дата");
-const slotsTimeInput = (page: Page) => page.getByLabel("Время начала");
-const addSlotButton = (page: Page) => page.getByRole("button", { name: "Добавить" });
-const freeSlotChip = (page: Page) => page.locator("[data-slot-status=free]");
-
-const upcomingPartners = (page: Page) => page.getByTestId("upcoming-meetings").locator("p.font-medium");
-
-const catalogFilterInput = (page: Page) => page.locator("#pomidorqa-catalog-skill-filter");
-const catalogFilterSubmit = (page: Page) => page.getByRole("button", { name: "Найти" });
-const catalogCard = (page: Page) => page.getByTestId("person-card");
-*/
-
 type TestUser = {
   name: string;
   email: string;
