@@ -103,10 +103,9 @@ test("Пишем О себе", async ({ page }) => {
     await aboutInput.fill(newAboutme);
     await page.getByRole("button", { name: "Сохранить" }).click();
 
-// Assert: проверяем, что инфа обо мне появилась
+    // Assert: проверяем, что инфа обо мне появилась
 
     await expect(page.getByRole('textbox', { name: 'О себе' })).toHaveValue(newAboutme);
-    await page.getByRole("button", { name: "Сохранить" }).click();
 
     // Assert: проверяем, что все поля заполнились
 
@@ -114,6 +113,21 @@ test("Пишем О себе", async ({ page }) => {
     await expect(page.getByRole("textbox", { name: "Telegram" })).toBeVisible();
     await expect(page.getByRole("combobox", { name: "Часовой пояс" })).toHaveValue("Europe/Moscow");
     await expect(page.getByRole("textbox", { name: "О себе" })).toHaveValue(newAboutme);
+  });
+
+  // Тест 5: Добавление навыка
+  test("Добавление навыка", async ({ page }) => {
+    // Arrange (уже сделано в beforeEach)
+    const skillTag = `Навык-${Date.now()}`;
+    const aboutInput = page.getByLabel('Тип').selectOption("can_help");
+
+    // Act: добавляем навык
+    await page.getByText("Навык", {exact: true}).fill(skillTag);
+    await page.getByLabel('Тип').selectOption("can_help");
+    await page.getByRole("button", { name: "Добавить" }).click();
+
+    // Assert: проверяем, что навык появился
+    await expect(page.getByRole('textbox', {name: 'Навык'})).toBeVisible();
   });
 });
 
