@@ -115,7 +115,6 @@ test.describe("Набор тестов для страницы профиля", 
         //Тянем вниз на 100px. steps: 10 делает движение плавным, что важно для браузера
         await page.mouse.move(startX, startY + 100, {steps: 10});
         await page.mouse.up();
-        //await page.waitForTimeout(200);
 
         // Проверяем новые размеры
         const newBox = await profile.aboutYourselfInput.boundingBox();
