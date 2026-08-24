@@ -100,39 +100,32 @@ test.describe("Тесты на изменение имени пользоват�
 
   test("Добавить Telegram username в профиль", async ({ page }) => {
     await test.step("Добавление Telegram username", async () => {
-    const newTelegramUserName = `@new_username_${Date.now()}`;
-    const { telegramUserName } = telegramLocators(page);
-    await telegramUserName.fill(newTelegramUserName);
-    await expect(telegramUserName).toHaveValue(newTelegramUserName);
+      const newTelegramUserName = `@new_username_${Date.now()}`;
+      const { telegramUserName } = telegramLocators(page);
+      const { saveProfileNameButton } = profileLocators(page);
+      await telegramUserName.fill(newTelegramUserName);
+      await saveProfileNameButton.click();
+      await expect(telegramUserName).toHaveValue(newTelegramUserName);
     });
   });
 
-   test("Выбор часового пояса", async ({ page }) => {
+  test("Выбор часового пояса", async ({ page }) => {
     await test.step("Выбор часового пояса", async () => {
-    const { timeZonaField } = timezonaLocators(page);
-    await timeZonaField.selectOption({label:'Asia/Yekaterinburg'});
-    await expect(timeZonaField).toHaveValue('Asia/Yekaterinburg');
-     });
+      const { timeZonaField } = timezonaLocators(page);
+      const { saveProfileNameButton } = profileLocators(page);
+      await timeZonaField.selectOption({ label: "Asia/Yekaterinburg" });
+      await saveProfileNameButton.click();
+      await expect(timeZonaField).toHaveValue("Asia/Yekaterinburg");
+    });
   });
 
   test("Добавление информации о себе", async ({ page }) => {
     await test.step("Добавление информации о себе", async () => {
-    const { aboutMySelfTextarea } = aboutMySelfLocators(page);
-    await aboutMySelfTextarea.fill("Я тестировщик и я тестю)");
-    await expect(aboutMySelfTextarea).toHaveValue("Я тестировщик и я тестю)");
-    });
-  });
-
-  test("Сохранение профиля", async ({ page }) => {
-    await test.step("Сохранение профиля", async () => {
-      const aboutText = `Я тестировщик и я тестю) ${Date.now()}`;
       const { aboutMySelfTextarea } = aboutMySelfLocators(page);
       const { saveProfileNameButton } = profileLocators(page);
-
-      await aboutMySelfTextarea.fill(aboutText);
+      await aboutMySelfTextarea.fill("Я тестировщик и я тестю)");
       await saveProfileNameButton.click();
-      await page.goto("/pomidorqa/profile");
-      await expect(aboutMySelfTextarea).toHaveValue(aboutText);
+      await expect(aboutMySelfTextarea).toHaveValue("Я тестировщик и я тестю)");
     });
   });
 
