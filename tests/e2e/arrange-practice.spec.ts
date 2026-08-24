@@ -53,7 +53,7 @@ test.describe("Тесты на профиле после регистрации"
   });
 
   test("Смена имени пользователя в профиле", async ({ page }) => {
-    const newName = `$(user.name) New`;
+    const newName = `${user.name} New`;
 
     await test.step("Вводим новое имя и сохраняем изменения", async () => {
       await profileName(page).fill(newName);
