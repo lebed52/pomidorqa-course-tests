@@ -59,7 +59,7 @@ test.describe("Тесты на профиле после регистрации"
   });
 
   test("Смена имени пользователя в профиле", async ({ page }) => {
-    const newName = `$(user.name) New`;
+    const newName = `${user.name} New`;
 
     await test.step("Вводим новое имя и сохраняем изменения", async () => {
       await profileName(page).fill(newName);
@@ -105,6 +105,7 @@ test.describe("Тесты на профиле после регистрации"
 
   test("Удаление навыка из профиля", async ({ page }) => {
     await test.step("Удаляем навык Навык и сохраняем изменения", async () => {
+      const runId = Date.now();
       const skillToDelete = `Skill-To-Delete-$(runId)`;
 
       await skillInput(page).fill(skillToDelete);
@@ -112,7 +113,7 @@ test.describe("Тесты на профиле после регистрации"
       await addSkillButton(page).click();
       await expect(canHelpSkills(page)).toContainText(skillToDelete);
       await canHelpSkills(page).getByText(skillToDelete).click();
-      await expect(canHelpSkills(page)).not.toContainText(skillTag);
+      await expect(canHelpSkills(page)).not.toContainText(skillToDelete);
     });
   });
 });
