@@ -73,7 +73,7 @@ test.describe("Набор тестов для страницы профиля", 
 
     test("Изменение часового пояса", async ({ page }) => {
         const profile = profileLocators(page);
-        const newTimeZone = 'Europe/Moscow';
+        const newTimeZone = 'Europe/Kaliningrad';
 
         await profile.timezoneInput.selectOption(newTimeZone);
         await profile.saveButton.click();
@@ -127,9 +127,9 @@ test.describe("Набор тестов для страницы профиля", 
     test("Успешное сохранение измененных анкетных данных профиля", async ({page}) => {
         const profile = profileLocators(page);
         const newData = {
-            name: `Updated ${user.name}`,
-            telegram: `@${user.name}`,
-            timezone: 'Europe/Moscow',
+            name: `Updated ${user.name}${runId}`,
+            telegram: `@${user.name}${runId}`,
+            timezone: 'Europe/Kaliningrad',
             aboutYourself: 'I am super QA'
         }
 
