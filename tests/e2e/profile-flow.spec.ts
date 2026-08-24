@@ -13,7 +13,6 @@ const profileLocators = (page: Page) => ({
     nameInput: page.getByLabel('Имя'),
     telegramInput: page.getByLabel('Telegram'),
     timezoneInput: page.getByLabel('Часовой пояс'),
-    timezoneOption: page.locator('[name="timezone"]'),
     aboutYourselfInput: page.getByLabel('О себе'),
     saveButton: page.getByRole('button', {name: "Сохранить"}),
     skillInput: page.getByLabel('Навык'),
@@ -62,6 +61,57 @@ test.describe("Набор тестов для страницы профиля", 
         await page.goto("/pomidorqa/profile");
     });
 
+    test("Изменение имени в профиле", async ({page}) => {
+        const profile = profileLocators(page);
+        const newName = `Updated ${runId}`;
+
+        await profile.nameInput.fill(newName);
+        await profile.saveButton.click();
+
+        await expect(profile.nameInput).toHaveValue(newName);
+    });
+
+    test("Изменение часового пояса", async ({ page }) => {
+        const profile = profileLocators(page);
+        const newTimeZone = 'Europe/Moscow';
+
+        await profile.timezoneInput.selectOption(newTimeZone);
+        await profile.saveButton.click();
+
+        await expect(profile.timezoneInput).toHaveValue(newTimeZone);
+    });
+
+    test("Изменение Telegram", async ({ page }) => {
+        const profile = profileLocators(page);
+        const newTelegram = `@updated_${runId}`;
+
+        await profile.telegramInput.fill(newTelegram);
+        await profile.saveButton.click();
+
+        await expect(profile.telegramInput).toHaveValue(newTelegram);
+    });
+
+    test('Изменение поля "О себе"', async ({ page }) => {
+        const profile = profileLocators(page);
+        const newAboutYourself = `Updated ${runId}`;
+
+        await profile.aboutYourselfInput.fill(newAboutYourself);
+        await profile.saveButton.click();
+
+        await expect(profile.aboutYourselfInput).toHaveValue(newAboutYourself);
+    });
+
+    test("добавление навыка в раздел 'Могу помочь'", async ({page}) => {
+        const profile = profileLocators(page);
+        const skillTag = `Skill-${runId}`;
+
+        await profile.skillInput.fill(skillTag);
+        await profile.skillType.selectOption("can_help");
+        await profile.addButton.click();
+
+        await expect(profile.canHelpSkillsSection).toContainText(skillTag);
+    });
+
     test("Страница профиля отображает заголовки и описания разделов", async ({page}) => {
         const profile = profileLocators(page);
         const headings = ['Твой профиль', 'Навыки'];
@@ -85,14 +135,14 @@ test.describe("Набор тестов для страницы профиля", 
 
         await profile.nameInput.fill(newData.name);
         await profile.telegramInput.fill(newData.telegram);
-        await profile.timezoneOption.selectOption(newData.timezone);
+        await profile.timezoneInput.selectOption(newData.timezone);
         await profile.aboutYourselfInput.fill(newData.aboutYourself)
         await profile.saveButton.click();
 
         const actualValues = {
             name: await profile.nameInput.inputValue(),
             telegram: await profile.telegramInput.inputValue(),
-            timezone: await profile.timezoneOption.inputValue(),
+            timezone: await profile.timezoneInput.inputValue(),
             aboutYourself: await profile.aboutYourselfInput.inputValue(),
         };
         expect(actualValues).toEqual(newData);
