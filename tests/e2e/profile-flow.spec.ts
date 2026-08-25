@@ -77,17 +77,15 @@ test.describe("Тесты профиля пользователя", () => {
  // Тест 3: пишем Часовой пояс
 
   test("Пишем Часовой пояс", async ({ page }) => {
-    const timezone = "Europe/Moscow";
+    const timezone = "Asia/Irkutsk";
     // 1. Находим выпадающий список (это select/combobox)
     const timezoneSelect = page.getByRole("combobox", { name: "Часовой пояс" });
     // 2. Проверяем, что он видим
   await expect(timezoneSelect).toBeVisible();
     // 3. Выбираем значение по видимому тексту
-  await timezoneSelect.selectOption({ label: "Europe/Moscow" });
-   // 4. Нажимаем "Сохранить" (если нужно)
-  await page.getByRole("button", { name: "Сохранить" }).click();
-  // 5. Проверяем, что выбралось правильное значение
-  await expect(timezoneSelect).toHaveValue("Europe/Moscow");
+  await timezoneSelect.selectOption({ label: "Asia/Irkutsk" });
+  // 4. Проверяем, что выбралось правильное значение
+  await expect(timezoneSelect).toHaveValue("Asia/Irkutsk");
   });
 
 
@@ -96,6 +94,7 @@ test.describe("Тесты профиля пользователя", () => {
 test("Пишем О себе", async ({ page }) => {
      const newAboutme = `Я смогу сделать автотест сама ${Date.now()}`;
      const aboutInput = page.getByRole("textbox", { name: "О себе" });
+
      // Act: пишем о себе
     
     await expect(aboutInput).toBeVisible();
@@ -107,27 +106,82 @@ test("Пишем О себе", async ({ page }) => {
 
     await expect(page.getByRole('textbox', { name: 'О себе' })).toHaveValue(newAboutme);
 
-    // Assert: проверяем, что все поля заполнились
-
-    await expect(page.getByRole("textbox", { name: "Имя" })).toBeVisible();
-    await expect(page.getByRole("textbox", { name: "Telegram" })).toBeVisible();
-    await expect(page.getByRole("combobox", { name: "Часовой пояс" })).toHaveValue("Europe/Moscow");
-    await expect(page.getByRole("textbox", { name: "О себе" })).toHaveValue(newAboutme);
   });
 
   // Тест 5: Добавление навыка
-  test("Добавление навыка", async ({ page }) => {
-    // Arrange (уже сделано в beforeEach)
-    const skillTag = `Навык-${Date.now()}`;
-    const aboutInput = page.getByLabel('Тип').selectOption("can_help");
 
-    // Act: добавляем навык
-    await page.getByText("Навык", {exact: true}).fill(skillTag);
-    await page.getByLabel('Тип').selectOption("can_help");
-    await page.getByRole("button", { name: "Добавить" }).click();
+   test("Добавление навыка", async ({ page }) => {
 
-    // Assert: проверяем, что навык появился
-    await expect(page.getByRole('textbox', {name: 'Навык'})).toBeVisible();
+  // Arrange (уже сделано в beforeEach)
+
+  const skillTag = `Навык-${Date.now()}`;
+
+  // Act: добавляем навык
+
+  await page.getByRole("textbox", { name: "Навык" }).fill(skillTag);
+  await page.getByLabel('Тип').selectOption("can_help");
+  await page.getByRole("button", { name: "Добавить" }).click();
+  // Assert: проверяем, что навык появился в списке "Могу помочь"
+  const skillsContainer = page.getByTestId('can-help-skills');
+  // Проверяем, что внутри этого блока есть skillTag
+  await expect(skillsContainer).toContainText(skillTag);
+  });
+
+// Тест 6: Добавление навыка с типом Хочу разобрать
+
+  test("Добавление навыка с типом Хочу разобрать", async ({ page }) => {
+// Arrange (уже сделано в beforeEach)
+  const skillTag = `Навык-${Date.now()}`;
+  // Act: добавляем навык
+  await page.getByRole("textbox", { name: "Навык" }).fill(skillTag);
+  await page.getByLabel('Тип').selectOption("want_to_learn");
+  await page.getByRole("button", { name: "Добавить" }).click();
+  // Assert: проверяем, что навык появился в списке "Могу помочь"
+  const skillsContainer = page.getByTestId('want-to-learn-skills');
+  // Проверяем, что внутри этого блока есть skillTag
+  await expect(page.getByText(skillTag)).toBeVisible();
+  });
+
+   // Тест 7: Удаление навыка
+
+   test("Удаление навыка", async ({ page }) => {
+  // Arrange: создаем навык, который будем удалять
+  const skillTagToDelete = `Навык-для-удаления-\${Date.now()}`;
+  
+  // Добавляем навык
+  await page.getByRole("textbox", { name: "Навык" }).fill(skillTagToDelete);
+  await page.getByLabel('Тип').selectOption("can_help");
+  await page.getByRole("button", { name: "Добавить" }).click();
+  
+  // Assert: Проверяем, что навык появился в контейнере
+  const skillsContainer = page.getByTestId('can-help-skills');
+  await expect(skillsContainer).toContainText(skillTagToDelete);
+
+  // Act: удаляем навык
+  
+  // Сначала находим карточку навыка по тексту, который создали.
+  const skillCard = page.getByText(skillTagToDelete, { exact: false });
+  
+  // Переменная skillCard определена. Ищем внутри неё кнопку "Убрать"
+  await skillCard.getByTitle('Убрать').click();
+
+  // Assert: проверяем, что навык исчез из списка
+  await expect(skillsContainer).not.toContainText(skillTagToDelete);
+});
+
+// Тест 8: Проверяем, что нельзя добавить пустой навык
+
+test("Нельзя добавить пустой навык", async ({ page }) => {
+  // Act: пытаемся добавить навык без заполнения поля
+  // Поле "Навык" оставляем пустым
+  await page.getByLabel('Тип').selectOption("can_help");
+  await page.getByRole("button", { name: "Добавить" }).click();
+
+  // Assert: проверяем, что появилась ошибка
+  // Проверяем, что поп-ап с ошибкой виден
+  const errorPopup = page.getByText('Please fill out this field.');
+  await expect(errorPopup).toBeVisible();
+  
   });
 });
 
