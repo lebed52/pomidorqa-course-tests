@@ -14,6 +14,13 @@ function makeUser(role: string, runId: number): TestUser {
     };
 }
 
+function toDateInputValue(d: Date): string {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+}
+
 //фабрика локаторов
 const registerNameInput = (page: Page) => page.getByLabel("Имя");
 const registerEmailInput = (page: Page) => page.getByLabel("Email");
@@ -61,6 +68,7 @@ test.describe("Тесты в профиле после регистрации", 
         await test.step("Заполняем новое имя и сохраняем", async () => {
             await profileUsername(page).fill(newName);
             await profileSaveButton(page).click();
+
             await expect(async () => {
                 await page.reload();
                 await expect(profileUsername(page)).toHaveValue(newName);
@@ -75,6 +83,7 @@ test.describe("Тесты в профиле после регистрации", 
             await profileSkillInput(page).fill(skillTag);
             await profileSkillTypeSelect(page).selectOption("can_help");
             await profileSkillSubmit(page).click();
+
             await expect(profileCanHelpSkills(page)).toContainText(skillTag);
         });
     });
@@ -83,10 +92,12 @@ test.describe("Тесты в профиле после регистрации", 
         await test.step("Идем в мои слоты и добавляем слот на завтра", async () => {
             await page.goto("/pomidorqa/profile/slots");
             const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
-            const date = tomorrow.toISOString().slice(0, 10);
+            const date = toDateInputValue(tomorrow);
+
             await slotsDateInput(page).fill(date);
             await slotsTimeInput(page).fill("12:00");
             await slotsAddSubmit(page).click();
+
             await expect(slotsCard(page).first()).toBeVisible();
         });
     });
