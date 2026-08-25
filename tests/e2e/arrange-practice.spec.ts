@@ -33,11 +33,14 @@ test.beforeEach(async ({ page }) => {
   await registerUser(page, host);
 });
 
-test("хост после регистрации видит главную страницу", async ({ page }) => {
-  await expect(page).toHaveURL(/\/pomidorqa\/?$/);
+test("имя хоста в профиле совпадает с данными фабрики", async ({ page }) => {
+  await page.goto("/pomidorqa/profile");
+
+  await expect(page.getByLabel("Имя")).toHaveValue(host.name);
 });
 
-test("профиль хоста открывается после регистрации", async ({ page }) => {
+test("у нового пользователя нет навыков", async ({ page }) => {
   await page.goto("/pomidorqa/profile");
-  await expect(page).toHaveURL(/\/pomidorqa\/profile$/);
+
+  await expect(page.getByTestId("can-help-skills")).toHaveCount(0);
 });
