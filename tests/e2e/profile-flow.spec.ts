@@ -27,6 +27,7 @@ const profileLocators = (page: Page) => ({
     skillInput: page.getByLabel("Навык", { exact: true }),
     skillTypeSelect: page.getByRole("combobox", { name: "Тип" }),
     addSkillButton: page.getByRole("button", { name: "Добавить" }),
+    skillChips: page.locator("[data-skill-tag]"),
     skillChip: (skill: string) => page.getByRole("button", { name: `${skill} ×`, exact: true }),
 });
 
@@ -109,10 +110,11 @@ test("сохранение информации о себе", async ({ page }) =
     await expect(profile.bioTextarea).toHaveValue(bio);
 });
 
-test("добавление навыка", async ({ page }) => {
+test("негативный сценарий: удаление навыка из списка", async ({ page }) => {
     // Arrange
     const skill = "Укрощение багов";
     const profile = profileLocators(page);
+    const skillChip = profile.skillChip(skill);
 
     // Act
     await profile.skillInput.fill(skill);
@@ -120,5 +122,39 @@ test("добавление навыка", async ({ page }) => {
     await profile.addSkillButton.click();
 
     // Assert
-    await expect(profile.skillChip(skill)).toBeVisible();
+    await expect(skillChip).toBeVisible();
+
+    // Act
+    await skillChip.click();
+
+    // Assert
+    await expect(skillChip).not.toBeVisible();
+});
+
+test("нельзя сохранить профиль с пустым именем", async ({ page }) => {
+    // Arrange
+    const profile = profileLocators(page);
+
+    // Act
+    await profile.nameInput.clear();
+    await profile.saveButton.click();
+
+    // Assert
+    await expect(profile.nameInput).toBeFocused();
+    await expect(profile.nameInput).toHaveValue("");
+});
+
+test("нельзя добавить навык без названия", async ({ page }) => {
+    // Arrange
+    const profile = profileLocators(page);
+    const skillCount = await profile.skillChips.count();
+
+    // Act
+    await profile.skillInput.clear();
+    await profile.addSkillButton.click();
+
+    // Assert
+    await expect(profile.skillInput).toBeFocused();
+    await expect(profile.skillInput).toHaveValue("");
+    await expect(profile.skillChips).toHaveCount(skillCount);
 });
