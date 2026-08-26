@@ -3,9 +3,9 @@ import { test, expect, type Page } from "@playwright/test";
 // ЛОКАТОРЫ
 
 // Регистрация юзера 
-const registerNameInput = (page: Page) => page.locator('#pomidorqa-register-name');
-const registerEmailInput = (page: Page) => page.locator('#pomidorqa-register-email');
-const registerPasswordInput = (page: Page) => page.locator('#pomidorqa-register-password');
+const registerNameInput = (page: Page) => page.getByLabel('Имя');
+const registerEmailInput = (page: Page) => page.getByLabel('Email');
+const registerPasswordInput = (page: Page) => page.getByLabel('Пароль');
 const registerSubmitButton = (page: Page) => page.getByRole('button', { name: 'Зарегистрироваться' });
 
 // Имя
@@ -27,7 +27,7 @@ const profileSkillList = (page: Page) => page.getByTestId('can-help-skills');
 // Навык "Хочу разобраться"
 
 // Удаление навыка
-const profileSkillDeleteButton = (page: Page, skill: string) => page.locator(`[data-skill-tag="${skill}"] span:has-text("×")`);
+const profileSkillDeleteButton = (page: Page, skill: string) => profileSkillList(page).getByRole('button', { name: skill });
 const profileSkillElement = (page: Page, skill: string) => page.locator(`[data-skill-tag="${skill}"]`);
 
 // "О себе"
@@ -171,7 +171,7 @@ test.describe("Профиль: действия", () => {
     await test.step("Удаляем навык", async () => {
       const deleteButton = profileSkillDeleteButton(page, skill);
       await expect(deleteButton).toBeVisible();
-      await deleteButton.click({ force: true });
+      await deleteButton.click();
     });
 
     await expect(profileSkillElement(page, skill)).not.toBeVisible();
