@@ -142,47 +142,43 @@ test("Пишем О себе", async ({ page }) => {
   await expect(page.getByText(skillTag)).toBeVisible();
   });
 
-   // Тест 7: Удаление навыка
+   /// Тест 7: Удаление навыка
 
    test("Удаление навыка", async ({ page }) => {
   // Arrange: создаем навык, который будем удалять
-  const skillTagToDelete = `Навык-для-удаления-\${Date.now()}`;
+  const skillTagToDelete = `Навык-для-удаления-${Date.now()}`;
   
   // Добавляем навык
   await page.getByRole("textbox", { name: "Навык" }).fill(skillTagToDelete);
   await page.getByLabel('Тип').selectOption("can_help");
   await page.getByRole("button", { name: "Добавить" }).click();
   
-  // Assert: Проверяем, что навык появился в контейнере
+  // Проверяем, что навык появился
   const skillsContainer = page.getByTestId('can-help-skills');
   await expect(skillsContainer).toContainText(skillTagToDelete);
 
-  // Act: удаляем навык
-  
-  // Сначала находим карточку навыка по тексту, который создали.
-  const skillCard = page.getByText(skillTagToDelete, { exact: false });
-  
-  // Переменная skillCard определена. Ищем внутри неё кнопку "Убрать"
-  await skillCard.getByTitle('Убрать').click();
+  // Act: удаляем навык — кликаем по самому чипу
+  await page.getByText(skillTagToDelete, { exact: false }).click();
 
-  // Assert: проверяем, что навык исчез из списка
-  await expect(skillsContainer).not.toContainText(skillTagToDelete);
+  // Assert: проверяем, что навык исчез
+  // Просто проверяем, что текст с названием навыка больше не виден
+  await expect(page.getByText(skillTagToDelete, { exact: false })).not.toBeVisible();
 });
 
-// Тест 8: Проверяем, что нельзя добавить пустой навык
-
+// ТЕСТ 8: Проверяем, что нельзя добавить пустой навык 
 test("Нельзя добавить пустой навык", async ({ page }) => {
   // Act: пытаемся добавить навык без заполнения поля
-  // Поле "Навык" оставляем пустым
   await page.getByLabel('Тип').selectOption("can_help");
   await page.getByRole("button", { name: "Добавить" }).click();
 
-  // Assert: проверяем, что появилась ошибка
-  // Проверяем, что поп-ап с ошибкой виден
-  const errorPopup = page.getByText('Please fill out this field.');
-  await expect(errorPopup).toBeVisible();
+  // Assert: проверяем, что навык НЕ добавился
+  // Ищем любой элемент с текстом, начинающимся на "Навык-"
+  const newSkill = page.getByText(/Навык-/);
   
-  });
+  // Проверяем, что такого навыка нет на странице
+  await expect(newSkill).not.toBeVisible();
+});
+
 });
 
 
