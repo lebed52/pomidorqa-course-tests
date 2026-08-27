@@ -33,6 +33,8 @@ const skillInput = (page: Page) => page.locator("#pomidorqa-profile-skill-input"
 const skillTypeSelect = (page: Page) => page.locator("#pomidorqa-profile-skill-type");
 const addSkillButton = (page: Page) => page.getByRole("button", { name: "Добавить" });
 const canHelpSkills = (page: Page) => page.getByTestId("can-help-skills");
+const skillChips = (page: Page) => page.locator("[data-skill-tag]");
+const skillChip = (page: Page, tag: string) => page.locator(`[data-skill-tag="${tag}"]`);
 
 // ─────────────────────────────────────────────────────────────
 // Фабрики и общие действия
@@ -156,6 +158,71 @@ test.describe("Профиль: действия с полями", () => {
 
     await test.step("Навык появился в блоке «могу помочь»", async () => {
       await expect(canHelpSkills(page)).toContainText(skillTag);
+    });
+  });
+
+  test("негатив: пустой навык не добавляется", async ({ page }) => {
+    await test.step("Жмём «Добавить», не заполнив поле", async () => {
+      await expect(skillInput(page)).toHaveValue("");
+      await addSkillButton(page).click();
+    });
+
+    await test.step("Ни одного навыка не появилось", async () => {
+      // Поле навыка помечено required — браузер не даёт отправить форму.
+      // Проверяем именно результат: чипов ноль и блока «могу помочь» нет,
+      // а не «клик прошёл и ладно».
+      await expect(skillChips(page)).toHaveCount(0);
+      await expect(canHelpSkills(page)).not.toBeVisible();
+    });
+  });
+
+  test("негатив: навык «хочу разобрать» не попадает в блок «могу помочь»", async ({ page }) => {
+    const runId = Date.now();
+    const canHelpTag = `CanHelp-${runId}`;
+    const wantToLearnTag = `WantToLearn-${runId}`;
+
+    await test.step("Добавляем навык «могу помочь»", async () => {
+      await skillInput(page).fill(canHelpTag);
+      await skillTypeSelect(page).selectOption("can_help");
+      await addSkillButton(page).click();
+      await expect(skillChip(page, canHelpTag)).toBeVisible();
+    });
+
+    await test.step("Добавляем навык «хочу разобрать»", async () => {
+      await skillInput(page).fill(wantToLearnTag);
+      await skillTypeSelect(page).selectOption("want_to_learn");
+      await addSkillButton(page).click();
+      await expect(skillChip(page, wantToLearnTag)).toBeVisible();
+    });
+
+    await test.step("Навыки разошлись по своим блокам", async () => {
+      await expect(skillChips(page)).toHaveCount(2);
+      await expect(canHelpSkills(page)).toContainText(canHelpTag);
+      // Главная проверка теста: второй навык добавлен, но в «могу помочь» его нет.
+      await expect(canHelpSkills(page)).not.toContainText(wantToLearnTag);
+    });
+  });
+
+  test("форма профиля: три поля сохраняются за один раз", async ({ page }) => {
+    const runId = Date.now();
+    const name = `Тимур Тестовый ${runId}`;
+    const telegram = `@qa_timur_${runId}`;
+    const bio = `QA-инженер, прогон ${runId}. Проверяю форму профиля целиком.`;
+
+    await test.step("Заполняем Имя, Telegram и «О себе», сохраняем разом", async () => {
+      await profileNameInput(page).fill(name);
+      await profileTelegramInput(page).fill(telegram);
+      await profileBioInput(page).fill(bio);
+      await saveProfile(page);
+    });
+
+    await test.step("После перезагрузки все три значения пришли с сервера", async () => {
+      await page.reload();
+      // expect.soft не останавливает тест на первой неудаче: если поедут
+      // два поля из трёх, увидим оба сразу, а не по одному за прогон.
+      await expect.soft(profileNameInput(page)).toHaveValue(name);
+      await expect.soft(profileTelegramInput(page)).toHaveValue(telegram);
+      await expect.soft(profileBioInput(page)).toHaveValue(bio);
     });
   });
 });
