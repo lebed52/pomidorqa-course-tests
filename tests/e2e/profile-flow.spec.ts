@@ -156,8 +156,8 @@ test.describe("Набор тестов для страницы профиля", 
         await profile.addButton.click();
         await profile.removeSkillButton.click();
 
-        const addedSkills = profile.allSkills.filter({hasText: skillTag});
-        await expect(addedSkills).not.toBeVisible();
+        const addedSkill = profile.allSkills.filter({hasText: skillTag});
+        await expect(addedSkill).not.toBeVisible();
         await expect(profile.allSkills).toHaveCount(0);
     });
 });
