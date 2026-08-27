@@ -23,6 +23,19 @@ async function registerUser(page: Page, user: TestUser) {
   await expect(page).toHaveURL(/\/pomidorqa\/?$/);
 }
 
+//Локаторы
+const skillInput = (page: Page) => page.locator("#pomidorqa-profile-skill-input");
+const skillTypeSelect = (page: Page) => page.locator("#pomidorqa-profile-skill-type");
+const skillSubmit = (page: Page) => page.getByRole("button", { name: "Добавить" });
+const canHelpSkills = (page: Page) => page.getByTestId("can-help-skills");
+const canHelpSkillChip = (page: Page, skillTag: string) =>
+  canHelpSkills(page).getByRole("button", { name: skillTag });
+async function addCanHelpSkill(page: Page, skillTag: string) {
+  await skillInput(page).fill(skillTag);
+  await skillTypeSelect(page).selectOption("can_help");
+  await skillSubmit(page).click();
+}
+
 test.describe("Act Practice", () => {
   let user: TestUser;
 
@@ -63,9 +76,41 @@ test.describe("Act Practice", () => {
 
   test("Навык: добавить «могу помочь»", async ({ page }) => {
     const skillTag = `skill-${Date.now()}`;
-    await page.locator("#pomidorqa-profile-skill-input").fill(skillTag);
-    await page.locator("#pomidorqa-profile-skill-type").selectOption("can_help");
-    await page.getByRole("button", { name: "Добавить" }).click();
-    await expect(page.getByTestId("can-help-skills")).toContainText(skillTag);
+    await skillInput(page).fill(skillTag);
+    await skillTypeSelect(page).selectOption("can_help");
+    await skillSubmit(page).click();
+    await expect(canHelpSkills(page)).toContainText(skillTag);
+  });
+
+  test("Навык: плашка отображается после добавления", async ({ page }) => {
+    const skillTag = `chip-${Date.now()}`;
+    await addCanHelpSkill(page, skillTag);
+    await expect(canHelpSkillChip(page, skillTag)).toBeVisible();
+    await expect(canHelpSkillChip(page, skillTag)).toHaveCount(1);
+  });
+
+  test("Негатив: множественный клик по «Добавить» не создаёт дубль навыка", async ({ page }) => {
+    const skillTag = `multi-${Date.now()}`;
+    await skillInput(page).fill(skillTag);
+    await skillTypeSelect(page).selectOption("can_help");
+    await skillSubmit(page).dblclick();
+    await expect(canHelpSkillChip(page, skillTag)).toHaveCount(1);
+  });
+
+  test("Негатив: после удаления навык больше не отображается", async ({ page }) => {
+    const skillTag = `del-${Date.now()}`;
+    await addCanHelpSkill(page, skillTag);
+    const chip = canHelpSkillChip(page, skillTag);
+    await expect(chip).toBeVisible();
+    await chip.click();
+    await expect(chip).not.toBeVisible();
+  });
+
+  test("Негатив: повторное добавление того же навыка не создаёт дубль", async ({ page }) => {
+    const skillTag = `dup-${Date.now()}`;
+    await addCanHelpSkill(page, skillTag);
+    await expect(canHelpSkillChip(page, skillTag)).toHaveCount(1);
+    await addCanHelpSkill(page, skillTag);
+    await expect(canHelpSkillChip(page, skillTag)).toHaveCount(1);
   });
 });
