@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { text } from "node:stream/consumers";
 
 // --- Карта локаторов ----
 const registerNameInput = (page: Page) => page.getByLabel("Имя");
@@ -15,12 +16,15 @@ const saveProfile = (page: Page) => page.getByRole("button", { name: "Сохра
 const skillInput = (page: Page) => page.getByLabel("Навык");
 const skillType = (page: Page) => page.getByLabel("Тип");
 const addSkillButton = (page: Page) => page.getByRole("button", { name: "Добавить" });
+const skillBlock = (page: Page) => page.getByRole("heading",{level: 2, name: 'Навыки', exact: true});
 const canHelpSkills = (page: Page) => page.getByTestId("can-help-skills");
+const needHelpSkills = (page: Page) => page.locator('div[data-skills="want_to_learn"]');;
 
 const skillTag = "Навык";
 const newTimezone = "Asia/Yekaterinburg";
 const tgNickname = "@username";
 const aboutUserText = "О себе хорошо или ничего";
+
 
 type TestUser = {
   name: string;
@@ -52,10 +56,6 @@ test.describe("Тесты на профиле после регистрации"
     user = makeUser("student", Date.now());
     await registerUser(page, user);
     await page.goto("/pomidorqa/profile");
-  });
-
-  test.afterEach(async ({ page }) => {
-    await page.close();
   });
 
   test("Смена имени пользователя в профиле", async ({ page }) => {
@@ -94,12 +94,33 @@ test.describe("Тесты на профиле после регистрации"
     });
   });
 
+  test("Навыков еще нет", async ({ page }) => {
+    await test.step("Профиль корректно отображается при отсутствии навыков", async () => {
+      await expect(skillBlock(page)).not.toContainText("Хочу разобрать");
+      await expect(skillBlock(page)).not.toContainText("Могу помочь с");
+    });
+  });
+
   test("Добавление навыка в профиле", async ({ page }) => {
     await test.step("Добавляем навык Навык и сохраняем изменения", async () => {
       await skillInput(page).fill(skillTag);
       await skillType(page).selectOption("can_help");
       await addSkillButton(page).click();
       await expect(canHelpSkills(page)).toContainText(skillTag);
+    });
+  });
+
+  test("Добавления запроса на навык в профиле", async ({ page }) => {
+    await test.step("Добавляем навык, помощь с которым хочет получить пользователь", async () => {
+      const runId = Date.now();
+      const skillToLearn = `Skill-To-Learn-$(runId)`;
+
+      await skillInput(page).fill(skillToLearn);
+      await skillType(page).selectOption("want_to_learn")
+      await addSkillButton(page).click();
+      await expect(needHelpSkills(page)).toContainText(skillToLearn);
+      await needHelpSkills(page).getByText(skillToLearn).click();
+      await expect(needHelpSkills(page)).toContainText(skillToLearn);
     });
   });
 
@@ -113,7 +134,18 @@ test.describe("Тесты на профиле после регистрации"
       await addSkillButton(page).click();
       await expect(canHelpSkills(page)).toContainText(skillToDelete);
       await canHelpSkills(page).getByText(skillToDelete).click();
-      await expect(canHelpSkills(page)).not.toContainText(skillToDelete);
+      await expect(canHelpSkills(page)).not.toBeVisible();
+    });
+  });
+
+  test("Поле ввода очищается после добавления навыка", async ({ page }) => {
+    await test.step("Добавляем навык", async () => {
+      
+      await skillInput(page).fill(skillTag);
+      await skillType(page).selectOption("can_help");
+      await addSkillButton(page).click();
+      await expect(canHelpSkills(page)).toContainText(skillTag);
+      await expect(skillInput(page)).toBeEmpty();
     });
   });
 });
