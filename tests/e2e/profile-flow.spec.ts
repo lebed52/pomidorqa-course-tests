@@ -25,12 +25,6 @@ const locators = {
     addSkillButton: (page: Page) => page.getByRole('button', { name: 'Добавить' }),
     canHelpSkills: (page: Page) => page.locator('[data-testid="can-help-skills"]'),
   },
-  slots: {
-    date: (page: Page) => page.locator('#pomidorqa-slots-date'),
-    time: (page: Page) => page.locator('#pomidorqa-slots-time'),
-    addSlotButton: (page: Page) => page.getByRole('button', { name: 'Добавить слот' }),
-    card: (page: Page) => page.locator('[data-slot-id]'),
-  },
 };
 
 //Хелперы
