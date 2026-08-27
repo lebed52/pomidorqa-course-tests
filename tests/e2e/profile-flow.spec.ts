@@ -22,7 +22,8 @@ const profileLocators = (page: Page) => ({
     wantToLearnSkillsSection: page.locator('[data-skills="want_to_learn"]'),
     allSkills: page.locator('[data-skill-tag]'),
     getSkillsInSection: (section: Locator) =>
-        section.locator('[data-skill-tag]')
+        section.locator('[data-skill-tag]'),
+    removeSkillButton: page.locator('[data-testid^="ProfileSkill-remove"]')
 })
 
 type TestUser = {
@@ -126,7 +127,7 @@ test.describe("Набор тестов для страницы профиля", 
         await profile.addButton.click();
 
         const addedSkills = profile.getSkillsInSection(profile.wantToLearnSkillsSection);
-        await expect(addedSkills).toHaveText(`${skillTag}×`);
+        await expect(addedSkills).toContainText(skillTag);
         await expect(addedSkills).toHaveCount(1);
     });
 
@@ -142,7 +143,7 @@ test.describe("Набор тестов для страницы профиля", 
         await profile.skillType.selectOption("can_help");
         await profile.addButton.click();
 
-        const addedSkills = profile.allSkills.filter({hasText: `${skillTag}×`});
+        const addedSkills = profile.allSkills.filter({hasText: skillTag});
         await expect(addedSkills).toHaveCount(2);
     });
 
@@ -153,11 +154,10 @@ test.describe("Набор тестов для страницы профиля", 
         await profile.skillInput.fill(skillTag);
         await profile.skillType.selectOption("can_help");
         await profile.addButton.click();
+        await profile.removeSkillButton.click();
 
-        const addedSkill = profile.allSkills.filter({hasText: `${skillTag}×`});
-        await addedSkill.click();
-
-        await expect(addedSkill).not.toBeVisible();
+        const addedSkills = profile.allSkills.filter({hasText: skillTag});
+        await expect(addedSkills).not.toBeVisible();
         await expect(profile.allSkills).toHaveCount(0);
     });
 });
