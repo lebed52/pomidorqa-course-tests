@@ -30,5 +30,6 @@ export class RegistrationPage {
         await this.registerEmailInput.fill(user.email);
         await this.registerPasswordInput.fill(user.password);
         await this.registerSubmitButton.click();
+        await expect(page).toHaveURL(/\/pomidorqa\/?$/);
     }
 }
