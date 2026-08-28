@@ -1,39 +1,44 @@
 import { test, expect, type Page } from "@playwright/test";
 
-// ДЗ Урока 8: Act — действия с полями профиля.
-// Arrange — зарегистрированный пользователь на своей странице профиля;
-// makeUser / registerUser / beforeEach скопированы из ДЗ-7.
-// Проверяем именно действие: ввод, выбор из списка, нажатие.
+// Урок 8, Act: действия с полями профиля.
+// Сцена (Arrange) одна на все тесты — зарегистрированный пользователь на своей странице профиля.
+// Проверяем именно действие: ввод, выбор, нажатие.
+// makeUser / registerUser / beforeEach скопированы из data-after-reg.spec.ts:
+// тот файл по условию ДЗ трогать нельзя, общий хелпер появится на Уроке 10.
 
-const PAGES = {
+const ROUTES = {
   register: "/pomidorqa/auth/register",
   profile: "/pomidorqa/profile",
-} as const;
+};
 
-// ── Локаторы: функция от страницы, чтобы не привязываться к одной вкладке ──
+// ─────────────────────────────────────────────────────────────
+// Локаторы
+// ─────────────────────────────────────────────────────────────
 
 // Регистрация
-const regName = (page: Page) => page.getByLabel("Имя");
-const regEmail = (page: Page) => page.getByLabel("Email");
-const regPassword = (page: Page) => page.getByLabel("Пароль");
-const regSubmit = (page: Page) =>
-  page.getByRole("button", { name: "Зарегистрироваться" });
+const registerNameInput = (page: Page) => page.getByLabel("Имя");
+const registerEmailInput = (page: Page) => page.getByLabel("Email");
+const registerPasswordInput = (page: Page) => page.getByLabel("Пароль");
+const registerSubmitButton = (page: Page) => page.getByRole("button", { name: "Зарегистрироваться" });
 
 // Профиль: верхняя форма, все поля сохраняются одной кнопкой
-const profileName = (page: Page) => page.getByLabel("Имя");
-const profileTimezone = (page: Page) => page.getByLabel("Часовой пояс");
-const profileTelegram = (page: Page) => page.getByLabel("Telegram");
-const profileBio = (page: Page) => page.getByLabel("О себе");
-const saveProfile = (page: Page) =>
-  page.getByRole("button", { name: "Сохранить" });
+const profileNameInput = (page: Page) => page.getByLabel("Имя");
+const profileTelegramInput = (page: Page) => page.getByLabel("Telegram");
+const profileTimezoneSelect = (page: Page) => page.getByLabel("Часовой пояс");
+const profileBioInput = (page: Page) => page.getByLabel("О себе");
+const profileSaveButton = (page: Page) => page.getByRole("button", { name: "Сохранить" });
 
-// Профиль: блок «Навыки» — нижняя форма со своей кнопкой
-const skillInput = (page: Page) => page.getByLabel("Навык");
-const skillType = (page: Page) => page.getByLabel("Тип");
-const addSkill = (page: Page) => page.getByRole("button", { name: "Добавить" });
+// Профиль: нижняя форма «Навыки», у неё своя кнопка
+const skillInput = (page: Page) => page.locator("#pomidorqa-profile-skill-input");
+const skillTypeSelect = (page: Page) => page.locator("#pomidorqa-profile-skill-type");
+const addSkillButton = (page: Page) => page.getByRole("button", { name: "Добавить" });
 const canHelpSkills = (page: Page) => page.getByTestId("can-help-skills");
+const skillChips = (page: Page) => page.locator("[data-skill-tag]");
+const skillChip = (page: Page, tag: string) => page.locator(`[data-skill-tag="${tag}"]`);
 
-// ── Фабрика тестовых данных ──
+// ─────────────────────────────────────────────────────────────
+// Фабрики и общие действия
+// ─────────────────────────────────────────────────────────────
 
 type TestUser = {
   name: string;
@@ -49,126 +54,175 @@ function makeUser(role: string, runId: number): TestUser {
   };
 }
 
-// ── Хелпер подготовки: только шаги регистрации, без проверяемых действий ──
-
 async function registerUser(page: Page, user: TestUser) {
-  await page.goto(PAGES.register);
-  await regName(page).fill(user.name);
-  await regEmail(page).fill(user.email);
-  await regPassword(page).fill(user.password);
-  await regSubmit(page).click();
+  await page.goto(ROUTES.register);
+  await registerNameInput(page).fill(user.name);
+  await registerEmailInput(page).fill(user.email);
+  await registerPasswordInput(page).fill(user.password);
+  await registerSubmitButton(page).click();
   await expect(page).toHaveURL(/\/pomidorqa\/?$/);
 }
 
-// ── Хелпер сохранения: общий для всех полей верхней формы ──
-
-// Признака успеха в UI нет: сохранение уходит POST-ом на адрес профиля.
-// Промис вешаем до клика — иначе ответ придёт раньше, чем начнём слушать.
-async function saveProfileAndWait(page: Page) {
+// Сохранение профиля уходит POST-ом на адрес самой страницы, а признака успеха
+// в интерфейсе нет: кнопка не меняется, сообщения не появляется. Поэтому ждём
+// ответ сервера. Промис создаём до клика — иначе ответ придёт раньше, чем мы
+// начнём его слушать, и ожидание повиснет.
+async function saveProfile(page: Page) {
   const saved = page.waitForResponse(
-    (r) => r.url().endsWith(PAGES.profile) && r.request().method() === "POST"
+    (response) => response.url().endsWith(ROUTES.profile) && response.request().method() === "POST"
   );
-  await saveProfile(page).click();
+  await profileSaveButton(page).click();
   await saved;
 }
 
-// ── Тесты ──
+// ─────────────────────────────────────────────────────────────
 
-test.describe("профиль: действия с полями", () => {
-  let user: TestUser;
-
+test.describe("Профиль: действия с полями", () => {
+  // Свой мир под каждый тест: новый пользователь, чистый профиль.
   test.beforeEach(async ({ page }) => {
-    // Arrange: свой мир на каждый тест — новый пользователь и чистый профиль.
-    user = makeUser("hw8", Date.now());
+    const user = makeUser("hw8", Date.now());
     await registerUser(page, user);
-    await page.goto(PAGES.profile);
+    await page.goto(ROUTES.profile);
   });
 
-  test("имя меняем и сохраняем", async ({ page }) => {
-    const newName = `Имя Act ${Date.now()}`;
+  test("имя: вводим новое и сохраняем", async ({ page }) => {
+    const newName = `Тимур Тестович ${Date.now()}`;
 
-    await test.step("В поле пока лежит имя с регистрации", async () => {
-      await expect(profileName(page)).toHaveValue(user.name);
-    });
-
-    await test.step("Вводим новое имя и сохраняем", async () => {
-      await profileName(page).fill(newName);
-      await saveProfileAndWait(page);
+    await test.step("Заполняем поле и сохраняем", async () => {
+      await profileNameInput(page).fill(newName);
+      await saveProfile(page);
     });
 
     await test.step("После перезагрузки имя пришло с сервера", async () => {
-      // Reload выбрасывает состояние страницы: имя должно прийти с сервера,
-      // а не просто лежать в поле, куда мы его вписали.
       await page.reload();
-      await expect(profileName(page)).toHaveValue(newName);
+      await expect(profileNameInput(page)).toHaveValue(newName);
     });
   });
 
-  test("часовой пояс выбираем из списка", async ({ page }) => {
-    // По умолчанию Europe/Moscow — берём заведомо другой пояс,
+  test("часовой пояс: выбираем из списка", async ({ page }) => {
+    // По умолчанию стоит Europe/Moscow — берём заведомо другой,
     // иначе проверка прошла бы и без всякого выбора.
-    const timezone = "Europe/Kaliningrad";
+    const timezone = "Asia/Yekaterinburg";
 
-    await test.step("В списке пока пояс по умолчанию", async () => {
-      await expect(profileTimezone(page)).toHaveValue("Europe/Moscow");
-    });
-
-    await test.step("Выбираем другой пояс и сохраняем", async () => {
-      await profileTimezone(page).selectOption(timezone);
-      await saveProfileAndWait(page);
+    await test.step("Выбираем часовой пояс и сохраняем", async () => {
+      await expect(profileTimezoneSelect(page)).toHaveValue("Europe/Moscow");
+      await profileTimezoneSelect(page).selectOption(timezone);
+      await saveProfile(page);
     });
 
     await test.step("После перезагрузки выбран новый пояс", async () => {
       await page.reload();
-      await expect(profileTimezone(page)).toHaveValue(timezone);
+      await expect(profileTimezoneSelect(page)).toHaveValue(timezone);
     });
   });
 
-  test("telegram заполняем в пустом поле", async ({ page }) => {
-    const telegram = `@hw8_valter_${Date.now()}`;
+  test("telegram: заполняем пустое поле", async ({ page }) => {
+    const telegram = `@qa_timur_cat${Date.now()}`;
 
-    await test.step("Поле после регистрации пустое", async () => {
-      await expect(profileTelegram(page)).toHaveValue("");
+    await test.step("Заполняем Telegram и сохраняем", async () => {
+      await expect(profileTelegramInput(page)).toHaveValue("");
+      await profileTelegramInput(page).fill(telegram);
+      await saveProfile(page);
     });
 
-    await test.step("Вводим telegram и сохраняем", async () => {
-      await profileTelegram(page).fill(telegram);
-      await saveProfileAndWait(page);
-    });
-
-    await test.step("После перезагрузки telegram пришёл с сервера", async () => {
+    await test.step("После перезагрузки Telegram пришёл с сервера", async () => {
       await page.reload();
-      await expect(profileTelegram(page)).toHaveValue(telegram);
+      await expect(profileTelegramInput(page)).toHaveValue(telegram);
     });
   });
 
-  test("о себе заполняем многострочным текстом", async ({ page }) => {
-    const bio = `QA-инженер, ДЗ Урока 8.\nПроверяю Act: ввод, выбор и нажатие. Прогон ${Date.now()}.`;
+  test("о себе: заполняем многострочное поле", async ({ page }) => {
+    const bio = `QA-инженер, прогон ${Date.now()}. Пытаюсь разобраться в Playwright.`;
 
-    await test.step("Вводим «О себе» и сохраняем", async () => {
-      await profileBio(page).fill(bio);
-      await saveProfileAndWait(page);
+    await test.step("Заполняем «О себе» и сохраняем", async () => {
+      await profileBioInput(page).fill(bio);
+      await saveProfile(page);
     });
 
     await test.step("После перезагрузки текст пришёл с сервера", async () => {
       await page.reload();
-      await expect(profileBio(page)).toHaveValue(bio);
+      await expect(profileBioInput(page)).toHaveValue(bio);
     });
   });
 
-  test("навык добавляем с типом «могу помочь»", async ({ page }) => {
-    const skill = `Playwright-hw8-${Date.now()}`;
+  test("навык: заполняем, выбираем тип и добавляем", async ({ page }) => {
+    const skillTag = `Playwright-demo-${Date.now()}`;
 
+    // Комбо из трёх действий: ввод, выбор в списке, нажатие.
+    // У этой формы своя кнопка «Добавить», к верхнему «Сохранить» она отношения не имеет.
     await test.step("Добавляем навык «могу помочь»", async () => {
-      // Комбо из трёх действий: ввод, выбор в списке, нажатие.
-      // У формы навыков своя кнопка «Добавить» — к верхнему «Сохранить» она не относится.
-      await skillInput(page).fill(skill);
-      await skillType(page).selectOption("can_help");
-      await addSkill(page).click();
+      await skillInput(page).fill(skillTag);
+      await skillTypeSelect(page).selectOption("can_help");
+      await addSkillButton(page).click();
     });
 
-    await test.step("Навык виден в списке «могу помочь»", async () => {
-      await expect(canHelpSkills(page)).toContainText(skill);
+    await test.step("Навык появился в блоке «могу помочь»", async () => {
+      await expect(canHelpSkills(page)).toContainText(skillTag);
+    });
+  });
+
+  test("негатив: пустой навык не добавляется", async ({ page }) => {
+    await test.step("Жмём «Добавить», не заполнив поле", async () => {
+      await expect(skillInput(page)).toHaveValue("");
+      await addSkillButton(page).click();
+    });
+
+    await test.step("Ни одного навыка не появилось", async () => {
+      // Поле навыка помечено required — браузер не даёт отправить форму.
+      // Проверяем именно результат: чипов ноль и блока «могу помочь» нет,
+      // а не «клик прошёл и ладно».
+      await expect(skillChips(page)).toHaveCount(0);
+      await expect(canHelpSkills(page)).not.toBeVisible();
+    });
+  });
+
+  test("негатив: навык «хочу разобрать» не попадает в блок «могу помочь»", async ({ page }) => {
+    const runId = Date.now();
+    const canHelpTag = `CanHelp-${runId}`;
+    const wantToLearnTag = `WantToLearn-${runId}`;
+
+    await test.step("Добавляем навык «могу помочь»", async () => {
+      await skillInput(page).fill(canHelpTag);
+      await skillTypeSelect(page).selectOption("can_help");
+      await addSkillButton(page).click();
+      await expect(skillChip(page, canHelpTag)).toBeVisible();
+    });
+
+    await test.step("Добавляем навык «хочу разобрать»", async () => {
+      await skillInput(page).fill(wantToLearnTag);
+      await skillTypeSelect(page).selectOption("want_to_learn");
+      await addSkillButton(page).click();
+      await expect(skillChip(page, wantToLearnTag)).toBeVisible();
+    });
+
+    await test.step("Навыки разошлись по своим блокам", async () => {
+      await expect(skillChips(page)).toHaveCount(2);
+      await expect(canHelpSkills(page)).toContainText(canHelpTag);
+      // Главная проверка теста: второй навык добавлен, но в «могу помочь» его нет.
+      await expect(canHelpSkills(page)).not.toContainText(wantToLearnTag);
+    });
+  });
+
+  test("форма профиля: три поля сохраняются за один раз", async ({ page }) => {
+    const runId = Date.now();
+    const name = `Тимур Тестовый ${runId}`;
+    const telegram = `@qa_timur_${runId}`;
+    const bio = `QA-инженер, прогон ${runId}. Проверяю форму профиля целиком.`;
+
+    await test.step("Заполняем Имя, Telegram и «О себе», сохраняем разом", async () => {
+      await profileNameInput(page).fill(name);
+      await profileTelegramInput(page).fill(telegram);
+      await profileBioInput(page).fill(bio);
+      await saveProfile(page);
+    });
+
+    await test.step("После перезагрузки все три значения пришли с сервера", async () => {
+      await page.reload();
+      // expect.soft не останавливает тест на первой неудаче: если поедут
+      // два поля из трёх, увидим оба сразу, а не по одному за прогон.
+      await expect.soft(profileNameInput(page)).toHaveValue(name);
+      await expect.soft(profileTelegramInput(page)).toHaveValue(telegram);
+      await expect.soft(profileBioInput(page)).toHaveValue(bio);
     });
   });
 });
