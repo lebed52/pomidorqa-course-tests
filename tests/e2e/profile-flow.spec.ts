@@ -1,4 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
+import {ROUTES, makeUser, registerUser} from "../helpers/user";
+import {} from "../pages/profile-page";
 
 // Урок 8, Act: действия с полями профиля.
 // Сцена (Arrange) одна на все тесты — зарегистрированный пользователь на своей странице профиля.
@@ -6,20 +8,11 @@ import { test, expect, type Page } from "@playwright/test";
 // makeUser / registerUser / beforeEach скопированы из data-after-reg.spec.ts:
 // тот файл по условию ДЗ трогать нельзя, общий хелпер появится на Уроке 10.
 
-const ROUTES = {
-  register: "/pomidorqa/auth/register",
-  profile: "/pomidorqa/profile",
-};
+
 
 // ─────────────────────────────────────────────────────────────
 // Локаторы
 // ─────────────────────────────────────────────────────────────
-
-// Регистрация
-const registerNameInput = (page: Page) => page.getByLabel("Имя");
-const registerEmailInput = (page: Page) => page.getByLabel("Email");
-const registerPasswordInput = (page: Page) => page.getByLabel("Пароль");
-const registerSubmitButton = (page: Page) => page.getByRole("button", { name: "Зарегистрироваться" });
 
 // Профиль: верхняя форма, все поля сохраняются одной кнопкой
 const profileNameInput = (page: Page) => page.getByLabel("Имя");
@@ -40,28 +33,7 @@ const skillChip = (page: Page, tag: string) => page.locator(`[data-skill-tag="${
 // Фабрики и общие действия
 // ─────────────────────────────────────────────────────────────
 
-type TestUser = {
-  name: string;
-  email: string;
-  password: string;
-};
 
-function makeUser(role: string, runId: number): TestUser {
-  return {
-    name: `${role} Автотест`,
-    email: `${role}-${runId}@example.com`,
-    password: "testpass123",
-  };
-}
-
-async function registerUser(page: Page, user: TestUser) {
-  await page.goto(ROUTES.register);
-  await registerNameInput(page).fill(user.name);
-  await registerEmailInput(page).fill(user.email);
-  await registerPasswordInput(page).fill(user.password);
-  await registerSubmitButton(page).click();
-  await expect(page).toHaveURL(/\/pomidorqa\/?$/);
-}
 
 // Сохранение профиля уходит POST-ом на адрес самой страницы, а признака успеха
 // в интерфейсе нет: кнопка не меняется, сообщения не появляется. Поэтому ждём
