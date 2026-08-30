@@ -22,9 +22,12 @@ export class SlotsPage {
     await this.page.goto(ROUTES.slots);
   }
 
-  async addSlot(dateStr: string, timeStr: string = "12:00") {
-    await this.dateInput.fill(dateStr);
-    await this.timeInput.fill(timeStr);
+  async addSlot(time: string) {
+    await this.page.goto(ROUTES.slots);
+    const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    const date = tomorrow.toISOString().slice(0, 10);
+    await this.dateInput.fill(date);
+    await this.timeInput.fill(time);
     await this.addSubmitButton.click();
   }
 }

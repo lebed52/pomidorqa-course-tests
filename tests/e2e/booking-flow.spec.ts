@@ -41,11 +41,7 @@ test("основной путь + гонка за слот: регистраци
   });
 
   await test.step("Хост: добавляет свободный слот на завтра", async () => {
-    await hostSlots.goto();
-    const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    const dateStr = tomorrow.toISOString().slice(0, 10);
-
-    await hostSlots.addSlot(dateStr, "12:00");
+    await hostSlots.addSlot("12:00");
     await expect(hostSlots.firstSlotCard).toBeVisible();
   });
 
