@@ -70,5 +70,21 @@ export class BookingPage {
     get bookingsCardName(): Locator {
         return this.bookingsUpcomingSection.locator("[data-booking-id]").first().locator("p").first();
     }
+
+    async fillSlotDateAndTimeInput(date: string, time: string): Promise<void> {
+        await this.slotsDateInput.fill(date);
+        await this.slotsTimeInput.fill(time);
+        await this.slotsAddSubmit.click();
+    }
+
+    async searchCatalogBySkill(skill: string): Promise<void> {
+        await this.catalogFilterInput.fill(skill);
+        await this.catalogFilterSubmit.click();
+    }
+
+    async clickFirstFreeSlot(): Promise<void> {
+        await this.bookingCalendarDay.first().click();
+        await this.bookingCalendarTime.first().click();
+    }
 }
 

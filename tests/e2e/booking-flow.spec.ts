@@ -1,6 +1,5 @@
 import { test, expect} from "@playwright/test";
-import {makeUser} from "../helpers/user";
-import {RegistrationPage} from "../pages/RegistrationPage";
+import {makeUser, registerUser} from "../helpers/user";
 import {ProfilePage} from "../pages/ProfilePage";
 import {BookingPage} from "../pages/BookingPage";
 
@@ -35,15 +34,13 @@ test("основной путь + гонка за слот: регистраци
   const guest2BookingPage = new BookingPage(guest2Page);
 
   await test.step("Хост: регистрируется в PomidorQA", async () => {
-    const registrationPage = new RegistrationPage(hostPage);
-    await registrationPage.registerUser(hostPage, host);
+    await registerUser(hostPage, host);
   });
  
   await test.step('Хост: добавляет навык «могу помочь» в профиле', async () => {
     await hostPage.goto("/pomidorqa/profile");
-    await hostProfilePage.skillInput.fill(skillTag);
-    await hostProfilePage.skillTypeSelect.selectOption("can_help");
-    await hostProfilePage.addSkillButton.click();
+    await hostProfilePage.fillSkillInput(skillTag, "can_help");
+
     await expect(hostProfilePage.canHelpSkills).toContainText(skillTag);
   });
 
@@ -51,20 +48,19 @@ test("основной путь + гонка за слот: регистраци
     await hostPage.goto("/pomidorqa/profile/slots");
     const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
     const date = tomorrow.toISOString().slice(0, 10);
-    await hostBookingPage.slotsDateInput.fill(date);
-    await hostBookingPage.slotsTimeInput.fill("12:00");
-    await hostBookingPage.slotsAddSubmit.click();
+
+    await hostBookingPage.fillSlotDateAndTimeInput(date, "12:00");
+
     await expect(hostBookingPage.slotsCard.first()).toBeVisible();
   });
 
   await test.step("Гость: регистрируется отдельным аккаунтом", async () => {
-    const registrationPage = new RegistrationPage(guestPage);
-    await registrationPage.registerUser(guestPage, guest);
+    await registerUser(guestPage, guest);
   });
 
   await test.step("Гость: ищет хоста в каталоге по навыку (сценарий 9)", async () => {
-    await guestBookingPage.catalogFilterInput.fill(skillTag);
-    await guestBookingPage.catalogFilterSubmit.click();
+    await guestBookingPage.searchCatalogBySkill(skillTag);
+
     await expect(
         guestBookingPage.catalogCard.filter({ hasText: host.name })
     ).toBeVisible();
@@ -84,22 +80,19 @@ test("основной путь + гонка за слот: регистраци
       await expect(dayChip).toBeVisible();
     }).toPass({ timeout: 10_000 });
 
-    await guestBookingPage.bookingCalendarDay.first().click();
-    await guestBookingPage.bookingCalendarTime.first().click();
+    await guestBookingPage.clickFirstFreeSlot();
     await expect(guestBookingPage.bookingConfirmDialog).toBeVisible();
   });
 
   // Важно для разбора ДЗ 4: модалку guest2 открываем ДО confirm у guest.
   // Пока слот в UI ещё свободен — оба «человек открыл и отошёл».
   await test.step("Гость2: регистрируется и тоже открывает окно бронирования на тот же слот", async () => {
-    const registrationPage = new RegistrationPage(guest2Page);
-    await registrationPage.registerUser(guest2Page, guest2);
+    await registerUser(guest2Page, guest2);
 
-    await guest2BookingPage.catalogFilterInput.fill(skillTag);
-    await guest2BookingPage.catalogFilterSubmit.click();
+    await guest2BookingPage.searchCatalogBySkill(skillTag);
     await guest2BookingPage.catalogCard.filter({ hasText: host.name }).click();
-    await expect(guest2BookingPage.personName).toHaveText(host.name);
 
+    await expect(guest2BookingPage.personName).toHaveText(host.name);
     await expect(async () => {
       const dayChip = guest2BookingPage.bookingCalendarDay.first();
       if (!(await dayChip.isVisible().catch(() => false))) {
@@ -108,8 +101,8 @@ test("основной путь + гонка за слот: регистраци
       await expect(dayChip).toBeVisible();
     }).toPass({ timeout: 10_000 });
 
-    await guest2BookingPage.bookingCalendarDay.first().click();
-    await guest2BookingPage.bookingCalendarTime.first().click();
+    await guest2BookingPage.clickFirstFreeSlot();
+
     await expect(guest2BookingPage.bookingConfirmDialog).toBeVisible();
   });
 
@@ -117,6 +110,7 @@ test("основной путь + гонка за слот: регистраци
     await guestBookingPage.bookingConfirmButton.click();
     const success = guestBookingPage.bookingConfirmSuccess;
     const error = guestBookingPage.bookingConfirmError;
+
     await expect(success.or(error)).toBeVisible({ timeout: 15_000 });
     if (await error.isVisible().catch(() => false)) {
       throw new Error(`Бронирование не удалось: ${await error.textContent()}`);

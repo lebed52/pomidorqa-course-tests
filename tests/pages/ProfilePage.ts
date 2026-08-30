@@ -59,4 +59,16 @@ export class ProfilePage {
         await this.profileSaveButton.click();
         await saved;
     }
+
+    async fillSkillInput(skillTag: string, section: string): Promise<void> {
+        await this.skillInput.fill(skillTag);
+        await this.skillTypeSelect.selectOption(section)
+        await this.addSkillButton.click();
+    }
+
+    async fillAllPersonalInputs(name: string, telegram : string, bio : string, ): Promise<void> {
+        await this.profileNameInput.fill(name);
+        await this.profileTelegramInput.fill(telegram);
+        await this.profileBioInput.fill(bio);
+    }
 }

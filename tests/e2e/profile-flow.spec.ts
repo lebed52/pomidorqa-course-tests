@@ -1,15 +1,14 @@
 import { test, expect} from "@playwright/test";
-import {RegistrationPage} from "../pages/RegistrationPage";
 import {ProfilePage} from "../pages/ProfilePage";
-import {makeUser, ROUTES} from "../helpers/user";
+import {makeUser,registerUser, ROUTES} from "../helpers/user";
 
 
 test.describe("Профиль: действия с полями", () => {
   // Свой мир под каждый тест: новый пользователь, чистый профиль.
   test.beforeEach(async ({ page }) => {
     const user = makeUser("hw8", Date.now());
-    const registrationPage = new RegistrationPage(page);
-    await registrationPage.registerUser(page, user);
+
+    await registerUser(page, user);
     await page.goto(ROUTES.profile);
   });
 
@@ -84,9 +83,7 @@ test.describe("Профиль: действия с полями", () => {
     // Комбо из трёх действий: ввод, выбор в списке, нажатие.
     // У этой формы своя кнопка «Добавить», к верхнему «Сохранить» она отношения не имеет.
     await test.step("Добавляем навык «могу помочь»", async () => {
-      await profilePage.skillInput.fill(skillTag);
-      await profilePage.skillTypeSelect.selectOption("can_help");
-      await profilePage.addSkillButton.click();
+      await profilePage.fillSkillInput(skillTag, "can_help");
     });
 
     await test.step("Навык появился в блоке «могу помочь»", async () => {
@@ -118,16 +115,14 @@ test.describe("Профиль: действия с полями", () => {
     const profilePage = new ProfilePage(page);
 
     await test.step("Добавляем навык «могу помочь»", async () => {
-      await profilePage.skillInput.fill(canHelpTag);
-      await profilePage.skillTypeSelect.selectOption("can_help");
-      await profilePage.addSkillButton.click();
+      await profilePage.fillSkillInput(canHelpTag, "can_help");
+
       await expect(profilePage.getSkillChip(canHelpTag)).toBeVisible();
     });
 
     await test.step("Добавляем навык «хочу разобрать»", async () => {
-      await profilePage.skillInput.fill(wantToLearnTag);
-      await profilePage.skillTypeSelect.selectOption("want_to_learn");
-      await profilePage.addSkillButton.click();
+      await profilePage.fillSkillInput(wantToLearnTag, "want_to_learn");
+
       await expect(profilePage.getSkillChip(wantToLearnTag)).toBeVisible();
     });
 
@@ -147,9 +142,7 @@ test.describe("Профиль: действия с полями", () => {
     const profilePage = new ProfilePage(page);
 
     await test.step("Заполняем Имя, Telegram и «О себе», сохраняем разом", async () => {
-      await profilePage.profileNameInput.fill(name);
-      await profilePage.profileTelegramInput.fill(telegram);
-      await profilePage.profileBioInput.fill(bio);
+      await profilePage.fillAllPersonalInputs(name, telegram, bio);
       await profilePage.saveProfile(page);
     });
 
