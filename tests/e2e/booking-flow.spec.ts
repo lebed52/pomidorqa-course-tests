@@ -3,7 +3,6 @@ import { makeUser, registerUser } from "../helpers/user";
 import { ProfilePage } from "../pages/profile-page";
 import { SlotsPage } from "../pages/slots-page";
 import { BookingPage } from "../pages/booking-page";
-// Импортируем класс профиля
 
 test("основной путь + гонка за слот: регистрация → навык → слот → поиск в каталоге → бронирование → «Мои встречи» у обоих → второй гость видит ошибку", async ({
   browser,
@@ -24,14 +23,12 @@ test("основной путь + гонка за слот: регистраци
   const guest2Page = await guest2Context.newPage();
 
   // Привязываем Page Objects к страницам конкретных юзеров
-  const hostProfile = new ProfilePage(hostPage); // Новый инстанс для работы с профилем хоста
+  const hostProfile = new ProfilePage(hostPage);
   const hostSlots = new SlotsPage(hostPage);
   const hostBookingsPage = new BookingPage(hostPage);
 
   const guestBookingPage = new BookingPage(guestPage);
   const guest2BookingPage = new BookingPage(guest2Page);
-
-  // --- ВЫПОЛНЕНИЕ СЦЕНАРИЯ ---
 
   await test.step("Хост: регистрируется в PomidorQA", async () => {
     await registerUser(hostPage, host);
@@ -39,7 +36,7 @@ test("основной путь + гонка за слот: регистраци
 
   await test.step("Хост: добавляет навык «могу помочь» в профиле", async () => {
     await hostProfile.goto();
-    await hostProfile.addSkill(skillTag, "can_help"); // Вызов красивого бизнес-метода
+    await hostProfile.addSkill(skillTag, "can_help");
     await expect(hostProfile.canHelpSkills).toContainText(skillTag);
   });
 
@@ -49,7 +46,7 @@ test("основной путь + гонка за слот: регистраци
     const dateStr = tomorrow.toISOString().slice(0, 10);
 
     await hostSlots.addSlot(dateStr, "12:00");
-    await expect.soft(hostSlots.firstSlotCard);
+    await expect(hostSlots.firstSlotCard).toBeVisible();
   });
 
   await test.step("Гость: регистрируется отдельным аккаунтом", async () => {

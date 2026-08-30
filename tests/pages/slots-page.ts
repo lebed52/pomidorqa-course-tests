@@ -15,7 +15,7 @@ export class SlotsPage {
     this.addSubmitButton = page.getByRole("button", {
       name: "Добавить слот",
     });
-    this.firstSlotCard = page.locator("[data-booking-id]").first();
+    this.firstSlotCard = page.locator("[data-slot-id]").first();
   }
 
   async goto() {
