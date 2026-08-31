@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { userInfo } from 'os';
+import { makeUser, makeUnique, type TestUser } from './helpers/user';
 
 const Registr = (page: Page) => ({
   InputName: () => page.getByLabel('Имя'),
@@ -44,25 +44,9 @@ const Bookings = (page: Page) => ({
   UpcomingSection: () => page.getByTestId('upcoming-meetings'),
 });
 
-type TestUser = {
-  name: string;
-  email: string;
-  password: string;
-};
-
-function makeUser(role: string, runId: number): TestUser {
-  return {
-    name: `${role} Автотест`,
-    email: `${role}-${runId}@example.com`,
-    password: 'testpass123',
-  };
-}
-
-function makeUnique(prefix: string) {
-  return `${prefix}-${Date.now()}`;
-}
 const telegramUsername = makeUnique('@student');
 const aboutMe = makeUnique('AQA Junior');
+const uniqueskill = makeUnique('skill');
 
 async function registerUser(page: Page, user: TestUser) {
   await page.goto('/pomidorqa/auth/register');
@@ -95,7 +79,6 @@ test.describe('Ввод данных после регистрации', () => {
 
   test('Добавление навыка', async ({ page }) => {
     const profile = Profile(page);
-    const uniqueskill = makeUnique('skill');
     await profile.InputProfileSkill().fill(uniqueskill);
     await profile.SelectSkillType().selectOption('can_help');
     await profile.BtnAdd().click();
