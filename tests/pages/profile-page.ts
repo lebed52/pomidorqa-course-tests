@@ -17,7 +17,7 @@ export class ProfilePage {
     addSkillButton: Locator;
     canHelpSkills: Locator;
     skillChips: Locator;
-    skillChip: Locator;
+    skillName: Locator;
   
     constructor( page: Page) {
         this.page = page;
@@ -34,7 +34,7 @@ export class ProfilePage {
         this.addSkillButton = page.getByRole("button", { name: "Добавить" });
         this.canHelpSkills = page.getByTestId("can-help-skills");
         this.skillChips = page.locator("[data-skill-tag]");
-        this.skillChip   = page.locator(`[data-skill-tag]`); 
+        this.skillName   = page.locator(`[data-skill-tag]`); 
     }
 
   async goto() {
@@ -53,6 +53,10 @@ export class ProfilePage {
   await this.profileSaveButton.click();
   await saved;
 }
+
+  getSkillChip(tag: string): Locator {
+    return this.page.locator(`[data-skill-tag="${tag}"]`);
+  }
 
   nameInput() {
     return this.page.getByLabel("Имя");
