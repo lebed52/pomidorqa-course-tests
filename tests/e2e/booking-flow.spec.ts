@@ -1,6 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { makeUser } from './helpers/user';
-import { RegistrPage } from './pages/registr';
+import { makeUser, registerUser } from './helpers/user';
 import { ProfilePage } from './pages/profile';
 import { CatalogPage } from './pages/catalog';
 import { BookingPage } from './pages/booking';
@@ -22,9 +21,6 @@ test('основной путь + гонка за слот: регистраци
   const guestPage = await guestContext.newPage();
   const guest2Page = await guest2Context.newPage();
 
-  const hostRegistr = new RegistrPage(hostPage);
-  const guestRegistr = new RegistrPage(guestPage);
-  const guest2Registr = new RegistrPage(guest2Page);
   const hostProfile = new ProfilePage(hostPage);
   const hostSlots = new SlotsPage(hostPage);
   const guestCatalog = new CatalogPage(guestPage);
@@ -34,7 +30,7 @@ test('основной путь + гонка за слот: регистраци
   const hostBookings = new BookingPage(hostPage); // только для upcomingSession («Мои встречи»)
 
   await test.step('Хост: регистрируется в PomidorQA', async () => {
-    await hostRegistr.register(host);
+    await registerUser(hostPage, host);
   });
 
   await test.step('Хост: добавляет навык «могу помочь» в профиле', async () => {
@@ -52,7 +48,7 @@ test('основной путь + гонка за слот: регистраци
   });
 
   await test.step('Гость: регистрируется отдельным аккаунтом', async () => {
-    await guestRegistr.register(guest);
+    await registerUser(guestPage, guest);
   });
 
   await test.step('Гость: ищет хоста в каталоге по навыку (сценарий 9)', async () => {
@@ -81,7 +77,7 @@ test('основной путь + гонка за слот: регистраци
   });
 
   await test.step('Гость2: регистрируется и тоже открывает окно бронирования на тот же слот', async () => {
-    await guest2Registr.register(guest2);
+    await registerUser(guest2Page, guest2);
 
     await guest2Catalog.catalogFilterInput.fill(skillTag);
     await guest2Catalog.btnSearch.click();

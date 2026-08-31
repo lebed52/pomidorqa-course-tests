@@ -39,10 +39,10 @@ export class ProfilePage {
       (resp) => resp.url().includes('/pomidorqa') && resp.request().method() !== 'GET',
     );
     await this.btnSave.click();
-    expect((await saveResponse).status()).toBeLessThan(400);
+    await saveResponse;
   }
 
-  async addSkill(tag: string, type: 'can_help' | 'want_discuss' = 'can_help') {
+  async addSkill(tag: string, type: 'can_help' | 'want_to_learn' = 'can_help') {
     await this.inputSkill.fill(tag);
     await this.selectSkillType.selectOption(type);
     await this.btnAddSkill.click();

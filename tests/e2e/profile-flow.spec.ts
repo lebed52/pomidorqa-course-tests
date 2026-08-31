@@ -1,18 +1,15 @@
 import { test, expect } from '@playwright/test';
-import { makeUser, makeUnique, type TestUser } from './helpers/user';
+import { makeUser, makeUnique, registerUser, type TestUser } from './helpers/user';
 import { ProfilePage } from './pages/profile';
-import { RegistrPage } from './pages/registr';
 
 test.describe('Заполнение профиля после регистрации', () => {
   let user: TestUser;
   let profilePage: ProfilePage;
-  let registrPage: RegistrPage;
 
   test.beforeEach(async ({ page }) => {
     const runId = Date.now();
     user = makeUser('student-hw8', runId);
-    registrPage = new RegistrPage(page);
-    await registrPage.register(user);
+    await registerUser(page, user);
     profilePage = new ProfilePage(page);
     await profilePage.open();
     await expect(profilePage.inputName).toHaveValue(user.name);
@@ -68,14 +65,11 @@ test.describe('Заполнение профиля после регистрац
     });
   });
 
-  test('Навык: заполняем, выбираем, добавляем', async ({ page }) => {
+  test('Навык: заполняем, выбираем, добавляем', async () => {
     const skillTag = `Playwright-demo-${Date.now()}`;
     await test.step('Добавляем навык «могу помочь»', async () => {
       await profilePage.addSkill(skillTag);
-      await profilePage.canHelpSkills;
-      profilePage.save();
     });
-
     await test.step('Навык появился в блоке «Могу помочь»', async () => {
       await expect(profilePage.canHelpSkills).toContainText(skillTag);
     });
