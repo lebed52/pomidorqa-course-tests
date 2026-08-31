@@ -48,9 +48,9 @@ test.describe("5 тестов профиля: Имя / Часовой пояс /
   });
 
   test("Выбор часового пояса", async ({ page }) => {
-    await page.getByLabel("Часовой пояс").selectOption('Europe/Moscow');
+    await page.getByLabel("Часовой пояс").selectOption('Asia/Omsk');
     await page.getByRole("button", { name: "Сохранить" }).click();
-    await expect(page.getByLabel("Часовой пояс")).toHaveValue('Europe/Moscow');
+    await expect(page.getByLabel("Часовой пояс")).toHaveValue('Asia/Omsk');
   });
 
   test("Добавление Telegram", async ({ page }) => {
