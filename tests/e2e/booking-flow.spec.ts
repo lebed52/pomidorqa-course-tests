@@ -37,7 +37,7 @@ test("основной путь + гонка за слот", async ({ browser })
   await test.step("Хост: добавляет навык", async () => {
     await hostPage.goto("/pomidorqa/profile");
     await hostProfile.addSkill(skillTag);
-    await hostProfile.expectSkillListToContain(skillTag);
+    await expect(hostProfile.canHelpSkills()).toContainText(skillTag);
   });
 
   await test.step("Хост: добавляет слот на завтра в 12:00", async () => {
@@ -70,20 +70,39 @@ test("основной путь + гонка за слот", async ({ browser })
 
   await test.step("Гость: подтверждает бронирование первым — успех", async () => {
     await guestBooking.confirmBooking();
-    await guestBooking.expectBookingSuccess();
+    const success = guestBooking.bookingSuccess();
+    const error = guestBooking.bookingError();
+    await expect(success.or(error)).toBeVisible({ timeout: 15000 });
+    if (await error.isVisible().catch(() => false)) {
+      throw new Error(`Бронирование не удалось: ${await error.textContent()}`);
+    }
   });
 
   await test.step("Гость2: пытается забронировать тот же слот вторым — видит ошибку", async () => {
     await guest2Booking.confirmBooking();
-    await guest2Booking.expectBookingError();
+    const success2 = guest2Booking.bookingSuccess();
+    const error2 = guest2Booking.bookingError();
+    await expect(success2.or(error2)).toBeVisible({ timeout: 15000 });
+    if (await success2.isVisible().catch(() => false)) {
+      throw new Error('Слот должен был быть занят, но бронирование прошло успешно');
+    }
+    await expect(error2).toBeVisible();
   });
 
   await test.step("Гость: видит бронирование в «Мои встречи»", async () => {
-    await guestBooking.expectUpcomingBookingForGuest(host.name);
+    await expect(async () => {
+      await guestBooking.goToBookings();
+      await expect(guestBooking.upcomingSection()).toBeVisible({ timeout: 5000 });
+      await expect(guestBooking.upcomingSection().getByText(host.name)).toBeVisible({ timeout: 5000 });
+    }).toPass({ timeout: 10000 });
   });
 
   await test.step("Хост: видит бронирование в «Мои встречи»", async () => {
-    await hostBooking.expectUpcomingBookingForHost(guest.name);
+    await expect(async () => {
+      await hostBooking.goToBookings();
+      await expect(hostBooking.upcomingSection()).toBeVisible({ timeout: 5000 });
+      await expect(hostBooking.upcomingSection().getByText(guest.name)).toBeVisible({ timeout: 5000 });
+    }).toPass({ timeout: 10000 });
   });
 
   await hostContext.close();
