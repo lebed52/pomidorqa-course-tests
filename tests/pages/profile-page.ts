@@ -40,28 +40,33 @@ export class ProfilePage {
     await this.bioInput.fill(bio);
   }
 
-  async selectTimezone(timezone: string) {
+  async saveName(name: string) {
+    await this.nameInput.fill(name);
+    await this.saveProfile();
+  }
+
+  async saveTelegram(telegram: string) {
+    await this.telegramInput.fill(telegram);
+    await this.saveProfile();
+  }
+
+  async saveBio(bio: string) {
+    await this.bioInput.fill(bio);
+    await this.saveProfile();
+  }
+
+  async saveTimezone(timezone: string) {
     await this.timezoneSelect.selectOption(timezone);
+    await this.saveProfile();
   }
 
   async saveProfile() {
     const responsePromise = this.page.waitForResponse(
-      (response) =>
-        response.url().includes(ROUTES.profile) &&
-        response.request().method() !== "GET",
+      (response) => response.url().includes(ROUTES.profile) && response.request().method() !== "GET",
       { timeout: 15_000 }
     );
-
     await this.saveButton.click();
-
-    try {
-      await responsePromise;
-    } catch (err) {
-      const reason = err instanceof Error ? err.message : String(err);
-      throw new Error(
-        `Не дождались ответа сервера на сохранение. URL: ${this.page.url()}. Ошибка: ${reason}`
-      );
-    }
+    await responsePromise;
   }
 
   async addSkill(name: string, type: SkillType) {
@@ -70,11 +75,13 @@ export class ProfilePage {
     await this.addSkillButton.click();
   }
 
-  canHelpSkillItem(tag: string): Locator {
-    return this.canHelpSkills.getByText(tag);
+  async removeSkill(skillName: string) {
+    const btn = this.page.locator(`[data-skill-tag="${skillName}"]`).getByLabel(/^Убрать/);
+    await btn.click();
+    await btn.waitFor({ state: "detached" });
   }
 
-  skillRemoveButton(skillName: string): Locator {
-    return this.page.locator(`[data-skill-tag="${skillName}"]`).getByLabel(/^Убрать/);
+  canHelpSkillItem(tag: string): Locator {
+    return this.canHelpSkills.getByText(tag);
   }
 }

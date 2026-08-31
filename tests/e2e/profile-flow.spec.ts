@@ -8,16 +8,14 @@ test.describe("Профиль: действия с полями (Page Object)", 
   test.beforeEach(async ({ page }) => {
     const user = makeUser("hw10");
     await registerUser(page, user);
-
     profile = new ProfilePage(page);
     await profile.goto();
   });
 
   test("позитив: три поля профиля сохраняются одновременно", async ({ page }) => {
-    const runId = Date.now();
-    const name = `Тохиржон POM ${runId}`;
-    const telegram = `@qa_pom_${runId}`;
-    const bio = `Автоматизатор, POM рефакторинг ${runId}`;
+    const name = `Тохиржон POM ${Date.now()}`;
+    const telegram = `@qa_pom_${Date.now()}`;
+    const bio = `Автоматизатор, POM рефакторинг ${Date.now()}`;
 
     await test.step("Заполняем Имя, Telegram, О себе и сохраняем", async () => {
       await profile.fillProfileForm(name, telegram, bio);
@@ -36,8 +34,7 @@ test.describe("Профиль: действия с полями (Page Object)", 
     const newTimezone = "Asia/Yekaterinburg";
 
     await test.step("Выбираем часовой пояс из селектора", async () => {
-      await profile.selectTimezone(newTimezone);
-      await profile.saveProfile();
+      await profile.saveTimezone(newTimezone);
     });
 
     await test.step("Проверяем сохранение после обновления страницы", async () => {
@@ -68,18 +65,19 @@ test.describe("Профиль: действия с полями (Page Object)", 
     });
 
     await test.step("Кликаем по кнопке удаления (крестик) и проверяем DOM", async () => {
-      const removeBtn = profile.skillRemoveButton(skillName);
-      await removeBtn.click();
-      await expect(removeBtn).not.toBeVisible();
+      await profile.removeSkill(skillName);
+      await expect(profile.skillInput).toBeEmpty();
+      await expect(profile.canHelpSkillItem(skillName)).toHaveCount(0);
     });
   });
-  
+
   test("позитив: поле ввода очищается после успешного добавления", async () => {
     const skillTag = `Очистка-${Date.now()}`;
+    
     await test.step("Добавляем навык", async () => {
       await profile.addSkill(skillTag, "can_help");
     });
-    
+
     await test.step("Проверяем, что инпут пустой", async () => {
       await expect(profile.skillInput).toBeEmpty();
     });
@@ -87,10 +85,11 @@ test.describe("Профиль: действия с полями (Page Object)", 
 
   test("негатив: добавленный навык встречается в списке ровно один раз", async () => {
     const skillTag = `Дубль-${Date.now()}`;
+    
     await test.step("Добавляем навык", async () => {
       await profile.addSkill(skillTag, "can_help");
     });
-    
+
     await test.step("Проверяем отсутствие дубликатов", async () => {
       await expect(profile.canHelpSkillItem(skillTag)).toHaveCount(1);
     });

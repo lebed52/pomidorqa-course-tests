@@ -3,7 +3,6 @@ import { makeUser, registerUser } from "../helpers/user";
 import { createHostAndGuestsContexts, closeApps } from "../helpers/booking";
 
 test("основной путь + гонка за слот: регистрация → навык → слот → поиск → бронирование", async ({ browser }) => {
-  // Увеличиваем таймаут для тяжелого E2E-теста
   test.setTimeout(120_000);
 
   const skillTag = `Playwright-demo-${Date.now()}`;
@@ -11,7 +10,6 @@ test("основной путь + гонка за слот: регистраци
   const guestUser = makeUser("guest");
   const guest2User = makeUser("guest2");
 
-  // Старт теста в одну строку благодаря Фабрике контекстов
   const { hostApp, guestApp, guest2App } = await createHostAndGuestsContexts(browser);
 
   try {
@@ -23,10 +21,9 @@ test("основной путь + гонка за слот: регистраци
     });
 
     await test.step("Хост: добавляет свободный слот на завтра", async () => {
-      await hostApp.bookingPage.goToSlots();
-      const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-      await hostApp.bookingPage.addSlot(tomorrow, "12:00");
-      await expect(hostApp.bookingPage.firstSlotCard).toBeVisible();
+      await hostApp.slotsPage.goto();
+      await hostApp.slotsPage.addSlot("12:00");
+      await expect(hostApp.slotsPage.firstSlotCard).toBeVisible();
     });
 
     await test.step("Гость 1: ищет хоста и открывает окно подтверждения слота", async () => {
@@ -71,20 +68,17 @@ test("основной путь + гонка за слот: регистраци
       await expect(guest2App.bookingPage.confirmError).toBeVisible();
     });
 
-    await test.step("Синхронизация: проверка бронирований в личных кабинетах", async () => {
+    await test.step("Синхронизация: проверка бронирований в кабинетах", async () => {
       await expect(async () => {
-        await guestApp.bookingPage.goToBookings();
-        await expect(guestApp.bookingPage.firstBookingName).toHaveText(hostUser.name);
+        await guestApp.bookingPage.verifyFirstMeetingWith(hostUser.name);
       }).toPass({ timeout: 10_000 });
 
       await expect(async () => {
-        await hostApp.bookingPage.goToBookings();
-        await expect(hostApp.bookingPage.firstBookingName).toHaveText(guestUser.name);
+        await hostApp.bookingPage.verifyFirstMeetingWith(guestUser.name);
       }).toPass({ timeout: 10_000 });
     });
 
   } finally {
-    // Гарантированно очищаем оперативную память при любом исходе теста
     await closeApps([hostApp, guestApp, guest2App]);
   }
 });
