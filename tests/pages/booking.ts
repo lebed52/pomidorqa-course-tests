@@ -23,4 +23,28 @@ export class BookingPage {
   async open() {
     await this.page.goto('/pomidorqa/profile/booking');
   }
+
+  async waitForFreeSlot() {
+    await expect(async () => {
+      const dayChip = this.calendarDay.first();
+      if (!(await dayChip.isVisible().catch(() => false))) {
+        await this.page.reload();
+      }
+      await expect(dayChip).toBeVisible();
+    }).toPass({ timeout: 15_000 });
+  }
+
+  async confirmBooking(): Promise<'success' | 'taken'> {
+    await this.modalDialogConfirm.click();
+    await expect(this.modalSuccess.or(this.modalError)).toBeVisible({ timeout: 15_000 });
+    return (await this.modalError.isVisible().catch(() => false)) ? 'taken' : 'success';
+  }
+
+  async selectFirstSlot() {
+    await this.calendarDay.first().click();
+    await this.calendarTime.first().click();
+  }
+  async openBookings() {
+    await this.page.goto('/pomidorqa/bookings');
+  }
 }

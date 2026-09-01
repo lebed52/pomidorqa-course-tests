@@ -1,9 +1,9 @@
 import { test, expect } from '@playwright/test';
-import { makeUser, registerUser } from './helpers/user';
-import { ProfilePage } from './pages/profile';
-import { CatalogPage } from './pages/catalog';
-import { BookingPage } from './pages/booking';
-import { SlotsPage } from './pages/slots';
+import { makeUser, registerUser } from '../helpers/user';
+import { ProfilePage } from '../pages/profile';
+import { CatalogPage } from '../pages/catalog';
+import { BookingPage } from '../pages/booking';
+import { SlotsPage } from '../pages/slots';
 
 test('основной путь + гонка за слот: регистрация → навык → слот → поиск в каталоге → бронирование → «Мои встречи» у обоих → второй гость видит ошибку', async ({
   browser,
@@ -27,7 +27,7 @@ test('основной путь + гонка за слот: регистраци
   const guest2Catalog = new CatalogPage(guest2Page);
   const guestBooking = new BookingPage(guestPage);
   const guest2Booking = new BookingPage(guest2Page);
-  const hostBookings = new BookingPage(hostPage); // только для upcomingSession («Мои встречи»)
+  const hostBookings = new BookingPage(hostPage);
 
   await test.step('Хост: регистрируется в PomidorQA', async () => {
     await registerUser(hostPage, host);
@@ -63,16 +63,8 @@ test('основной путь + гонка за слот: регистраци
   });
 
   await test.step('Гость: кликает по дню и времени в календаре слотов', async () => {
-    await expect(async () => {
-      const dayChip = guestBooking.calendarDay.first();
-      if (!(await dayChip.isVisible().catch(() => false))) {
-        await guestPage.reload();
-      }
-      await expect(dayChip).toBeVisible();
-    }).toPass({ timeout: 15_000 });
-
-    await guestBooking.calendarDay.first().click();
-    await guestBooking.calendarTime.first().click();
+    await guestBooking.waitForFreeSlot();
+    await guestBooking.selectFirstSlot();
     await expect(guestBooking.confirmModalDialog).toBeVisible();
   });
 
@@ -84,52 +76,31 @@ test('основной путь + гонка за слот: регистраци
     await guest2Catalog.personCard.filter({ hasText: host.name }).click();
     await expect(guest2Catalog.personName).toHaveText(host.name);
 
-    await expect(async () => {
-      const dayChip = guest2Booking.calendarDay.first();
-      if (!(await dayChip.isVisible().catch(() => false))) {
-        await guest2Page.reload();
-      }
-      await expect(dayChip).toBeVisible();
-    }).toPass({ timeout: 15_000 });
-
-    await guest2Booking.calendarDay.first().click();
-    await guest2Booking.calendarTime.first().click();
+    await guest2Booking.waitForFreeSlot();
+    await guest2Booking.selectFirstSlot();
     await expect(guest2Booking.confirmModalDialog).toBeVisible();
   });
 
   await test.step('Гость: подтверждает бронирование первым — успех', async () => {
-    await guestBooking.modalDialogConfirm.click();
-    const success = guestBooking.modalSuccess;
-    const error = guestBooking.modalError;
-    await expect(success.or(error)).toBeVisible({ timeout: 15_000 });
-    if (await error.isVisible().catch(() => false)) {
-      throw new Error(`Бронирование не удалось: ${await error.textContent()}`);
-    }
+    const result = await guestBooking.confirmBooking();
+    expect(result).toBe('success');
   });
 
   await test.step('Гость2: пытается забронировать тот же слот вторым — видит ошибку', async () => {
-    await guest2Booking.modalDialogConfirm.click();
-
-    const success2 = guest2Booking.modalSuccess;
-    const error2 = guest2Booking.modalError;
-    await expect(success2.or(error2)).toBeVisible({ timeout: 15_000 });
-
-    if (await success2.isVisible().catch(() => false)) {
-      throw new Error('Слот должен был быть занят, но бронирование прошло успешно');
-    }
-    await expect(error2).toBeVisible();
+    const result = await guest2Booking.confirmBooking();
+    expect(result).toBe('taken');
   });
 
   await test.step('Гость: видит бронирование в разделе «Мои встречи»', async () => {
     await expect(async () => {
-      await guestPage.goto('/pomidorqa/bookings');
+      await guestBooking.openBookings();
       await expect(guestBooking.upcomingSession).toContainText(host.name);
     }).toPass({ timeout: 15_000 });
   });
 
   await test.step('Хост: тоже видит это бронирование в своих «Мои встречи»', async () => {
     await expect(async () => {
-      await hostPage.goto('/pomidorqa/bookings');
+      await hostBookings.openBookings();
       await expect(hostBookings.upcomingSession).toContainText(guest.name);
     }).toPass({ timeout: 15_000 });
   });

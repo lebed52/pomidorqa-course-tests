@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { makeUser, makeUnique, registerUser, type TestUser } from './helpers/user';
-import { ProfilePage } from './pages/profile';
+import { makeUser, makeUnique, registerUser, type TestUser } from '../helpers/user';
+import { ProfilePage } from '../pages/profile';
 
 test.describe('Заполнение профиля после регистрации', () => {
   let user: TestUser;
@@ -26,6 +26,7 @@ test.describe('Заполнение профиля после регистрац
 
   test('Выбор часового пояса из списка', async ({ page }) => {
     const timezone = 'Asia/Yekaterinburg';
+
     await test.step('Выбираем часовой пояс и сохраняем', async () => {
       await expect(profilePage.timezoneSelect).toHaveValue('Europe/Moscow');
       await profilePage.timezoneSelect.selectOption(timezone);
@@ -40,6 +41,7 @@ test.describe('Заполнение профиля после регистрац
 
   test('Заполнение поля Telegram', async ({ page }) => {
     const telegram = `@qaDarya${Date.now()}`;
+
     await test.step('Заполняем и сохраняем', async () => {
       await expect(profilePage.inputTelegram).toHaveValue('');
       await profilePage.inputTelegram.fill(telegram);
@@ -54,6 +56,7 @@ test.describe('Заполнение профиля после регистрац
 
   test('Заполняем поле "О себе"', async ({ page }) => {
     const infoAboutMyself = `QA-student ${Date.now()}`;
+
     await test.step('Заполняем и сохраняем', async () => {
       await profilePage.inputAboutMe.fill(infoAboutMyself);
       await profilePage.save();
@@ -67,9 +70,11 @@ test.describe('Заполнение профиля после регистрац
 
   test('Навык: заполняем, выбираем, добавляем', async () => {
     const skillTag = `Playwright-demo-${Date.now()}`;
+
     await test.step('Добавляем навык «могу помочь»', async () => {
       await profilePage.addSkill(skillTag);
     });
+
     await test.step('Навык появился в блоке «Могу помочь»', async () => {
       await expect(profilePage.canHelpSkills).toContainText(skillTag);
     });
