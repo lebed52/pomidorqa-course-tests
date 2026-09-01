@@ -22,11 +22,20 @@ export class SlotsPage {
     await this.page.goto(ROUTES.slots);
   }
 
-  async addSlot(time: string) {
-    await this.page.goto(ROUTES.slots);
-    const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    const date = tomorrow.toISOString().slice(0, 10);
-    await this.dateInput.fill(date);
+  /**
+   * Добавляет свободный слот.
+   * @param time Время слота (например, "12:00")
+   * @param customDate Необязательная дата в формате YYYY-MM-DD. По умолчанию — завтрашний день.
+   */
+  async addSlot(time: string, customDate?: string) {
+    let targetDate = customDate;
+
+    if (!targetDate) {
+      const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      targetDate = tomorrow.toISOString().slice(0, 10);
+    }
+
+    await this.dateInput.fill(targetDate);
     await this.timeInput.fill(time);
     await this.addSubmitButton.click();
   }

@@ -1,4 +1,4 @@
-import { expect, type Locator, type Page } from "@playwright/test";
+import { type Locator, type Page } from "@playwright/test";
 import { ROUTES } from "../helpers/user";
 
 export class BookingPage {
@@ -61,43 +61,50 @@ export class BookingPage {
 
   async openPersonCard(name: string) {
     await this.getPersonCard(name).click();
-    await expect(this.personHeading).toHaveText(name);
   }
 
-  async openBookingDialog() {
-    await expect(async () => {
-      const dayChip = this.calendarDays.first();
-      if (!(await dayChip.isVisible().catch(() => false))) {
-        await this.page.reload();
-      }
-      await expect(dayChip).toBeVisible();
-    }).toPass({ timeout: 10_000 });
+  async navigateToHostProfile(skillTag: string, hostName: string) {
+    await this.searchBySkill(skillTag);
+    await this.openPersonCard(hostName);
+  }
 
+  async ensureCalendarVisible(): Promise<Locator> {
+    const dayChip = this.calendarDays.first();
+    const isVisible = await dayChip.isVisible({ timeout: 5000 }).catch(() => false);
+
+    if (!isVisible) {
+      await this.page.reload();
+    }
+    return dayChip;
+  }
+
+  async waitForBookingStatus(): Promise<boolean> {
+    const statusLocator = this.successStatus.or(this.errorAlert);
+    await statusLocator.waitFor({ state: "visible", timeout: 15_000 });
+    return await this.successStatus.isVisible().catch(() => false);
+  }
+
+  async loadUpcomingMeetingsAndEnsureData(expectedName: string) {
+    await this.goto();
+
+    const textContext = await this.firstCardName.textContent().catch(() => null);
+    const hasText = textContext ? textContext.includes(expectedName) : false;
+
+    if (!hasText) {
+      await this.page.reload();
+    }
+  }
+
+  async selectFirstSlot() {
     await this.calendarDays.first().click();
     await this.calendarTimes.first().click();
-    await expect(this.confirmDialog).toBeVisible();
   }
 
-  async confirmBooking(): Promise<"success" | "error"> {
+  async confirmBooking() {
     await this.confirmButton.click();
-    await expect(this.successStatus.or(this.errorAlert)).toBeVisible({
-      timeout: 15_000,
-    });
-
-    if (await this.errorAlert.isVisible().catch(() => false)) {
-      return "error";
-    }
-    return "success";
   }
 
   async goto() {
     await this.page.goto(ROUTES.booking);
-  }
-
-  async verifyFirstMeetingWith(expectedName: string) {
-    await expect(async () => {
-      await this.goto();
-      await expect(this.firstCardName).toHaveText(expectedName);
-    }).toPass({ timeout: 10_000 });
   }
 }

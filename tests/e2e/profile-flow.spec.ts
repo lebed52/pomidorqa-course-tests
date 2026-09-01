@@ -4,6 +4,7 @@ import { ProfilePage } from "../pages/profile-page";
 
 test.describe("Профиль: действия с полями", () => {
   let profile: ProfilePage;
+
   test.beforeEach(async ({ page }) => {
     const user: TestUser = makeUser("hw8", Date.now());
     await registerUser(page, user);
@@ -89,7 +90,7 @@ test.describe("Профиль: действия с полями", () => {
 
     await test.step("Ни одного навыка не появилось", async () => {
       await expect(profile.skillChips).toHaveCount(0);
-      await expect(profile.canHelpSkills).not.toBeVisible();
+      await expect(profile.canHelpSkills).toBeHidden();
     });
   });
 
