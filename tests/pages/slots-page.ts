@@ -22,11 +22,7 @@ export class SlotsPage {
     await this.page.goto(ROUTES.slots);
   }
 
-  /**
-   * Добавляет свободный слот.
-   * @param time Время слота (например, "12:00")
-   * @param customDate Необязательная дата в формате YYYY-MM-DD. По умолчанию — завтрашний день.
-   */
+
   async addSlot(time: string, customDate?: string) {
     let targetDate = customDate;
 
