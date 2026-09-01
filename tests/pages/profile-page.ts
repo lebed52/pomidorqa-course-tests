@@ -24,7 +24,6 @@ export class ProfilePage {
     this.skillInput = page.getByLabel("Навык");
     this.canHelpSkills = page.getByTestId("can-help-skills");
     this.wantToLearnSkills = page.locator('[data-skills="want_to_learn"]');
-
     this.saveButton = page.getByRole("button", { name: "Сохранить" });
     this.skillTypeSelect = page.getByRole("combobox", { name: "Тип" });
     this.addSkillButton = page.getByRole("button", { name: "Добавить" });
@@ -38,21 +37,6 @@ export class ProfilePage {
     await this.nameInput.fill(name);
     await this.telegramInput.fill(telegram);
     await this.bioInput.fill(bio);
-  }
-
-  async saveName(name: string) {
-    await this.nameInput.fill(name);
-    await this.saveProfile();
-  }
-
-  async saveTelegram(telegram: string) {
-    await this.telegramInput.fill(telegram);
-    await this.saveProfile();
-  }
-
-  async saveBio(bio: string) {
-    await this.bioInput.fill(bio);
-    await this.saveProfile();
   }
 
   async saveTimezone(timezone: string) {

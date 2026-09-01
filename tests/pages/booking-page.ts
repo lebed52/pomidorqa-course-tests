@@ -4,32 +4,29 @@ import { ROUTES } from "../helpers/user";
 export class BookingPage {
   private readonly catalogFilterInput: Locator;
   private readonly catalogFilterButton: Locator;
-
+  
   readonly personName: Locator;
   private readonly dayChip: Locator;
   private readonly timeChip: Locator;
-
+  
   readonly confirmDialog: Locator;
   private readonly confirmButton: Locator;
   readonly confirmSuccess: Locator;
   readonly confirmError: Locator;
-
+  
   private readonly bookingsSection: Locator;
   readonly firstBookingName: Locator;
 
   constructor(readonly page: Page) {
     this.catalogFilterInput = page.locator("#pomidorqa-catalog-skill-filter");
     this.catalogFilterButton = page.getByRole("button", { name: "Найти" });
-
     this.personName = page.getByRole("heading", { level: 1 });
     this.dayChip = page.getByRole("group", { name: "Дни со слотами" }).getByRole("button").first();
     this.timeChip = page.getByRole("group", { name: "Время слотов" }).getByRole("button").first();
-
     this.confirmDialog = page.getByRole("dialog");
     this.confirmButton = this.confirmDialog.getByRole("button", { name: "Подтвердить" });
     this.confirmSuccess = this.confirmDialog.getByRole("status");
     this.confirmError = this.confirmDialog.getByRole("alert");
-
     this.bookingsSection = page.getByTestId("upcoming-meetings");
     this.firstBookingName = this.bookingsSection.locator("[data-booking-id]").first().locator("p").first();
   }
@@ -45,9 +42,7 @@ export class BookingPage {
   }
 
   async pickFirstSlot(retryTimeoutMs = 10_000) {
-    if (await this.confirmDialog.isVisible().catch(() => false)) {
-      return;
-    }
+    if (await this.confirmDialog.isVisible().catch(() => false)) return;
     const deadline = Date.now() + retryTimeoutMs;
     for (;;) {
       try {
@@ -76,14 +71,5 @@ export class BookingPage {
 
   async goToBookings() {
     await this.page.goto(ROUTES.bookings);
-  }
-
-  async verifyFirstMeetingWith(expectedName: string) {
-    await this.goToBookings();
-    await this.firstBookingName.waitFor({ state: "visible", timeout: 10000 });
-    const actualName = await this.firstBookingName.textContent();
-    if (actualName !== expectedName) {
-      throw new Error(`Ожидали "${expectedName}", но получили "${actualName}"`);
-    }
   }
 }

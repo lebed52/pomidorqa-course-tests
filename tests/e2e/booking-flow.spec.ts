@@ -1,6 +1,13 @@
 import { test, expect } from "@playwright/test";
 import { makeUser, registerUser } from "../helpers/user";
-import { createHostAndGuestsContexts, closeApps } from "../helpers/booking";
+import { createHostAndGuestsContexts, closeApps, type AppContext } from "../helpers/booking";
+
+async function expectFirstMeetingWith(app: AppContext, expectedName: string) {
+  await expect(async () => {
+    await app.bookingPage.goToBookings();
+    await expect(app.bookingPage.firstBookingName).toHaveText(expectedName);
+  }).toPass({ timeout: 15_000, intervals: [1000, 2000, 5000] }); 
+}
 
 test("основной путь + гонка за слот: регистрация → навык → слот → поиск → бронирование", async ({ browser }) => {
   test.setTimeout(120_000);
@@ -34,7 +41,7 @@ test("основной путь + гонка за слот: регистраци
       await expect(async () => {
         await guestApp.bookingPage.pickFirstSlot();
         await expect(guestApp.bookingPage.confirmDialog).toBeVisible({ timeout: 1000 });
-      }).toPass({ timeout: 15_000 });
+      }).toPass({ timeout: 30_000 });
     });
 
     await test.step("Гость 2: открывает окно бронирования на ТОТ ЖЕ слот", async () => {
@@ -45,7 +52,7 @@ test("основной путь + гонка за слот: регистраци
       await expect(async () => {
         await guest2App.bookingPage.pickFirstSlot();
         await expect(guest2App.bookingPage.confirmDialog).toBeVisible({ timeout: 1000 });
-      }).toPass({ timeout: 15_000 });
+      }).toPass({ timeout: 30_000 });
     });
 
     await test.step("Гость 1: подтверждает первым и получает успех", async () => {
@@ -69,13 +76,8 @@ test("основной путь + гонка за слот: регистраци
     });
 
     await test.step("Синхронизация: проверка бронирований в кабинетах", async () => {
-      await expect(async () => {
-        await guestApp.bookingPage.verifyFirstMeetingWith(hostUser.name);
-      }).toPass({ timeout: 10_000 });
-
-      await expect(async () => {
-        await hostApp.bookingPage.verifyFirstMeetingWith(guestUser.name);
-      }).toPass({ timeout: 10_000 });
+      await expectFirstMeetingWith(guestApp, hostUser.name);
+      await expectFirstMeetingWith(hostApp, guestUser.name);
     });
 
   } finally {

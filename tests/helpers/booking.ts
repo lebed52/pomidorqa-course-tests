@@ -33,5 +33,13 @@ export async function createHostAndGuestsContexts(browser: Browser) {
 }
 
 export async function closeApps(apps: AppContext[]) {
-  await Promise.all(apps.map((app) => app.context.close()));
+  await Promise.all(
+    apps.map(async (app) => {
+      try {
+        await app.context.close();
+      } catch (err) {
+        console.warn(`Контекст уже закрыт: ${(err as Error).message}`);
+      }
+    })
+  );
 }
