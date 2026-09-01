@@ -3,12 +3,6 @@ import {makeUser, registerUser} from "../helpers/user";
 import {ProfilePage} from "../pages/ProfilePage";
 import {BookingPage} from "../pages/BookingPage";
 
-// E2E-уровень пирамиды: реальный браузер на живом стенде aiqa.su/pomidorqa.
-// После ДЗ Урока 4: guest2 открывает тот же слот и должен увидеть ошибку.
-// host/guest уже через registerUser; регистрация guest2 пока инлайн — это заготовка к ДЗ Урока 5.
-//POMIDORQA_BASE_URL=http://localhost:3000 npx playwright test --project=e2e tests/e2e/booking-flow.spec.ts
-
-
 test("основной путь + гонка за слот: регистрация → навык → слот → поиск в каталоге → бронирование → «Мои встречи» у обоих → второй гость видит ошибку", async ({
   browser,
 }) => {
@@ -18,7 +12,6 @@ test("основной путь + гонка за слот: регистраци
   const guest = makeUser("guest", runId);
   const guest2 = makeUser("guest2", runId);
 
-  // Три независимых аккаунта = три независимых браузерных контекста
   const hostContext = await browser.newContext();
   const guestContext = await browser.newContext();
   const guest2Context = await browser.newContext();
@@ -26,7 +19,6 @@ test("основной путь + гонка за слот: регистраци
   const guestPage = await guestContext.newPage();
   const guest2Page = await guest2Context.newPage();
 
-  //Объявление экземпляров страниц
   const hostProfilePage = new ProfilePage(hostPage);
 
   const hostBookingPage = new BookingPage(hostPage);
@@ -84,8 +76,6 @@ test("основной путь + гонка за слот: регистраци
     await expect(guestBookingPage.bookingConfirmDialog).toBeVisible();
   });
 
-  // Важно для разбора ДЗ 4: модалку guest2 открываем ДО confirm у guest.
-  // Пока слот в UI ещё свободен — оба «человек открыл и отошёл».
   await test.step("Гость2: регистрируется и тоже открывает окно бронирования на тот же слот", async () => {
     await registerUser(guest2Page, guest2);
 
@@ -124,7 +114,6 @@ test("основной путь + гонка за слот: регистраци
     const error2 = guest2BookingPage.bookingConfirmError;
     await expect(success2.or(error2)).toBeVisible({ timeout: 15_000 });
 
-    // Полярность наоборот относительно гостя 1: ошибка — ожидаемый результат
     if (await success2.isVisible().catch(() => false)) {
       throw new Error("Слот должен был быть занят, но бронирование прошло успешно");
     }

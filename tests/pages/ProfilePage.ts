@@ -52,8 +52,8 @@ export class ProfilePage {
         return this.page.locator(`[data-skill-tag="${tag}"]`);
     }
 
-    async saveProfile(page: Page) {
-        const saved = page.waitForResponse(
+    async saveProfile() {
+        const saved = this.page.waitForResponse(
             (response) => response.url().endsWith(ROUTES.profile) && response.request().method() === "POST"
         );
         await this.profileSaveButton.click();
