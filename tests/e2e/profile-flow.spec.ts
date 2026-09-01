@@ -99,6 +99,21 @@ test.describe("Профиль: действия с полями", () => {
     });
   });
 
+test("негатив: имя не сохраняется без нажатия «Сохранить»", async ({ page }) => {
+  const newName = `Несохранённое имя ${Date.now()}`;
+
+  await test.step("Меняем имя, но не сохраняем", async () => {
+    await profileNameInput(page).fill(newName);
+    await expect(profileNameInput(page)).toHaveValue(newName);
+  });
+
+  await test.step("Перезагружаем страницу и проверяем, что новое имя не сохранилось", async () => {
+    await page.reload();
+
+    await expect(profileNameInput(page)).not.toHaveValue(newName);
+  });
+});
+
   test("часовой пояс: выбираем из списка", async ({ page }) => {
     // По умолчанию стоит Europe/Moscow — берём заведомо другой,
     // иначе проверка прошла бы и без всякого выбора.
@@ -116,6 +131,24 @@ test.describe("Профиль: действия с полями", () => {
     });
   });
 
+test("часовой пояс: сохраняется после повторного открытия профиля", async ({ page }) => {
+  const timezone = "Asia/Omsk";
+
+  await test.step("Меняем часовой пояс и сохраняем", async () => {
+    await profileTimezoneSelect(page).selectOption(timezone);
+    await saveProfile(page);
+
+    await expect(profileTimezoneSelect(page)).toHaveValue(timezone);
+  });
+
+  await test.step("Уходим со страницы и снова открываем профиль", async () => {
+    await page.goto("/pomidorqa");
+    await page.goto("/pomidorqa/profile");
+
+    await expect(profileTimezoneSelect(page)).toHaveValue(timezone);
+  });
+});
+
   test("telegram: заполняем пустое поле", async ({ page }) => {
     const telegram = `@qa_timur_cat${Date.now()}`;
 
@@ -130,6 +163,26 @@ test.describe("Профиль: действия с полями", () => {
       await expect(profileTelegramInput(page)).toHaveValue(telegram);
     });
   });
+  
+  test("telegram: можно очистить сохранённое значение", async ({ page }) => {
+  const telegram = `@qa_${Date.now()}`;
+
+  await test.step("Сначала сохраняем Telegram", async () => {
+    await profileTelegramInput(page).fill(telegram);
+    await saveProfile(page);
+
+    await page.reload();
+    await expect(profileTelegramInput(page)).toHaveValue(telegram);
+  });
+
+  await test.step("Очищаем Telegram и сохраняем", async () => {
+    await profileTelegramInput(page).fill("");
+    await saveProfile(page);
+
+    await page.reload();
+    await expect(profileTelegramInput(page)).toHaveValue("");
+  });
+});
 
   test("о себе: заполняем многострочное поле", async ({ page }) => {
     const bio = `QA-инженер, прогон ${Date.now()}. Пытаюсь разобраться в Playwright.`;
