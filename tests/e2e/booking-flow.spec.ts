@@ -16,6 +16,7 @@ test("основной путь + гонка за слот: регистраци
 
   const contexts = await createHostAndGuestsContexts(browser);
   const { hostPage, guestPage, guest2Page, hostBooking, guestBooking, guest2Booking } = contexts;
+  const hostProfile = new ProfilePage(hostPage);
 
   try {
     await test.step("Хост: регистрируется в PomidorQA", async () => {
@@ -23,17 +24,19 @@ test("основной путь + гонка за слот: регистраци
     });
 
     await test.step("Хост: добавляет навык «могу помочь» в профиле", async () => {
-      const hostProfile = new ProfilePage(hostPage);
-
       await hostProfile.goto();
       await hostProfile.addSkill(skillTag, "can_help");
+    });
 
+    await test.step("Навык хоста появился в блоке «Могу помочь»", async () => {
       await expect(hostProfile.canHelpSkills).toContainText(skillTag);
     });
 
     await test.step("Хост: добавляет свободный слот на завтра", async () => {
       await hostBooking.addSlot("12:00");
+    });
 
+    await test.step("Слот отображается в списке хоста", async () => {
       await expect(hostBooking.slotsCard.first()).toBeVisible();
     });
 
@@ -43,65 +46,72 @@ test("основной путь + гонка за слот: регистраци
 
     await test.step("Гость: ищет хоста в каталоге по навыку", async () => {
       await guestBooking.searchBySkill(skillTag);
+    });
 
+    await test.step("Хост найден в каталоге по навыку", async () => {
       await expect(guestBooking.catalogCard.filter({ hasText: host.name })).toBeVisible();
     });
 
     await test.step("Гость: открывает карточку хоста", async () => {
       await guestBooking.openHostCard(host.name);
+    });
 
+    await test.step("Гостю открыта карточка хоста", async () => {
       await expect(guestBooking.personName).toHaveText(host.name);
     });
 
     await test.step("Гость: кликает по дню и времени в календаре слотов", async () => {
       await guestBooking.selectFirstSlot();
+    });
 
+    await test.step("У гостя открылся диалог подтверждения брони", async () => {
       await expect(guestBooking.bookingConfirmDialog).toBeVisible();
     });
 
-    await test.step("Гость2: регистрируется и тоже открывает окно бронирования на тот же слот", async () => {
+    await test.step("Гость2: регистрируется отдельным аккаунтом", async () => {
       await registerUser(guest2Page, guest2);
+    });
 
+    await test.step("Гость2: ищет хоста в каталоге по навыку", async () => {
       await guest2Booking.searchBySkill(skillTag);
+    });
 
+    await test.step("Хост найден в каталоге для гостя2", async () => {
       await expect(guest2Booking.catalogCard.filter({ hasText: host.name })).toBeVisible();
+    });
 
+    await test.step("Гость2: открывает карточку хоста", async () => {
       await guest2Booking.openHostCard(host.name);
+    });
 
+    await test.step("Гостю2 открыта карточка хоста", async () => {
       await expect(guest2Booking.personName).toHaveText(host.name);
+    });
 
+    await test.step("Гость2: тоже кликает по тому же дню и времени в календаре слотов", async () => {
       await guest2Booking.selectFirstSlot();
+    });
 
+    await test.step("У гостя2 тоже открылся диалог подтверждения брони на тот же слот", async () => {
       await expect(guest2Booking.bookingConfirmDialog).toBeVisible();
     });
 
-    await test.step("Гость: подтверждает бронирование первым — успех", async () => {
+    await test.step("Гость: подтверждает бронирование первым", async () => {
       await guestBooking.confirmBooking();
-
-      const success = guestBooking.bookingConfirmSuccess;
-      const error = guestBooking.bookingConfirmError;
-
-      await expect(success.or(error)).toBeVisible({ timeout: 15_000 });
-
-      if (await error.isVisible().catch(() => false)) {
-        throw new Error(`Бронирование не удалось: ${await error.textContent()}`);
-      }
     });
 
-    await test.step("Гость2: пытается забронировать тот же слот вторым — видит ошибку", async () => {
+    await test.step("Бронирование гостя прошло успешно", async () => {
+      await expect(guestBooking.bookingConfirmSuccess).toBeVisible({ timeout: 15_000 });
+      await expect(guestBooking.bookingConfirmError).toBeHidden();
+    });
+
+    await test.step("Гость2: пытается забронировать тот же слот вторым", async () => {
       await guest2Booking.confirmBooking();
+    });
 
-      const success2 = guest2Booking.bookingConfirmSuccess;
-      const error2 = guest2Booking.bookingConfirmError;
-
-      await expect(success2.or(error2)).toBeVisible({ timeout: 15_000 });
-
-
-      if (await success2.isVisible().catch(() => false)) {
-        throw new Error("Слот должен был быть занят, но бронирование прошло успешно");
-      }
-
-      await expect(error2).toBeVisible();
+    await test.step("Гостю2 показана ошибка о занятом слоте", async () => {
+      await expect(guest2Booking.bookingConfirmError).toBeVisible({ timeout: 15_000 });
+      await expect(guest2Booking.bookingConfirmSuccess).toBeHidden();
     });
 
     await test.step("Гость: видит бронирование в разделе «Мои встречи»", async () => {

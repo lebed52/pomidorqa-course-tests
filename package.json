@@ -8,11 +8,15 @@
     "test:unit": "playwright test --project=unit",
     "test:api": "playwright test --project=api",
     "test:e2e": "playwright test --project=e2e",
-    "report": "playwright show-report"
+    "report": "playwright show-report",
+    "lint": "eslint ."
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",
     "@types/node": "^24.0.0",
-    "typescript": "^5.9.0"
+    "eslint": "^10.9.1",
+    "eslint-plugin-playwright": "^2.11.0",
+    "typescript": "^5.9.0",
+    "typescript-eslint": "^8.69.0"
   }
 }

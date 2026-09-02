@@ -1,4 +1,4 @@
-import { expect, type Locator, type Page } from "@playwright/test";
+import { type Locator, type Page } from "@playwright/test";
 
 export class BookingPage {
   page: Page;
@@ -71,26 +71,30 @@ export class BookingPage {
   }
 
   async selectFirstSlot() {
-    await expect(async () => {
-      const dayChip = this.bookingCalendarDay.first();
+    const deadline = Date.now() + 30_000;
 
-      if (!(await dayChip.isVisible().catch(() => false))) {
-        await this.page.reload();
+    while (true) {
+      try {
+        const dayChip = this.bookingCalendarDay.first();
+
+        if (!(await dayChip.isVisible().catch(() => false))) {
+          await this.page.reload();
+        }
+
+        await dayChip.waitFor({ state: "visible" });
+        await dayChip.click();
+
+        const timeSlot = this.bookingCalendarTime.first();
+
+        await timeSlot.waitFor({ state: "visible" });
+        await timeSlot.click();
+
+        await this.bookingConfirmDialog.waitFor({ state: "visible", timeout: 5_000 });
+        return;
+      } catch (err) {
+        if (Date.now() > deadline) throw err;
       }
-
-      await expect(dayChip).toBeVisible();
-
-      await dayChip.click();
-
-      const timeSlot = this.bookingCalendarTime.first();
-
-      await expect(timeSlot).toBeVisible();
-      await expect(timeSlot).toBeEnabled();
-
-      await timeSlot.click();
-
-      await expect(this.bookingConfirmDialog).toBeVisible({ timeout: 5_000 });
-    }).toPass({ timeout: 30_000 });
+    }
   }
 
   async confirmBooking() {
