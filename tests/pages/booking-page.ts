@@ -19,7 +19,7 @@ export class BookingPage {
   bookingError = () => this.bookingDialog().getByText(/забронировали|занят|выбери другой/i);
 
   upcomingSection = () => this.page.locator('[data-testid="upcoming-meetings"]');
-  upcomingCardName = () => this.upcomingSection().getByRole('heading').first(); // или другой селектор
+  upcomingCardName = () => this.upcomingSection().getByRole('heading').first();
 
   async searchBySkill(skillTag: string) {
     await this.catalogFilterInput().fill(skillTag);
