@@ -45,7 +45,7 @@ test.describe("Профиль: действия с полями", () => {
   });
 
   test("telegram: заполняем пустое поле", async ({ page }) => {
-    const telegram = `@@qa_timur_cat${Date.now()}`;
+    const telegram = `@qa_timur_cat${Date.now()}`;
 
     await test.step("Заполняем Telegram и сохраняем", async () => {
       await expect(profilePage.profileTelegramInput).toHaveValue("");

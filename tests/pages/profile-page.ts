@@ -17,7 +17,7 @@ export class ProfilePage {
     addSkillButton: Locator;
     canHelpSkills: Locator;
     skillChips: Locator;
-    skillName: Locator;
+    // skillName: Locator;
   
     constructor( page: Page) {
         this.page = page;
@@ -34,7 +34,7 @@ export class ProfilePage {
         this.addSkillButton = page.getByRole("button", { name: "Добавить" });
         this.canHelpSkills = page.getByTestId("can-help-skills");
         this.skillChips = page.locator("[data-skill-tag]");
-        this.skillName   = page.locator(`[data-skill-tag]`); 
+        // this.skillName   = page.locator(`[data-skill-tag]`); 
     }
 
   async goto() {
@@ -42,8 +42,8 @@ export class ProfilePage {
   }
 
   async saveName(name: string) {
-    await this.page.getByLabel("Имя").fill(name);
-    await this.page.getByRole("button", { name: "Сохранить" }).click();
+    await this.profileNameInput.fill(name);
+    await this.profileSaveButton.click();
   }
 
   async saveProfile(page: Page) {
@@ -58,9 +58,6 @@ export class ProfilePage {
     return this.page.locator(`[data-skill-tag="${tag}"]`);
   }
 
-  nameInput() {
-    return this.page.getByLabel("Имя");
-  }
   telegramInput() {
     return this.page.getByLabel("Telegram");
   }
