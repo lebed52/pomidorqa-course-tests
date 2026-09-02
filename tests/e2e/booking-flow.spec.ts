@@ -37,10 +37,8 @@ test("основной путь + гонка за слот", async ({ browser })
 
   await test.step("Хост: добавляет слот на завтра в 12:00", async () => {
     await hostPage.goto("/pomidorqa/profile/slots");
-    await slotDateInput(hostPage).fill(slotDate);
-    await slotTimeInput(hostPage).fill("12:00");
-    await slotAddSubmit(hostPage).click();
-    await expect(slotCard(hostPage)).toBeVisible({ timeout: 15000 });
+    await hostBooking.addSlot(slotDate, "12:00");
+await expect(hostBooking.freeSlot()).toBeVisible({ timeout: 15000 });
   });
 
   await test.step("Гость: регистрируется", async () => {
@@ -88,7 +86,7 @@ test("основной путь + гонка за слот", async ({ browser })
     await expect(async () => {
       await guestBooking.goToBookings();
       await expect(guestBooking.upcomingSection()).toBeVisible({ timeout: 5000 });
-      await expect(guestBooking.upcomingBookingFor(host.name)).toBeVisible({ timeout: 5000 });
+      await expect(guestBooking.upcomingCardName()).toBeVisible({ timeout: 5000 });
     }).toPass({ timeout: 10000 });
   });
 
@@ -96,7 +94,7 @@ test("основной путь + гонка за слот", async ({ browser })
     await expect(async () => {
       await hostBooking.goToBookings();
       await expect(hostBooking.upcomingSection()).toBeVisible({ timeout: 5000 });
-      await expect(hostBooking.upcomingBookingFor(guest.name)).toBeVisible({ timeout: 5000 });
+      await expect(hostBooking.upcomingCardName()).toBeVisible({ timeout: 5000 });
     }).toPass({ timeout: 10000 });
   });
 

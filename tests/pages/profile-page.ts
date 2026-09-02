@@ -3,7 +3,12 @@ import { type Page } from "@playwright/test";
 export class ProfilePage {
   constructor(private readonly page: Page) {}
 
+  async reload() {
+    await this.page.reload();
+  }
+
   nameInput = () => this.page.getByLabel("Имя");
+
   telegramInput = () => this.page.getByLabel("Telegram");
   timezoneSelect = () => this.page.getByLabel("Часовой пояс");
   bioInput = () => this.page.getByLabel("О себе");

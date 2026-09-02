@@ -9,6 +9,20 @@ export class BookingPage {
     this.page.locator('[data-testid="person-card"]').filter({ hasText: name });
 
   personName = () => this.page.getByRole('heading', { level: 1 });
+  slotDateInput = () => this.page.locator('input[type="date"]');
+  slotTimeInput = () => this.page.locator('input[type="time"]');
+  slotAddSubmit = () =>
+    this.page.getByRole('button', { name: 'Добавить слот' });
+  slotCard = () =>
+    this.page.locator('[data-slot-status="free"]').first();
+  
+  async addSlot(date: string, time: string) {
+    await this.slotDateInput().fill(date);
+    await this.slotTimeInput().fill(time);
+    await this.slotAddSubmit().click();
+  }
+  
+  freeSlot = () => this.slotCard();
 
   bookingDay = (date: string) => this.page.locator(`button[data-date="${date}"]`);
   anyTime = () => this.page.locator('button[data-slot-id]').first();

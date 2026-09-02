@@ -1,4 +1,4 @@
-import { test } from "@playwright/test";
+import { test, expect } from "@playwright/test";
 import { makeUser, registerUser } from "../helpers/user";
 import { ProfilePage } from "../pages/profile-page";
 
@@ -15,28 +15,28 @@ test.describe("Профиль: действия с полями", () => {
   test("имя: вводим новое и сохраняем", async () => {
     const newName = `Тимур Тестович ${Date.now()}`;
     await profilePage.changeNameAndSave(newName);
-    await profilePage.page.reload();
+    await profilePage.reload();
     await expect(profilePage.nameInput()).toHaveValue(newName);
   });
 
   test("часовой пояс: выбираем из списка", async () => {
     const timezone = "Asia/Yekaterinburg";
     await profilePage.changeTimezoneAndSave(timezone);
-    await profilePage.page.reload();
+    await profilePage.reload();
     await expect(profilePage.timezoneSelect()).toHaveValue(timezone);
   });
 
   test("telegram: заполняем пустое поле", async () => {
     const telegram = `@qa_timur_cat${Date.now()}`;
     await profilePage.addTelegramAndSave(telegram);
-    await profilePage.page.reload();
+    await profilePage.reload();
     await expect(profilePage.telegramInput()).toHaveValue(telegram);
   });
 
   test("о себе: заполняем многострочное поле", async () => {
     const bio = `QA-инженер, прогон ${Date.now()}. Пытаюсь разобраться в Playwright.`;
     await profilePage.addBioAndSave(bio);
-    await profilePage.page.reload();
+    await profilePage.reload();
     await expect(profilePage.bioInput()).toHaveValue(bio);
   });
 
@@ -70,7 +70,7 @@ test.describe("Профиль: действия с полями", () => {
     const bio = `QA-инженер, прогон ${runId}. Проверяю форму профиля целиком.`;
 
     await profilePage.fillNameTelegramBioAndSave(name, telegram, bio);
-    await profilePage.page.reload();
+    await profilePage.reload();
     await expect.soft(profilePage.nameInput()).toHaveValue(name);
     await expect.soft(profilePage.telegramInput()).toHaveValue(telegram);
     await expect.soft(profilePage.bioInput()).toHaveValue(bio);
