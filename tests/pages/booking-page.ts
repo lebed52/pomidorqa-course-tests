@@ -1,4 +1,4 @@
-import { expect, type Locator, type Page } from "@playwright/test";
+import { type Locator, type Page } from "@playwright/test";
 
 const ROUTES = {
     profile: "/pomidorqa/profile",
@@ -64,24 +64,15 @@ export class BookingPage {
             .getByRole("button");
 
         this.bookingConfirmDialog = page.getByRole("dialog");
-
         this.bookingConfirmButton = page
             .getByRole("dialog")
             .getByRole("button", { name: "Подтвердить" });
 
-        this.bookingConfirmSuccess = page
-            .getByRole("dialog")
-            .getByRole("status");
-
-        this.bookingConfirmError = page
-            .getByRole("dialog")
-            .getByRole("alert");
+        this.bookingConfirmSuccess = page.getByRole("dialog").getByRole("status");
+        this.bookingConfirmError = page.getByRole("dialog").getByRole("alert");
 
         this.bookingsUpcomingSection = page.getByTestId("upcoming-meetings");
-
-        this.bookingsCards = this.bookingsUpcomingSection.locator(
-            "[data-booking-id]"
-        );
+        this.bookingsCards = this.bookingsUpcomingSection.locator("[data-booking-id]");
     }
 
     async openProfile(): Promise<void> {
@@ -121,67 +112,30 @@ export class BookingPage {
         await this.personCard(name).click();
     }
 
-    async waitForCalendarSlot(): Promise<void> {
-        await expect(async () => {
-            const dayChip = this.bookingCalendarDays.first();
+    calendarDayChip(): Locator {
+        return this.bookingCalendarDays.first();
+    }
 
-            if (!(await dayChip.isVisible().catch(() => false))) {
-                await this.page.reload();
-            }
+    calendarTimeChip(): Locator {
+        return this.bookingCalendarTimes.first();
+    }
 
-            await expect(dayChip).toBeVisible();
-        }).toPass({ timeout: 10_000 });
+    async waitForCalendarSlot(): Promise<Locator> {
+        const dayChip = this.calendarDayChip();
+        await dayChip.waitFor({ state: "visible", timeout: 10_000 });
+        return dayChip;
     }
 
     async chooseFirstSlot(): Promise<void> {
-        await this.bookingCalendarDays.first().click();
-        await this.bookingCalendarTimes.first().click();
+        await this.calendarDayChip().click();
+        await this.calendarTimeChip().click();
     }
 
-    async expectBookingDialogVisible(): Promise<void> {
-        await expect(this.bookingConfirmDialog).toBeVisible();
-    }
-
-    async confirmBookingExpectSuccess(): Promise<void> {
+    async confirmBooking(): Promise<void> {
         await this.bookingConfirmButton.click();
-
-        await expect(
-            this.bookingConfirmSuccess.or(this.bookingConfirmError)
-        ).toBeVisible({ timeout: 15_000 });
-
-        if (await this.bookingConfirmError.isVisible().catch(() => false)) {
-            throw new Error(
-                `Бронирование не удалось: ${await this.bookingConfirmError.textContent()}`
-            );
-        }
     }
 
-    async confirmBookingExpectError(): Promise<void> {
-        await this.bookingConfirmButton.click();
-
-        await expect(
-            this.bookingConfirmSuccess.or(this.bookingConfirmError)
-        ).toBeVisible({ timeout: 15_000 });
-
-        if (await this.bookingConfirmSuccess.isVisible().catch(() => false)) {
-            throw new Error(
-                "Слот должен был быть занят, но бронирование прошло успешно"
-            );
-        }
-
-        await expect(this.bookingConfirmError).toBeVisible();
-    }
-
-    async expectUpcomingBookingWithName(name: string): Promise<void> {
-        await expect(async () => {
-            await this.openBookings();
-
-            const cardName = this.bookingsCards
-                .first()
-                .locator("p")
-                .first();
-
-            await expect(cardName).toHaveText(name);
-        }).toPass({ timeout: 10_000 });
+    bookingCardName(): Locator {
+        return this.bookingsCards.first().locator("p").first();
     }
 }

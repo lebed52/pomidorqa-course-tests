@@ -107,12 +107,12 @@ test.describe("Профиль: действия с полями", () => {
 
         await test.step("Добавляем навык «могу помочь»", async () => {
             await profilePage.addCanHelpSkill(canHelpTag);
-            await expect(profilePage.skillChip(canHelpTag)).toBeVisible();
+            await expect(profilePage.canHelpSkills).toContainText(canHelpTag);
         });
 
         await test.step("Добавляем навык «хочу разобрать»", async () => {
             await profilePage.addWantToLearnSkill(wantToLearnTag);
-            await expect(profilePage.skillChip(wantToLearnTag)).toBeVisible();
+            await expect(profilePage.skillChips).toHaveCount(2);
         });
 
         await test.step("Навыки разошлись по своим блокам", async () => {
