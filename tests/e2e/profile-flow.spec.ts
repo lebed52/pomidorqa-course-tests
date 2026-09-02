@@ -49,7 +49,7 @@ test.describe("Профиль: действия с полями", () => {
   test("негатив: пустой навык не добавляется", async () => {
     await profilePage.clickAddSkillWithoutInput();
     await expect(profilePage.skillChips()).toHaveCount(0);
-    await expect(profilePage.canHelpSkills()).not.toBeVisible();
+    await expect(profilePage.canHelpSkills()).toBeHidden();
   });
 
   test("негатив: навык «хочу разобрать» не попадает в блок «могу помочь»", async () => {

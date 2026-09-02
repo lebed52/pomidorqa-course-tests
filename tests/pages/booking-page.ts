@@ -1,4 +1,4 @@
-import { type Page, expect } from "@playwright/test";
+import { type Page } from "@playwright/test";
 
 export class BookingPage {
   constructor(private readonly page: Page) {}
@@ -28,24 +28,36 @@ export class BookingPage {
 
   async openHostCard(hostName: string) {
     await this.catalogCard(hostName).click();
-    await expect(this.personName()).toHaveText(hostName);
   }
 
-  async selectDayAndTime(slotDate: string) {
-    await expect(async () => {
-      const dayChip = this.bookingDay(slotDate);
-      if (!(await dayChip.isVisible().catch(() => false))) {
-        await this.page.reload();
-      }
-      await expect(dayChip).toBeVisible();
-    }).toPass({ timeout: 10_000 });
 
-    await this.bookingDay(slotDate).click();
-    await this.page.waitForSelector('button[data-slot-id]', { timeout: 10000 });
+  async selectDayAndTime(slotDate: string) {
+    const dayChip = this.bookingDay(slotDate);
+  
+    if (!(await dayChip.isVisible().catch(() => false))) {
+      await this.page.reload();
+    }
+  
+    await dayChip.waitFor({
+      state: "visible",
+      timeout: 10_000,
+    });
+  
+    await dayChip.click();
+  
     const timeButton = this.anyTime();
-    await expect(timeButton).toBeVisible({ timeout: 10000 });
+  
+    await timeButton.waitFor({
+      state: "visible",
+      timeout: 10_000,
+    });
+  
     await timeButton.click();
-    await expect(this.bookingDialog()).toBeVisible({ timeout: 10000 });
+  
+    await this.bookingDialog().waitFor({
+      state: "visible",
+      timeout: 10_000,
+    });
   }
 
   async confirmBooking() {

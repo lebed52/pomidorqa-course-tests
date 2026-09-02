@@ -5,7 +5,7 @@
   "description": "Официальный репозиторий марафона «Автоматизация на Playwright + TypeScript» — эталонные тесты PomidorQA (aiqa.su/pomidorqa) для чтения на уроках и площадка для домашних заданий студентов",
   "scripts": {
     "test": "playwright test",
-    "lint": "eslint . --ext .ts",
+    "lint": "eslint tests",
     "test:unit": "playwright test --project=unit",
     "test:api": "playwright test --project=api",
     "test:e2e": "playwright test --project=e2e",
@@ -18,6 +18,7 @@
     "@typescript-eslint/parser": "^8.69.0",
     "eslint": "^10.9.1",
     "eslint-plugin-playwright": "^2.11.0",
-    "typescript": "^5.9.0"
+    "typescript": "^5.9.0",
+    "typescript-eslint": "^8.69.0"
   }
 }

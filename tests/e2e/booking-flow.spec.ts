@@ -3,11 +3,6 @@ import { makeUser, registerUser } from "../helpers/user";
 import { ProfilePage } from "../pages/profile-page";
 import { BookingPage } from "../pages/booking-page";
 
-const slotDateInput = (page: Page) => page.locator('input[type="date"]');
-const slotTimeInput = (page: Page) => page.locator('input[type="time"]');
-const slotAddSubmit = (page: Page) => page.getByRole('button', { name: 'Добавить слот' });
-const slotCard = (page: Page) => page.locator('[data-slot-status="free"]').first();
-
 test("основной путь + гонка за слот", async ({ browser }) => {
   const runId = Date.now();
   const skillTag = `Playwright-demo-${runId}`;
@@ -93,7 +88,7 @@ test("основной путь + гонка за слот", async ({ browser })
     await expect(async () => {
       await guestBooking.goToBookings();
       await expect(guestBooking.upcomingSection()).toBeVisible({ timeout: 5000 });
-      await expect(guestBooking.upcomingSection().getByText(host.name)).toBeVisible({ timeout: 5000 });
+      await expect(guestBooking.upcomingBookingFor(host.name)).toBeVisible({ timeout: 5000 });
     }).toPass({ timeout: 10000 });
   });
 
@@ -101,7 +96,7 @@ test("основной путь + гонка за слот", async ({ browser })
     await expect(async () => {
       await hostBooking.goToBookings();
       await expect(hostBooking.upcomingSection()).toBeVisible({ timeout: 5000 });
-      await expect(hostBooking.upcomingSection().getByText(guest.name)).toBeVisible({ timeout: 5000 });
+      await expect(hostBooking.upcomingBookingFor(guest.name)).toBeVisible({ timeout: 5000 });
     }).toPass({ timeout: 10000 });
   });
 
