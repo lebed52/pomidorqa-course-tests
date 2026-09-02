@@ -12,15 +12,17 @@ export class ProfilePage {
   readonly profileNameInput: Locator;
   readonly profileTelegramInput: Locator;
   readonly profileTimezoneSelect: Locator;
-  readonly profileBioInput: Locator;
+  readonly profileAboutInput: Locator;
   readonly profileSaveButton: Locator;
 
   // Профиль: нижняя форма «Навыки»
-  readonly skillInput: Locator;
-  readonly skillTypeSelect: Locator;
-  readonly addSkillButton: Locator;
+  readonly profileSkillInput: Locator;
+  readonly profileSkillTypeSelect: Locator;
+  readonly profileSkillSubmit: Locator;
   readonly canHelpSkills: Locator;
   readonly skillChips: Locator;
+  readonly profileSkillTags: Locator;
+  readonly profileSkillDrop: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -29,14 +31,21 @@ export class ProfilePage {
     this.profileNameInput = page.getByLabel('Имя');
     this.profileTelegramInput = page.getByLabel('Telegram');
     this.profileTimezoneSelect = page.getByLabel('Часовой пояс');
-    this.profileBioInput = page.getByLabel('О себе');
+    this.profileAboutInput = page.getByLabel('О себе');
     this.profileSaveButton = page.getByRole('button', { name: 'Сохранить' });
 
-    this.skillInput = page.locator('#pomidorqa-profile-skill-input');
-    this.skillTypeSelect = page.locator('#pomidorqa-profile-skill-type');
-    this.addSkillButton = page.getByRole('button', { name: 'Добавить' });
+    this.profileSkillInput = page.locator('#pomidorqa-profile-skill-input');
+    this.profileSkillTypeSelect = page.locator('#pomidorqa-profile-skill-type');
+    this.profileSkillSubmit = page.getByRole('button', { name: 'Добавить' });
     this.canHelpSkills = page.getByTestId('can-help-skills');
     this.skillChips = page.locator('[data-skill-tag]');
+    this.profileSkillTags = page.locator('[data-skill-tag]'); // для всех тегов навыков на странице
+    this.profileSkillDrop = page.getByRole('button', { name: 'Убрать' });
+  }
+
+  // для конкретного тега навыка
+  getProfileSkillTagByName(name: string): Locator {
+    return this.page.locator(`[data-skill-tag="${name}"]`);
   }
 
   getSkillChip(tag: string): Locator {

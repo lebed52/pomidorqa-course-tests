@@ -35,9 +35,9 @@ test.describe('Профиль: создание и бронирование сл
 
     await test.step('Хост: добавляет навык «могу помочь» в профиле', async () => {
       await hostProfile.goto();
-      await hostProfile.skillInput.fill(skillTag);
-      await hostProfile.skillTypeSelect.selectOption('can_help');
-      await hostProfile.addSkillButton.click();
+      await hostProfile.profileSkillInput.fill(skillTag);
+      await hostProfile.profileSkillTypeSelect.selectOption('can_help');
+      await hostProfile.profileSkillSubmit.click();
       await expect(hostProfile.canHelpSkills).toContainText(skillTag);
     });
 
