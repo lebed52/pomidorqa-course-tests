@@ -50,6 +50,10 @@ async save() {
   await saved;
 }
 
-
+async addCanHelpSkill (skillTag: string) {
+    await this.skillInput.fill(skillTag);
+    await this.skillTypeSelect.selectOption("can_help");
+    await this.addSkillButton.click();
+  };
 
 }

@@ -30,8 +30,6 @@ test.describe("Профиль: действия с полями", () => {
   });
 
   test("часовой пояс: выбираем из списка", async ({ page }) => {
-    // По умолчанию стоит Europe/Moscow — берём заведомо другой,
-    // иначе проверка прошла бы и без всякого выбора.
     const timezone = "Asia/Yekaterinburg";
 
     await test.step("Выбираем часовой пояс и сохраняем", async () => {
@@ -78,12 +76,8 @@ test.describe("Профиль: действия с полями", () => {
   test("навык: заполняем, выбираем тип и добавляем", async ({ page }) => {
     const skillTag = `Playwright-demo-${Date.now()}`;
 
-    // Комбо из трёх действий: ввод, выбор в списке, нажатие.
-    // У этой формы своя кнопка «Добавить», к верхнему «Сохранить» она отношения не имеет.
-    await test.step("Добавляем навык «могу помочь»", async () => {
-      await profilePage.skillInput.fill(skillTag);
-      await profilePage.skillTypeSelect.selectOption("can_help");
-      await profilePage.addSkillButton.click();
+      await test.step("Добавляем навык «могу помочь»", async () => {
+      await profilePage.addCanHelpSkill(skillTag);
     });
 
     await test.step("Навык появился в блоке «могу помочь»", async () => {
@@ -98,9 +92,6 @@ test.describe("Профиль: действия с полями", () => {
     });
 
     await test.step("Ни одного навыка не появилось", async () => {
-      // Поле навыка помечено required — браузер не даёт отправить форму.
-      // Проверяем именно результат: чипов ноль и блока «могу помочь» нет,
-      // а не «клик прошёл и ладно».
       await expect(profilePage.skillChips).toHaveCount(0);
       await expect(profilePage.canHelpSkills).not.toBeVisible();
     });
@@ -112,9 +103,7 @@ test.describe("Профиль: действия с полями", () => {
     const wantToLearnTag = `WantToLearn-${runId}`;
 
     await test.step("Добавляем навык «могу помочь»", async () => {
-      await profilePage.skillInput.fill(canHelpTag);
-      await profilePage.skillTypeSelect.selectOption("can_help");
-      await profilePage.addSkillButton.click();
+      await profilePage.addCanHelpSkill(canHelpTag);
       await expect(profilePage.skillChip(canHelpTag)).toBeVisible();
     });
 

@@ -3,6 +3,8 @@ import { test, expect, type Page } from "@playwright/test";
 export const ROUTES = {
   register: "/pomidorqa/auth/register",
   profile: "/pomidorqa/profile",
+  slots: "/pomidorqa/profile/slots",
+  bookings: "/pomidorqa/bookings"
 };
 
 // Локаторы
@@ -10,6 +12,7 @@ const registerNameInput = (page: Page) => page.getByLabel("Имя");
 const registerEmailInput = (page: Page) => page.getByLabel("Email");
 const registerPasswordInput = (page: Page) => page.getByLabel("Пароль");
 const registerSubmitButton = (page: Page) => page.getByRole("button", { name: "Зарегистрироваться" });
+
 
 export type TestUser = {
   name: string;
