@@ -3,49 +3,30 @@ import {ROUTES} from "../helpers/user";
 
 export class ProfilePage {
     readonly page: Page;
+    readonly profileNameInput: Locator;
+    readonly profileTelegramInput: Locator;
+    readonly profileTimezoneSelect: Locator;
+    readonly profileBioInput : Locator;
+    readonly profileSaveButton : Locator;
+    readonly skillInput : Locator;
+    readonly skillTypeSelect : Locator;
+    readonly addSkillButton : Locator;
+    readonly canHelpSkills : Locator;
+    readonly skillChips : Locator;
+
 
     constructor(page: Page) {
         this.page = page;
-    }
-
-    get profileNameInput(): Locator {
-        return this.page.getByLabel("Имя");
-    }
-
-    get profileTelegramInput(): Locator {
-        return this.page.getByLabel("Telegram");
-    }
-
-    get profileTimezoneSelect(): Locator {
-        return this.page.getByLabel("Часовой пояс");
-    }
-
-    get profileBioInput(): Locator {
-        return this.page.getByLabel("О себе");
-    }
-
-    get profileSaveButton(): Locator {
-        return this.page.getByRole("button", { name: "Сохранить" });
-    }
-
-    get skillInput(): Locator {
-        return this.page.locator("#pomidorqa-profile-skill-input");
-    }
-
-    get skillTypeSelect(): Locator {
-        return this.page.locator("#pomidorqa-profile-skill-type");
-    }
-
-    get addSkillButton(): Locator {
-        return this.page.getByRole("button", { name: "Добавить" });
-    }
-
-    get canHelpSkills(): Locator {
-        return this.page.getByTestId("can-help-skills");
-    }
-
-    get skillChips(): Locator {
-        return this.page.locator("[data-skill-tag]");
+        this.profileNameInput = page.getByLabel("Имя");
+        this.profileTelegramInput = page.getByLabel("Telegram");
+        this.profileTimezoneSelect = page.getByLabel("Часовой пояс");
+        this.profileBioInput = page.getByLabel("О себе");
+        this.profileSaveButton = page.getByRole("button", { name: "Сохранить" });
+        this.skillInput = page.getByLabel("Навык");
+        this.skillTypeSelect = page.getByRole("combobox", { name: "Тип" });
+        this.addSkillButton = page.getByRole("button", { name: "Добавить" });
+        this.canHelpSkills = page.getByTestId("can-help-skills");
+        this.skillChips = page.locator("[data-skill-tag]");
     }
 
     getSkillChip(tag: string): Locator {
@@ -70,5 +51,13 @@ export class ProfilePage {
         await this.profileNameInput.fill(name);
         await this.profileTelegramInput.fill(telegram);
         await this.profileBioInput.fill(bio);
+    }
+
+    async gotoProfile() {
+        await this.page.goto(ROUTES.profile);
+    }
+
+    async gotoSlots() {
+        await this.page.goto(ROUTES.slots);
     }
 }

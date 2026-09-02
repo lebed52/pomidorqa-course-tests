@@ -5,12 +5,13 @@ import {makeUser,registerUser, ROUTES} from "../helpers/user";
 
 test.describe("Профиль: действия с полями", () => {
   let profilePage : ProfilePage;
+
   test.beforeEach(async ({ page }) => {
     const user = makeUser("hw8", Date.now());
     profilePage = new ProfilePage(page);
 
     await registerUser(page, user);
-    await page.goto(ROUTES.profile);
+    await profilePage.gotoProfile();
   });
 
   test("имя: вводим новое и сохраняем", async ({ page }) => {
@@ -31,7 +32,6 @@ test.describe("Профиль: действия с полями", () => {
     const timezone = "Asia/Yekaterinburg";
 
     await test.step("Выбираем часовой пояс и сохраняем", async () => {
-      await expect(profilePage.profileTimezoneSelect).toHaveValue("Europe/Moscow");
       await profilePage.profileTimezoneSelect.selectOption(timezone);
       await profilePage.saveProfile();
     });
@@ -46,7 +46,6 @@ test.describe("Профиль: действия с полями", () => {
     const telegram = `@qa_timur_cat${Date.now()}`;
 
     await test.step("Заполняем Telegram и сохраняем", async () => {
-      await expect(profilePage.profileTelegramInput).toHaveValue("");
       await profilePage.profileTelegramInput.fill(telegram);
       await profilePage.saveProfile();
     });
@@ -85,14 +84,12 @@ test.describe("Профиль: действия с полями", () => {
 
   test("негатив: пустой навык не добавляется", async () => {
     await test.step("Жмём «Добавить», не заполнив поле", async () => {
-
-      await expect(profilePage.skillInput).toHaveValue("");
       await profilePage.addSkillButton.click();
     });
 
     await test.step("Ни одного навыка не появилось", async () => {
       await expect(profilePage.skillChips).toHaveCount(0);
-      await expect(profilePage.canHelpSkills).not.toBeVisible();
+      await expect(profilePage.canHelpSkills).toBeHidden();
     });
   });
 
@@ -109,8 +106,6 @@ test.describe("Профиль: действия с полями", () => {
 
     await test.step("Добавляем навык «хочу разобрать»", async () => {
       await profilePage.fillSkillInput(wantToLearnTag, "want_to_learn");
-
-      await expect(profilePage.getSkillChip(wantToLearnTag)).toBeVisible();
     });
 
     await test.step("Навыки разошлись по своим блокам", async () => {

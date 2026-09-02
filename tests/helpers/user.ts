@@ -3,6 +3,8 @@ import {expect, type Page} from "@playwright/test";
 export const ROUTES = {
     register: "/pomidorqa/auth/register",
     profile: "/pomidorqa/profile",
+    slots: "/pomidorqa/profile/slots",
+    bookings: "/pomidorqa/bookings",
 };
 
 const registerNameInput = (page: Page) => page.getByLabel("Имя");
