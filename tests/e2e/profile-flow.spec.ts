@@ -1,6 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import {ROUTES, makeUser, registerUser} from "../helpers/user";
-import {} from "../pages/profile-page";
+import {ProfilePage} from "../pages/profile-page";
 
 // Урок 8, Act: действия с полями профиля.
 // Сцена (Arrange) одна на все тесты — зарегистрированный пользователь на своей странице профиля.
