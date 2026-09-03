@@ -8,7 +8,8 @@
     "test:unit": "playwright test --project=unit",
     "test:api": "playwright test --project=api",
     "test:e2e": "playwright test --project=e2e",
-    "report": "playwright show-report"
+    "report": "playwright show-report",
+    "lint": "eslint tests"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",
