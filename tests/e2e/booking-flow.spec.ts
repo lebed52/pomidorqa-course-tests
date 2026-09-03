@@ -1,28 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-
-// E2E-уровень пирамиды: реальный браузер на живом стенде aiqa.su/pomidorqa.
-// После ДЗ Урока 4: guest2 открывает тот же слот и должен увидеть ошибку.
-// host/guest уже через registerUser; регистрация guest2 пока инлайн — это заготовка к ДЗ Урока 5.
-//POMIDORQA_BASE_URL=http://localhost:3000 npx playwright test --project=e2e tests/e2e/booking-flow.spec.ts
-
-type TestUser = {
-  name: string;
-  email: string;
-  password: string;
-};
-
-function makeUser(role: string, runId: number): TestUser {
-  return {
-    name: `${role} Автотест`,
-    email: `${role}-${runId}@example.com`,
-    password: "testpass123",
-  };
-}
-//Локаторы
-const registerNameInput = (page: Page) => page.getByLabel("Имя");
-const registerEmailInput = (page: Page) => page.getByLabel("Email");
-const registerPasswordInput = (page: Page) => page.getByLabel("Пароль");
-const registerSubmitButton = (page: Page) => page.getByRole("button", { name: "Зарегистрироваться" });
+import { makeUser, registerUser, ROUTES } from "../helpers/user";
 
 const profileSkillInput = (page: Page) => page.locator("#pomidorqa-profile-skill-input");
 const profileSkillTypeSelect = (page: Page) => page.locator("#pomidorqa-profile-skill-type");
@@ -55,16 +32,6 @@ const bookingsUpcomingSection = (page: Page) => page.getByTestId("upcoming-meeti
 const bookingsCardName = (page: Page) =>
   bookingsUpcomingSection(page).locator("[data-booking-id]").first().locator("p").first();
 
-
-async function registerUser(page: Page, user: TestUser) {
-  await page.goto("/pomidorqa/auth/register");
-  await registerNameInput(page).fill(user.name);
-  await registerEmailInput(page).fill(user.email);
-  await registerPasswordInput(page).fill(user.password);
-  await registerSubmitButton(page).click();
-  await expect(page).toHaveURL(/\/pomidorqa\/?$/);
-}
-
 test("основной путь + гонка за слот: регистрация → навык → слот → поиск в каталоге → бронирование → «Мои встречи» у обоих → второй гость видит ошибку", async ({
   browser,
 }) => {
@@ -87,7 +54,7 @@ test("основной путь + гонка за слот: регистраци
   });
  
   await test.step('Хост: добавляет навык «могу помочь» в профиле', async () => {
-    await hostPage.goto("/pomidorqa/profile");
+    await hostPage.goto(ROUTES.profile);
     await profileSkillInput(hostPage).fill(skillTag);
     await profileSkillTypeSelect(hostPage).selectOption("can_help");
     await profileSkillSubmit(hostPage).click();
@@ -95,7 +62,7 @@ test("основной путь + гонка за слот: регистраци
   });
 
   await test.step("Хост: добавляет свободный слот на завтра", async () => {
-    await hostPage.goto("/pomidorqa/profile/slots");
+    await hostPage.goto(ROUTES.slots);
     const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
     const date = tomorrow.toISOString().slice(0, 10);
     await slotsDateInput(hostPage).fill(date);
@@ -184,7 +151,7 @@ test("основной путь + гонка за слот: регистраци
 
   await test.step("Гость: видит бронирование в разделе «Мои встречи»", async () => {
     await expect(async () => {
-      await guestPage.goto("/pomidorqa/bookings");
+      await guestPage.goto(ROUTES.bookings);
       const card = bookingsCardName(guestPage);
       await expect(card).toHaveText(host.name);
     }).toPass({ timeout: 10_000 });
@@ -192,7 +159,7 @@ test("основной путь + гонка за слот: регистраци
 
   await test.step("Хост: тоже видит это бронирование в своих «Мои встречи»", async () => {
     await expect(async () => {
-      await hostPage.goto("/pomidorqa/bookings");
+      await hostPage.goto(ROUTES.bookings);
       const card = bookingsCardName(hostPage);
       await expect(card).toHaveText(guest.name);
     }).toPass({ timeout: 10_000 });
