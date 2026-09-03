@@ -28,7 +28,7 @@
 ## Установка
 
 ```bash
-npm install
+npm ci
 npx playwright install chromium
 ```
 
@@ -39,6 +39,7 @@ npm run test:unit   # Unit — без сети и без браузера
 npm run test:api    # API — HTTP-запросы к локальному мок-серверу
 npm run test:e2e    # E2E — реальный браузер на живом aiqa.su/pomidorqa
 npm test            # все три уровня сразу
+npm run lint        # правила Playwright: await, timeout, force, only, pause
 npm run report      # открыть HTML-отчёт последнего прогона
 ```
 
@@ -57,6 +58,19 @@ tests/unit/        — пересечение слотов по времени, 
 tests/api/         — регистрация, бронирование, гонка за слот — через HTTP к локальному мок-серверу
 tests/e2e/         — реальный сценарий бронирования и негативный сценарий логина в браузере
 ```
+
+## CI в Pull Request
+
+Каждый Pull Request в `main` автоматически запускает GitHub Actions:
+
+1. устанавливает зависимости командой `npm ci`;
+2. устанавливает Chromium и системные библиотеки;
+3. запускает `npm run lint`;
+4. запускает все Playwright-тесты командой `npm test`;
+5. сохраняет HTML-отчёт `playwright-report` в Artifacts даже после падения теста.
+
+Зелёный check означает, что проект воспроизводимо прошёл известные проверки на чистом runner.
+Он не заменяет ревью и не доказывает отсутствие всех багов.
 
 ## Материал к Уроку 3 («Программирование с нуля через JS/TS»)
 
