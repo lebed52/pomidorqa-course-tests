@@ -1,5 +1,4 @@
 import { type Locator, type Page } from "@playwright/test";
-
 import { ROUTES } from "../helpers/user";
 
 export class ProfilePage{
@@ -33,11 +32,11 @@ export class ProfilePage{
     return this.page.locator(`[data-skill-tag="${tag}"]`);
   }
 
-  async goto(): Promise<void> {
+  async goto() {
     await this.page.goto(ROUTES.profile);
   }
 
-  async saveProfile(): Promise<void> {
+  async saveProfile() {
     const saved = this.page.waitForResponse(
       (response) =>
         response.url().endsWith(ROUTES.profile) &&
@@ -47,20 +46,26 @@ export class ProfilePage{
     await saved;
   }
 
-  async fillProfileName(name: string): Promise<void> {
+  async fillProfileName(name: string) {
     await this.profileNameInput.fill(name);
   }
 
-  async fillProfileTelegram(telegram: string): Promise<void> {
+  async fillProfileTelegram(telegram: string) {
     await this.profileTelegramInput.fill(telegram);
   }
 
-  async fillProfileTimezone(timezone: string): Promise<void> {
+  async fillProfileTimezone(timezone: string) {
     await this.profileTimezoneSelect.selectOption(timezone);
   }
 
-  async fillProfileBio(bio: string): Promise<void> {
+  async fillProfileBio(bio: string) {
     await this.profileBioInput.fill(bio);
+  }
+
+  async addSkill(tag: string, type = "can_help") {
+    await this.skillInput.fill(tag);
+    await this.skillTypeSelect.selectOption(type);
+    await this.addSkillButton.click();
   }
 }
 
