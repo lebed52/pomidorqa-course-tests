@@ -12,7 +12,7 @@ export class BookingPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.calendarDay = page.locator('[aria-pressed="true"]');
+    this.calendarDay = page.getByRole('group', { name: 'Дни со слотами' }).getByRole('button');
     this.calendarTime = page.getByRole('group', { name: 'Время слотов' }).getByRole('button');
     this.confirmModalDialog = page.locator('[role="dialog"]');
     this.modalDialogConfirm = page.getByRole('button', { name: 'Подтвердить' });
@@ -41,8 +41,11 @@ export class BookingPage {
   }
 
   async selectFirstSlot() {
-    await this.calendarDay.first().click();
-    await this.calendarTime.first().click();
+    await expect(async () => {
+      await this.calendarDay.first().click();
+      await this.calendarTime.first().click();
+      await expect(this.confirmModalDialog).toBeVisible();
+    }).toPass({ timeout: 15_000 });
   }
   async openBookings() {
     await this.page.goto('/pomidorqa/bookings');

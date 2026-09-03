@@ -65,7 +65,6 @@ test('основной путь + гонка за слот: регистраци
   await test.step('Гость: кликает по дню и времени в календаре слотов', async () => {
     await guestBooking.waitForFreeSlot();
     await guestBooking.selectFirstSlot();
-    await expect(guestBooking.confirmModalDialog).toBeVisible();
   });
 
   await test.step('Гость2: регистрируется и тоже открывает окно бронирования на тот же слот', async () => {
@@ -78,7 +77,6 @@ test('основной путь + гонка за слот: регистраци
 
     await guest2Booking.waitForFreeSlot();
     await guest2Booking.selectFirstSlot();
-    await expect(guest2Booking.confirmModalDialog).toBeVisible();
   });
 
   await test.step('Гость: подтверждает бронирование первым — успех', async () => {

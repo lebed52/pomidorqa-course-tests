@@ -7,6 +7,11 @@ export type TestUser = {
   password: string;
 };
 
+export const ROUTES = {
+  register: '/pomidorqa/auth/register',
+  login: '/pomidorqa/auth/login',
+};
+
 export function makeUser(role: string, runId: number): TestUser {
   return {
     name: `${role} Автотест`,
@@ -26,4 +31,11 @@ export async function registerUser(page: Page, user: TestUser) {
   await page.getByLabel('Пароль').fill(user.password);
   await page.getByRole('button', { name: 'Зарегистрироваться' }).click();
   await expect(page).toHaveURL(/\/pomidorqa\/?$/);
+}
+
+export async function loginUser(page: Page, email: string, password: string) {
+  await page.goto(ROUTES.login);
+  await page.getByLabel('Email').fill(email);
+  await page.getByLabel('Пароль').fill(password);
+  await page.getByRole('button', { name: 'Войти' }).click();
 }
