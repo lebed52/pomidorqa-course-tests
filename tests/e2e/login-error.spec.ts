@@ -21,6 +21,7 @@ test("вход с неверными данными — одинаковая о�
   });
 
   let wrongPasswordError = "";
+
   await test.step("Пробуем войти с верным email, но неверным паролем", async () => {
     await page.goto("/pomidorqa/auth/login");
     await page.getByLabel("Email").fill(email);
@@ -32,6 +33,7 @@ test("вход с неверными данными — одинаковая о�
   });
 
   let unknownEmailError = "";
+
   await test.step("Пробуем войти с несуществующим email", async () => {
     await page.goto("/pomidorqa/auth/login");
     await page.getByLabel("Email").fill(`no-such-user-${runId}@example.com`);
