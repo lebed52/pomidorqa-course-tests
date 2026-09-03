@@ -25,8 +25,8 @@ export class BookingPage {
     this.catalogFilterSubmit = page.getByRole("button", { name: "Найти" });
     this.catalogCard = page.getByTestId("person-card");
     this.personName = page.getByRole("heading", { level: 1 });
-    this.bookingCalendarDay = page.getByRole("group", { name: "Дни со слотами" }).getByRole("button");
-    this.bookingCalendarTime = page.getByRole("group", { name: "Время слотов" }).getByRole("button");
+    this.bookingCalendarDay = page.locator('[data-date]');
+    this.bookingCalendarTime = page.locator('[data-slot-id]');
     this.bookingConfirmDialog = page.getByRole("dialog");
     this.bookingConfirmButton = page.getByRole("dialog").getByRole("button", { name: "Подтвердить" });
     this.bookingConfirmSuccess = page.getByRole("dialog").getByRole("status");

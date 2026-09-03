@@ -59,8 +59,22 @@ export class ProfilePage {
     await this.addButton.click();
   }
 
-  async removeSkill() {
-    await this.page.getByTestId(/^ProfileSkill-remove-/).click();
+  async removeSkill(skillName: string) {
+    await this.page
+      .locator('[data-skills="can_help"] div, [data-skill-tag]') 
+      .filter({ hasText: skillName })
+      .locator('button, [role="button"], svg')
+      .first()
+      .click();
   }
+
+  async saveProfile(page: Page) {
+    const saved = page.waitForResponse(
+      (response) => response.url().endsWith(ROUTES.profile) && response.request().method() === "POST"
+    );
+    await this.saveButton.click();
+    await saved;
+  }
+  
 }
 

@@ -36,9 +36,9 @@ export function makeUser(role: string, runId: number): TestUser {
 
 export async function registerUser(page: Page, user: TestUser) {
   await page.goto(ROUTES.register);
-  await page.getByLabel("Имя").fill(user.name);
-  await page.getByLabel("Email").fill(user.email);
-  await page.getByLabel("Пароль").fill(user.password);
+  await page.locator('#pomidorqa-register-name').fill(user.name);
+  await page.locator('#pomidorqa-register-email').fill(user.email);
+  await page.locator('#pomidorqa-register-password').fill(user.password);
   await page.getByRole("button", { name: "Зарегистрироваться" }).click();
   await expect(page).toHaveURL(/\/pomidorqa\/?$/);
 }
