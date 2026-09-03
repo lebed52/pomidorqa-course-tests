@@ -131,13 +131,8 @@ test("основной путь + гонка за слот: регистраци
     }).toPass({ timeout: 10_000 });
 
     await bookingCalendarDay(guestPage).first().click();
-    await expect(async () => {
-      const dialog = bookingConfirmDialog(guestPage);
-      if (!(await dialog.isVisible().catch(() => false))) {
-        await bookingCalendarTime(guestPage).first().click();
-      }
-      await expect(dialog).toBeVisible({ timeout: 2_000 });
-    }).toPass({ timeout: 15_000 });
+    await bookingCalendarTime(guestPage).first().click();
+    await expect(bookingConfirmDialog(guestPage)).toBeVisible();
   });
 
   // Важно для разбора ДЗ 4: модалку guest2 открываем ДО confirm у guest.
@@ -159,13 +154,8 @@ test("основной путь + гонка за слот: регистраци
     }).toPass({ timeout: 10_000 });
 
     await bookingCalendarDay(guest2Page).first().click();
-    await expect(async () => {
-      const dialog = bookingConfirmDialog(guest2Page);
-      if (!(await dialog.isVisible().catch(() => false))) {
-        await bookingCalendarTime(guest2Page).first().click();
-      }
-      await expect(dialog).toBeVisible({ timeout: 2_000 });
-    }).toPass({ timeout: 15_000 });
+    await bookingCalendarTime(guest2Page).first().click();
+    await expect(bookingConfirmDialog(guest2Page)).toBeVisible();
   });
 
   await test.step("Гость: подтверждает бронирование первым — успех", async () => {

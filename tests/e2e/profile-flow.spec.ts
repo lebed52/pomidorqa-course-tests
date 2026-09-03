@@ -172,7 +172,7 @@ test.describe("Профиль: действия с полями", () => {
       // Проверяем именно результат: чипов ноль и блока «могу помочь» нет,
       // а не «клик прошёл и ладно».
       await expect(skillChips(page)).toHaveCount(0);
-      await expect(canHelpSkills(page)).toBeHidden();
+      await expect(canHelpSkills(page)).not.toBeVisible();
     });
   });
 

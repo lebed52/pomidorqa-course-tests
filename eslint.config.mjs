@@ -23,7 +23,10 @@ export default [
       "playwright/no-focused-test": "error",
       "playwright/expect-expect": "error",
       "playwright/no-conditional-in-test": "off",
-      "playwright/valid-title": "warn",
+      // Эти правила форматируют уже существующие учебные тесты, но не ловят флаки.
+      "playwright/consistent-spacing-between-blocks": "off",
+      "playwright/no-useless-not": "off",
+      "playwright/valid-title": "off",
     },
   },
 ];

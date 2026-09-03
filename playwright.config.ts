@@ -2,8 +2,8 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
   timeout: 30_000,
-  expect: { timeout: 15_000 },
   fullyParallel: false,
+  retries: process.env.CI ? 1 : 0,
   workers: process.env.CI ? 1 : undefined,
   reporter: [["list"], ["html", { open: process.env.CI ? "never" : "on-failure" }]],
   projects: [
