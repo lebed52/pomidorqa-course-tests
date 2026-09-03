@@ -9,7 +9,7 @@ export class ProfilePage {
   profileBioInput: Locator;
   profileSaveButton: Locator;
 
-// Профиль: нижняя форма «Навыки», у неё своя кнопка
+
   skillInput: Locator;  
   skillTypeSelect: Locator;
   addSkillButton: Locator;

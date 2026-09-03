@@ -30,5 +30,6 @@ export async function registerUser(page: Page, user: TestUser) {
   await registerEmailInput(page).fill(user.email);
   await registerPasswordInput(page).fill(user.password);
   await registerSubmitButton(page).click();
+  
   await expect(page).toHaveURL(/\/pomidorqa\/?$/);
 }

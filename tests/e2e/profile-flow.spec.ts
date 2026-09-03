@@ -7,6 +7,7 @@ import { ProfilePage } from "./pages/profile-page";
 test.describe("Профиль: действия с полями", () => {
   
   let profile: ProfilePage;
+
   test.beforeEach(async ({ page }) => {
     const user = makeUser("hw8", Date.now());
     await registerUser(page, user);
@@ -28,7 +29,7 @@ test.describe("Профиль: действия с полями", () => {
     });
   });
 
-  test("Изменение часового пояса в профиле", async ({ page }) => {
+  test("Изменение часового пояса в профиле", async () => {
     const timezone = "Asia/Yekaterinburg";
 
     await test.step("Выбираем часовой пояс и сохраняем", async () => {
@@ -58,7 +59,7 @@ test.describe("Профиль: действия с полями", () => {
     });
   });
 
-  test("Заполнение многострочного поля О себе", async ({ page }) => {
+  test("Заполнение многострочного поля О себе", async () => {
     const bio = `QA-инженер, прогон ${Date.now()}. Пытаюсь разобраться в Playwright.`;
 
     await test.step("Заполняем «О себе» и сохраняем", async () => {
@@ -72,7 +73,7 @@ test.describe("Профиль: действия с полями", () => {
     });
   });
 
-  test("Добавление навыка в раздел 'Могу помочь'", async ({ page }) => {
+  test("Добавление навыка в раздел 'Могу помочь'", async () => {
     const skillTag = `Playwright-demo-${Date.now()}`;
 
     await test.step("Добавляем навык «могу помочь»", async () => {
@@ -84,8 +85,7 @@ test.describe("Профиль: действия с полями", () => {
     });
   });
 
-  test("Негатив: пустой навык не добавляется", async ({ page }) => {
-    
+  test("Негатив: пустой навык не добавляется", async () => {
     await test.step("Жмём «Добавить», не заполнив поле", async () => {
       await expect(profile.skillInput).toHaveValue("");
       await profile.addSkillButton.click(); 
@@ -93,11 +93,11 @@ test.describe("Профиль: действия с полями", () => {
 
     await test.step("Ни одного навыка не появилось", async () => {
       await expect(profile.skillChips).toHaveCount(0);
-      await expect(profile.canHelpSkills).not.toBeVisible();
+      await expect(profile.canHelpSkills).toBeHidden();
     });
   });
 
-  test("Негатив: навык «хочу разобрать» не попадает в блок «могу помочь»", async ({ page }) => {
+  test("Негатив: навык «хочу разобрать» не попадает в блок «могу помочь»", async () => {
     const runId = Date.now();
     const canHelpTag = `CanHelp-${runId}`;
     const wantToLearnTag = `WantToLearn-${runId}`;

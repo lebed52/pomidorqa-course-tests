@@ -12,7 +12,6 @@ test("основной путь + гонка за слот: регистраци
   const guest = makeUser("guest", runId);
   const guest2 = makeUser("guest2", runId);
 
-  // Три независимых аккаунта = три независимых браузерных контекста
   const hostContext = await browser.newContext();
   const guestContext = await browser.newContext();
   const guest2Context = await browser.newContext();
