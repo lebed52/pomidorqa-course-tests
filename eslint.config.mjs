@@ -5,9 +5,6 @@ const playwrightRecommended = playwright.configs["flat/recommended"];
 
 export default [
   {
-    ignores: ["**/ci-fail-demo.spec.ts"],
-  },
-  {
     ...playwrightRecommended,
     files: ["tests/**/*.ts"],
     languageOptions: {
