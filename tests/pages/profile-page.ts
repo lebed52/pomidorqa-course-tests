@@ -64,4 +64,10 @@ export class ProfilePage {
     await this.profileSaveButton.click();
     await saved;
   }
+
+  async addSkill(tag: string, label: 'Хочу разобрать' | 'Могу помочь') {
+    await this.profileSkillInput.fill(tag);
+    await this.profileSkillTypeSelect.selectOption({ label });
+    await this.profileSkillSubmit.click();
+  }
 }

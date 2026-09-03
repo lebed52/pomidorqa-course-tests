@@ -5,7 +5,9 @@ import { BookingPage } from '../pages/booking-page';
 import { SlotsPage } from '../pages/slots-page';
 
 test.describe('Профиль: создание и бронирование слота', () => {
-  test.beforeEach(async ({ browser }) => {
+  test('основной путь + гонка за слот: регистрация → навык → слот → поиск в каталоге → бронирование → «Мои встречи» у обоих → второй гость видит ошибку', async ({
+    browser,
+  }) => {
     // Arrange: три независимых актора — свои контексты, свои страницы, свои PO
     const runId = Date.now();
     const skillTag = `Playwright-demo-${runId}`;
@@ -42,8 +44,6 @@ test.describe('Профиль: создание и бронирование сл
     });
 
     await test.step('Хост: добавляет свободный слот на завтра', async () => {
-      // SlotsPage.goto() ведёт на ROUTES.booking, а не на страницу слотов,
-      // поэтому переходим на нужный урл явно.
       await hostPage.goto('/pomidorqa/profile/slots');
       const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
       const date = tomorrow.toISOString().slice(0, 10);

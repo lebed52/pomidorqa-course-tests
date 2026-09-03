@@ -1,7 +1,6 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import { ProfilePage } from '../pages/profile-page';
 import { makeUser, registerUser } from '../helpers/user';
-import { userInfo } from 'os';
 
 test.describe('Внесение данных в профиле', () => {
   let profilePage: ProfilePage;
@@ -15,71 +14,69 @@ test.describe('Внесение данных в профиле', () => {
       skillTag = `Skill-${runId}`;
 
       await registerUser(page, user);
-      await page.goto('/pomidorqa/profile');
+      await profilePage.goto();
     });
   });
 
-  // Тест №1
-  test('Тест №1: Изменение имени в профиле', async ({ page }) => {
+  test('профиль: имя сохраняется после перезагрузки', async ({ page }) => {
     const username = `имя ${Date.now()}`;
 
     await test.step('Заполнить и сохранить новое имя', async () => {
       await profilePage.profileNameInput.fill(username);
-      await profilePage.profileSaveButton.click();
+      await profilePage.saveProfile();
     });
 
-    await test.step('Проверить, что новое имя сохранилось', async () => {
+    await test.step('После перезагрузки имя пришло с сервера', async () => {
+      await page.reload();
       await expect(profilePage.profileNameInput).toHaveValue(username);
     });
   });
 
-  // Тест №2
-  test('Тест №2: Изменение профиля Telegram в профиле', async ({ page }) => {
+  test('профиль: telegram сохраняется после перезагрузки', async ({ page }) => {
     const telegramName = `@TG-${Date.now()}`;
 
     await test.step('Заполнить и сохранить Telegram', async () => {
       await profilePage.profileTelegramInput.fill(telegramName);
-      await profilePage.profileSaveButton.click();
+      await profilePage.saveProfile();
     });
 
-    await test.step('Проверить отображение Telegram', async () => {
+    await test.step('После перезагрузки Telegram пришёл с сервера', async () => {
+      await page.reload();
       await expect(profilePage.profileTelegramInput).toHaveValue(telegramName);
     });
   });
 
-  // Тест №3
-  test('Тест №3: Изменение часового пояса в профиле', async ({ page }) => {
+  test('профиль: часовой пояс сохраняется после перезагрузки', async ({ page }) => {
     const timezoneIrkutsk = 'Asia/Irkutsk';
 
     await test.step('Выбрать и сохранить часовой пояс', async () => {
       await profilePage.profileTimezoneSelect.selectOption(timezoneIrkutsk);
-      await profilePage.profileSaveButton.click();
+      await profilePage.saveProfile();
     });
-    await test.step('Проверить выбранный часовой пояс', async () => {
+
+    await test.step('После перезагрузки выбран новый пояс', async () => {
+      await page.reload();
       await expect(profilePage.profileTimezoneSelect).toHaveValue(timezoneIrkutsk);
     });
   });
 
-  // Тест №4
-  test('Тест №4: Изменение описания о себе в профиле', async ({ page }) => {
+  test('профиль: описание "о себе" сохраняется после перезагрузки', async ({ page }) => {
     const aboutText = `About me ${Date.now()}`;
 
     await test.step('Заполнить поле "О себе" и сохранить', async () => {
       await profilePage.profileAboutInput.fill(aboutText);
-      await profilePage.profileSaveButton.click();
+      await profilePage.saveProfile();
     });
 
-    await test.step('Проверить текст в поле "О себе"', async () => {
+    await test.step('После перезагрузки текст пришёл с сервера', async () => {
+      await page.reload();
       await expect(profilePage.profileAboutInput).toHaveValue(aboutText);
     });
   });
 
-  // Тест №5
-  test('Тест №5: Добавление навыка в профиле', async ({ page }) => {
-    await test.step('Заполнить форму и добавить навык', async () => {
-      await profilePage.profileSkillInput.fill(skillTag);
-      await profilePage.profileSkillTypeSelect.selectOption({ label: 'Хочу разобрать' });
-      await profilePage.profileSkillSubmit.click();
+  test('навыки: добавленный навык появляется в списке', async () => {
+    await test.step('Добавить навык', async () => {
+      await profilePage.addSkill(skillTag, 'Хочу разобрать');
     });
 
     await test.step('Проверить появление тега навыка', async () => {
@@ -87,12 +84,9 @@ test.describe('Внесение данных в профиле', () => {
     });
   });
 
-  // Тест №6
-  test('Тест №6: Удаление навыка из профиля', async ({ page }) => {
+  test('навыки: удалённый навык пропадает из списка', async () => {
     await test.step('Добавить навык', async () => {
-      await profilePage.profileSkillInput.fill(skillTag);
-      await profilePage.profileSkillTypeSelect.selectOption({ label: 'Хочу разобрать' });
-      await profilePage.profileSkillSubmit.click();
+      await profilePage.addSkill(skillTag, 'Хочу разобрать');
     });
 
     await test.step('Удалить добавленный навык', async () => {
@@ -104,26 +98,19 @@ test.describe('Внесение данных в профиле', () => {
     });
   });
 
-  // Тест №7
-  test('Тест №7: Добавление нескольких навыков', async ({ page }) => {
+  test('навыки: три навыка добавляются и отображаются все', async () => {
     const skillTag1 = `${skillTag}-1`;
     const skillTag2 = `${skillTag}-2`;
     const skillTag3 = `${skillTag}-3`;
 
-    await test.step('Заполнить форму и добавить 3 навыка', async () => {
-      await profilePage.profileSkillInput.fill(skillTag1);
-      await profilePage.profileSkillTypeSelect.selectOption({ label: 'Хочу разобрать' });
-      await profilePage.profileSkillSubmit.click();
+    await test.step('Добавить 3 навыка', async () => {
+      await profilePage.addSkill(skillTag1, 'Хочу разобрать');
       await expect(profilePage.getProfileSkillTagByName(skillTag1)).toBeVisible();
 
-      await profilePage.profileSkillInput.fill(skillTag2);
-      await profilePage.profileSkillTypeSelect.selectOption({ label: 'Хочу разобрать' });
-      await profilePage.profileSkillSubmit.click();
+      await profilePage.addSkill(skillTag2, 'Хочу разобрать');
       await expect(profilePage.getProfileSkillTagByName(skillTag2)).toBeVisible();
 
-      await profilePage.profileSkillInput.fill(skillTag3);
-      await profilePage.profileSkillTypeSelect.selectOption({ label: 'Хочу разобрать' });
-      await profilePage.profileSkillSubmit.click();
+      await profilePage.addSkill(skillTag3, 'Хочу разобрать');
       await expect(profilePage.getProfileSkillTagByName(skillTag3)).toBeVisible();
     });
 
@@ -132,12 +119,9 @@ test.describe('Внесение данных в профиле', () => {
     });
   });
 
-  // Тест №8
-  test('Тест №8: Очистка поля ввода навыка после добавления', async ({ page }) => {
-    await test.step('Заполнить и добавить навык', async () => {
-      await profilePage.profileSkillInput.fill(skillTag);
-      await profilePage.profileSkillTypeSelect.selectOption({ label: 'Хочу разобрать' });
-      await profilePage.profileSkillSubmit.click();
+  test('навыки: поле ввода очищается после добавления', async () => {
+    await test.step('Добавить навык', async () => {
+      await profilePage.addSkill(skillTag, 'Хочу разобрать');
     });
 
     await test.step('Дождаться появления тега в UI', async () => {
