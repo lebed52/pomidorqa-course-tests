@@ -26,9 +26,7 @@ test("основной путь + гонка за слот: регистраци
 
   await test.step('Хост: добавляет навык «могу помочь» в профиле', async () => {
     await hostPage.goto("/pomidorqa/profile");
-    await hostProfilePage.profileSkillInput.fill(skillTag);
-    await hostProfilePage.profileSkillTypeSelect.selectOption("can_help");
-    await hostProfilePage.profileAddSkillButton.click();
+    await hostProfilePage.addSkill(skillTag, "can_help");
     await expect(hostProfilePage.profileCanHelpSkills).toContainText(skillTag);
   });
 

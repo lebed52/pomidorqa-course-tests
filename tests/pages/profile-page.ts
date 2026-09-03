@@ -30,11 +30,17 @@ export class ProfilePage {
         this.profileSkillChips = page.locator("[data-skill-tag]");
     }
 
-    async saveProfile(page: Page) {
-        const saved = page.waitForResponse(
+    async saveProfile() {
+        const saved = this.page.waitForResponse(
             (response) => response.url().endsWith(ROUTES.profile) && response.request().method() === "POST"
         );
         await this.profileSaveButton.click();
         await saved;
+    }
+
+    async addSkill(tag: string, type: "can_help" | "want_to_learn") {
+        await this.profileSkillInput.fill(tag);
+        await this.profileSkillTypeSelect.selectOption(type);
+        await this.profileAddSkillButton.click();
     }
 }

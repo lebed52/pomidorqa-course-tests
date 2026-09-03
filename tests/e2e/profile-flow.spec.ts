@@ -19,7 +19,7 @@ test.describe("Профиль: действия с полями", () => {
 
     await test.step("Заполняем поле и сохраняем", async () => {
       await profilePage.profileNameInput.fill(newName);
-      await profilePage.saveProfile(page);
+      await profilePage.saveProfile();
     });
 
     await test.step("После перезагрузки имя пришло с сервера", async () => {
@@ -36,7 +36,7 @@ test.describe("Профиль: действия с полями", () => {
     await test.step("Выбираем часовой пояс и сохраняем", async () => {
       await expect(profilePage.profileTimezoneSelect).toHaveValue("Europe/Moscow");
       await profilePage.profileTimezoneSelect.selectOption(timezone);
-      await profilePage.saveProfile(page);
+      await profilePage.saveProfile();
     });
 
     await test.step("После перезагрузки выбран новый пояс", async () => {
@@ -51,7 +51,7 @@ test.describe("Профиль: действия с полями", () => {
     await test.step("Заполняем Telegram и сохраняем", async () => {
       await expect(profilePage.profileTelegramInput).toHaveValue("");
       await profilePage.profileTelegramInput.fill(telegram);
-      await profilePage.saveProfile(page);
+      await profilePage.saveProfile();
     });
 
     await test.step("После перезагрузки Telegram пришёл с сервера", async () => {
@@ -65,7 +65,7 @@ test.describe("Профиль: действия с полями", () => {
 
     await test.step("Заполняем «О себе» и сохраняем", async () => {
       await profilePage.profileBioInput.fill(bio);
-      await profilePage.saveProfile(page);
+      await profilePage.saveProfile();
     });
 
     await test.step("После перезагрузки текст пришёл с сервера", async () => {
@@ -80,9 +80,7 @@ test.describe("Профиль: действия с полями", () => {
     // Комбо из трёх действий: ввод, выбор в списке, нажатие.
     // У этой формы своя кнопка «Добавить», к верхнему «Сохранить» она отношения не имеет.
     await test.step("Добавляем навык «могу помочь»", async () => {
-      await profilePage.profileSkillInput.fill(skillTag);
-      await profilePage.profileSkillTypeSelect.selectOption("can_help");
-      await profilePage.profileAddSkillButton.click();
+      await profilePage.addSkill(skillTag, "can_help");
     });
 
     await test.step("Навык появился в блоке «могу помочь»", async () => {
@@ -111,16 +109,12 @@ test.describe("Профиль: действия с полями", () => {
     const wantToLearnTag = `WantToLearn-${runId}`;
 
     await test.step("Добавляем навык «могу помочь»", async () => {
-      await profilePage.profileSkillInput.fill(canHelpTag);
-      await profilePage.profileSkillTypeSelect.selectOption("can_help");
-      await profilePage.profileAddSkillButton.click();
+      await profilePage.addSkill(canHelpTag, "can_help");
       await expect(profilePage.profileSkillChips).toBeVisible();
     });
 
     await test.step("Добавляем навык «хочу разобрать»", async () => {
-      await profilePage.profileSkillInput.fill(wantToLearnTag);
-      await profilePage.profileSkillTypeSelect.selectOption("want_to_learn");
-      await profilePage.profileAddSkillButton.click();
+      await profilePage.addSkill(wantToLearnTag, "want_to_learn");
       await expect(profilePage.profileSkillChips).toBeVisible();
     });
 
@@ -142,7 +136,7 @@ test.describe("Профиль: действия с полями", () => {
       await profilePage.profileNameInput.fill(name);
       await profilePage.profileTelegramInput.fill(telegram);
       await profilePage.profileBioInput.fill(bio);
-      await profilePage.saveProfile(page);
+      await profilePage.saveProfile();
     });
 
     await test.step("После перезагрузки все три значения пришли с сервера", async () => {
