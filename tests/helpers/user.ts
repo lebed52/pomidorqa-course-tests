@@ -27,7 +27,9 @@ export async function registerUser(page: Page, user: TestUser) {
   await page.getByLabel("Email").fill(user.email);
   await page.getByLabel("Пароль").fill(user.password);
   await page.getByRole("button", { name: "Зарегистрироваться" }).click();
-  await expect(page).toHaveURL(/\/pomidorqa\/?$/);
+  // Стенд общий и живой: редирект после регистрации иногда не укладывается
+  // в дефолтные 5 секунд expect — за день прогонов словил такой таймаут дважды.
+  await expect(page).toHaveURL(/\/pomidorqa\/?$/, { timeout: 15_000 });
 }
 
 export async function registerInNewContext(browser: Browser, user: TestUser): Promise<Page> {

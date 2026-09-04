@@ -45,22 +45,23 @@ export class BookingPage {
     await this.personCard(name).click();
   }
 
-  // Календарь перерисовывается, когда слоты доезжают с сервера, и клик уходит в старый DOM:
-  // кнопки нажались, а окно брони не открылось. Поэтому цепочка повторяется целиком.
+  // Переход из каталога — клиентская навигация Next.js: разметка календаря уже
+  // на месте, а обработчики React ещё не навешаны, и клик уходит впустую —
+  // кнопки нажимаются, окно брони не открывается. Замер: без повтора модалка
+  // открывается в 3 попытках из 8, с повтором — в 8 из 8.
   async openFirstSlot() {
-    const deadline = Date.now() + 20_000;
+    const deadline = Date.now() + 15_000;
 
     for (;;) {
       try {
         await this.calendarDays.first().click({ timeout: 5_000 });
         await this.calendarTimes.first().click({ timeout: 5_000 });
-        await this.confirmDialog.waitFor({ state: "visible", timeout: 5_000 });
+        await this.confirmDialog.waitFor({ state: "visible", timeout: 3_000 });
         return;
       } catch (error) {
         if (Date.now() > deadline) {
           throw error;
         }
-        await this.page.reload();
       }
     }
   }
