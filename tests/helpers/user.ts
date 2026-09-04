@@ -22,3 +22,7 @@ export async function registerUser(page: Page, user: TestUser) {
   await page.getByRole('button', { name: 'Зарегистрироваться' }).click();
   await expect(page).toHaveURL(/\/pomidorqa\/?$/);
 }
+
+export async function reload(page: Page) {
+  await page.reload();
+}
