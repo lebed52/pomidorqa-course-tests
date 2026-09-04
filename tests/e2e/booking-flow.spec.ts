@@ -65,7 +65,7 @@ test("основной путь + гонка за слот: регистраци
   });
 
   await test.step("Гость: открывает карточку хоста", async () => {
-    await guestBookingPage.catalogCard.filter({ hasText: host.name }).click();
+    await guestBookingPage.openCardByName(host.name);
   });
 
   await test.step("Гость: видит карточку подтвержденную именем хоста", async () => {
@@ -97,7 +97,7 @@ test("основной путь + гонка за слот: регистраци
 
   await test.step("Гость2: открывает карточку хоста", async () => {
     await guest2BookingPage.searchCatalogBySkill(skillTag);
-    await guest2BookingPage.catalogCard.filter({ hasText: host.name }).click();
+    await guest2BookingPage.openCardByName(host.name);;
   });
 
   await test.step("Гость2: видит карточку подтвержденную именем хоста", async () => {
@@ -126,7 +126,7 @@ test("основной путь + гонка за слот: регистраци
     await guestBookingPage.bookingConfirmButton.click();
   });
 
-  await test.step("Гость: подтверждает бронирование первым — успех", async () => {
+  await test.step("Гость: видит успех при подтверждении бронирования", async () => {
     const success = guestBookingPage.bookingConfirmSuccess;
     const error = guestBookingPage.bookingConfirmError;
 
@@ -140,7 +140,7 @@ test("основной путь + гонка за слот: регистраци
     await guest2BookingPage.bookingConfirmButton.click();
   });
 
-  await test.step("Гость2: пытается забронировать тот же слот вторым — видит ошибку", async () => {
+  await test.step("Гость2: видит ошибку при попытке забронировать тот же слот", async () => {
     const success2 = guest2BookingPage.bookingConfirmSuccess;
     const error2 = guest2BookingPage.bookingConfirmError;
     await expect(success2.or(error2)).toBeVisible({ timeout: 15_000 });
