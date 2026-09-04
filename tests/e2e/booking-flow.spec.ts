@@ -91,7 +91,7 @@ test("основной путь + гонка за слот: регистраци
     await profileSkillInput(hostPage).fill(skillTag);
     await profileSkillTypeSelect(hostPage).selectOption("can_help");
     await profileSkillSubmit(hostPage).click();
-   expect(profileCanHelpSkills(hostPage)).toContainText(skillTag);
+    await expect(profileCanHelpSkills(hostPage)).toContainText(skillTag);
   });
 
   await test.step("Хост: добавляет свободный слот на завтра", async () => {
