@@ -17,11 +17,17 @@ test.describe('Заполнение профиля после регистрац
 
   test('Смена имени в профиле', async ({ page }) => {
     const newName = makeUnique('Hw10');
-    await profilePage.inputName.clear();
-    await profilePage.inputName.fill(newName);
-    await profilePage.save();
-    await page.reload();
-    await expect(profilePage.inputName).toHaveValue(newName);
+
+    await test.step('Заполняем новое имя и сохраняем', async () => {
+      await profilePage.inputName.clear();
+      await profilePage.inputName.fill(newName);
+      await profilePage.save();
+    });
+
+    await test.step('После перезагрузки имя пришло с сервера', async () => {
+      await page.reload();
+      await expect(profilePage.inputName).toHaveValue(newName);
+    });
   });
 
   test('Выбор часового пояса из списка', async ({ page }) => {

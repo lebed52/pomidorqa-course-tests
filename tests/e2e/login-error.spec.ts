@@ -21,17 +21,23 @@ test.describe('Вход с неверными данными', () => {
 
     await test.step('Пробуем войти с верным email, но неверным паролем', async () => {
       await loginUser(page, user.email, 'wrong-password');
+    });
+
+    await test.step('Появляется сообщение об ошибке', async () => {
       await expect(errorMessage).toBeVisible();
       wrongPasswordError = (await errorMessage.textContent())?.trim() ?? '';
     });
 
-    await test.step('Пробуем войти с несуществующим Email', async () => {
+    await test.step('Пробуем войти с несуществующим email', async () => {
       await loginUser(page, `no-such-user-${runId}@example.com`, 'any-password-123');
+    });
+
+    await test.step('Появляется сообщение об ошибке', async () => {
       await expect(errorMessage).toBeVisible();
       unknownEmailError = (await errorMessage.textContent())?.trim() ?? '';
     });
 
-    await test.step('Проверяем: текст ошибки одинаковый в обоих случаях — не раскрывает, что именно неверно', async () => {
+    await test.step('Текст ошибки одинаковый в обоих случаях — не раскрывает, что именно неверно', async () => {
       expect(wrongPasswordError).toBe(unknownEmailError);
       expect(wrongPasswordError).toContain('Неверный');
     });

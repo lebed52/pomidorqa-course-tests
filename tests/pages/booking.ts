@@ -20,9 +20,6 @@ export class BookingPage {
     this.modalError = page.getByText('Этот слот только что забронировали');
     this.upcomingSession = page.getByTestId('upcoming-meetings');
   }
-  async open() {
-    await this.page.goto('/pomidorqa/profile/booking');
-  }
 
   async waitForFreeSlot() {
     await expect(async () => {

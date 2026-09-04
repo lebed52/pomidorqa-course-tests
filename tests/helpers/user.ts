@@ -25,7 +25,7 @@ export function makeUnique(prefix: string) {
 }
 
 export async function registerUser(page: Page, user: TestUser) {
-  await page.goto('/pomidorqa/auth/register');
+  await page.goto(ROUTES.register);
   await page.getByLabel('Имя').fill(user.name);
   await page.getByLabel('Email').fill(user.email);
   await page.getByLabel('Пароль').fill(user.password);

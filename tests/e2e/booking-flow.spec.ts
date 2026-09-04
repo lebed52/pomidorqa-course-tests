@@ -13,6 +13,8 @@ test('основной путь + гонка за слот: регистраци
   const host = makeUser('host', runId);
   const guest = makeUser('guest', runId);
   const guest2 = makeUser('guest2', runId);
+  let guestResult: 'success' | 'taken';
+  let guest2Result: 'success' | 'taken';
 
   const hostContext = await browser.newContext();
   const guestContext = await browser.newContext();
@@ -36,6 +38,9 @@ test('основной путь + гонка за слот: регистраци
   await test.step('Хост: добавляет навык «могу помочь» в профиле', async () => {
     await hostProfile.open();
     await hostProfile.addSkill(skillTag);
+  });
+
+  await test.step('Навык появился в блоке «Могу помочь»', async () => {
     await expect(hostProfile.canHelpSkills).toContainText(skillTag);
   });
 
@@ -44,6 +49,9 @@ test('основной путь + гонка за слот: регистраци
     const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
     const date = tomorrow.toISOString().slice(0, 10);
     await hostSlots.addSlot(date, '12:00');
+  });
+
+  await test.step('Слот отображается в списке', async () => {
     await expect(hostSlots.freeSlots).toBeVisible();
   });
 
@@ -54,11 +62,17 @@ test('основной путь + гонка за слот: регистраци
   await test.step('Гость: ищет хоста в каталоге по навыку (сценарий 9)', async () => {
     await guestCatalog.catalogFilterInput.fill(skillTag);
     await guestCatalog.btnSearch.click();
+  });
+
+  await test.step('Карточка хоста найдена в каталоге', async () => {
     await expect(guestCatalog.personCard.filter({ hasText: host.name })).toBeVisible();
   });
 
   await test.step('Гость: открывает карточку хоста', async () => {
     await guestCatalog.personCard.filter({ hasText: host.name }).click();
+  });
+
+  await test.step('Открыта карточка хоста', async () => {
     await expect(guestCatalog.personName).toHaveText(host.name);
   });
 
@@ -67,26 +81,39 @@ test('основной путь + гонка за слот: регистраци
     await guestBooking.selectFirstSlot();
   });
 
-  await test.step('Гость2: регистрируется и тоже открывает окно бронирования на тот же слот', async () => {
+  await test.step('Гость2: регистрируется отдельным аккаунтом', async () => {
     await registerUser(guest2Page, guest2);
+  });
 
+  await test.step('Гость2: находит и открывает карточку хоста', async () => {
     await guest2Catalog.catalogFilterInput.fill(skillTag);
     await guest2Catalog.btnSearch.click();
     await guest2Catalog.personCard.filter({ hasText: host.name }).click();
-    await expect(guest2Catalog.personName).toHaveText(host.name);
+  });
 
+  await test.step('Открыта карточка хоста', async () => {
+    await expect(guest2Catalog.personName).toHaveText(host.name);
+  });
+
+  await test.step('Гость2: кликает по дню и времени в календаре слотов', async () => {
     await guest2Booking.waitForFreeSlot();
     await guest2Booking.selectFirstSlot();
   });
 
-  await test.step('Гость: подтверждает бронирование первым — успех', async () => {
-    const result = await guestBooking.confirmBooking();
-    expect(result).toBe('success');
+  await test.step('Гость: подтверждает бронирование первым', async () => {
+    guestResult = await guestBooking.confirmBooking();
   });
 
-  await test.step('Гость2: пытается забронировать тот же слот вторым — видит ошибку', async () => {
-    const result = await guest2Booking.confirmBooking();
-    expect(result).toBe('taken');
+  await test.step('Бронирование гостя подтверждено — слот достался ему', async () => {
+    expect(guestResult).toBe('success');
+  });
+
+  await test.step('Гость2: пытается забронировать тот же слот вторым', async () => {
+    guest2Result = await guest2Booking.confirmBooking();
+  });
+
+  await test.step('Бронирование гостя2 не прошло — слот уже занят', async () => {
+    expect(guest2Result).toBe('taken');
   });
 
   await test.step('Гость: видит бронирование в разделе «Мои встречи»', async () => {
