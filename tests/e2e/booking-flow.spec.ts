@@ -97,7 +97,7 @@ test("основной путь + гонка за слот: регистраци
 
   await test.step("Гость2: открывает карточку хоста", async () => {
     await guest2BookingPage.searchCatalogBySkill(skillTag);
-    await guest2BookingPage.openCardByName(host.name);;
+    await guest2BookingPage.openCardByName(host.name);
   });
 
   await test.step("Гость2: видит карточку подтвержденную именем хоста", async () => {
