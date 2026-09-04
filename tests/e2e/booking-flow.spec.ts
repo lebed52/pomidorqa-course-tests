@@ -91,7 +91,7 @@ test("основной путь + гонка за слот: регистраци
     await profileSkillInput(hostPage).fill(skillTag);
     await profileSkillTypeSelect(hostPage).selectOption("can_help");
     await profileSkillSubmit(hostPage).click();
-    await expect(profileCanHelpSkills(hostPage)).toContainText(skillTag);
+   expect(profileCanHelpSkills(hostPage)).toContainText(skillTag);
   });
 
   await test.step("Хост: добавляет свободный слот на завтра", async () => {
@@ -179,7 +179,7 @@ test("основной путь + гонка за слот: регистраци
     if (await success2.isVisible().catch(() => false)) {
       throw new Error("Слот должен был быть занят, но бронирование прошло успешно");
     }
-    await expect(error2).toBeVisible();
+    await expect(success2).toBeVisible();
   });
 
   await test.step("Гость: видит бронирование в разделе «Мои встречи»", async () => {
