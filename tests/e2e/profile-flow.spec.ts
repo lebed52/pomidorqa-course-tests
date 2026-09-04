@@ -89,7 +89,7 @@ test.describe("Профиль: действия с полями", () => {
     });
   });
 
-  test("негатив: пустой навык не добавляется", async ({ page }) => {
+  test("Негатив: пустой навык не добавляется", async ({ page }) => {
     await test.step("Жмём «Добавить», не заполнив поле", async () => {
 
       await expect(profilePage.skillInput).toHaveValue("");
