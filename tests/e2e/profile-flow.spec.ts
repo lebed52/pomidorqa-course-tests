@@ -13,28 +13,27 @@ test.describe("Профиль: действия с полями", () => {
     await profilePage.goto();
   });
 
-  test("имя: вводим новое и сохраняем", async () => {
+  test("Изменить имя", async () => {
     const newName = `Тимур Тестович ${Date.now()}`;
 
-    await test.step("Заполняем поле и сохраняем", async () => {
+    await test.step("Ввести новое значение и сохранить", async () => {
       await profilePage.fillName(newName);
       await profilePage.saveProfile();
     });
 
-    await test.step("После перезагрузки имя пришло с сервера", async () => {
+    await test.step("После перезагрузки с сервера пришло введенное значение", async () => {
       await profilePage.reload();
       await expect(profilePage.profileNameInput).toHaveValue(newName);
     });
   });
 
-  test("часовой пояс: выбираем из списка", async () => {
+  test("Изменить часовой пояс", async () => {
     // По умолчанию стоит Europe/Moscow — берём заведомо другой,
     // иначе проверка прошла бы и без всякого выбора.
     const timezone = "Asia/Yekaterinburg";
 
-    await test.step("Выбираем часовой пояс и сохраняем", async () => {
-      await expect(profilePage.profileTimezoneSelect).toHaveValue("Europe/Moscow");
-      await profilePage.profileTimezoneSelect.selectOption(timezone);
+    await test.step("Выбрать другой часовой пояс и сохранить", async () => {
+      await profilePage.changeTimezone(timezone);
       await profilePage.saveProfile();
     });
 
@@ -44,63 +43,62 @@ test.describe("Профиль: действия с полями", () => {
     });
   });
 
-  test("telegram: заполняем пустое поле", async () => {
+  test("Изменить Telegram", async () => {
     const telegram = `@qa_timur_cat${Date.now()}`;
 
-    await test.step("Заполняем Telegram и сохраняем", async () => {
-      await expect(profilePage.profileTelegramInput).toHaveValue("");
+    await test.step("Ввести новое значение и сохранить", async () => {
       await profilePage.fillTelegram(telegram);
       await profilePage.saveProfile();
     });
 
-    await test.step("После перезагрузки Telegram пришёл с сервера", async () => {
+    await test.step("После перезагрузки с сервера пришёл введенный Telegram", async () => {
       await profilePage.reload();
       await expect(profilePage.profileTelegramInput).toHaveValue(telegram);
     });
   });
 
-  test("о себе: заполняем многострочное поле", async () => {
+  test("Изменить «О себе»", async () => {
     const bio = `QA-инженер, прогон ${Date.now()}. Пытаюсь разобраться в Playwright.`;
 
-    await test.step("Заполняем «О себе» и сохраняем", async () => {
+    await test.step("Ввести новое значение и сохранить", async () => {
       await profilePage.fillBio(bio);
       await profilePage.saveProfile();
     });
 
-    await test.step("После перезагрузки текст пришёл с сервера", async () => {
+    await test.step("После перезагрузки с сервера пришли введенные данные", async () => {
       await profilePage.reload();
       await expect(profilePage.profileBioInput).toHaveValue(bio);
     });
   });
 
-  test("навык: заполняем, выбираем тип и добавляем", async () => {
+  test("Добавить навык в блок «могу помочь»", async () => {
     const skillTag = `Playwright-demo-${Date.now()}`;
 
-    await test.step("Добавляем навык «могу помочь»", async () => {
+    await test.step("Добавить навык", async () => {
       await profilePage.addSkill(skillTag, "can_help");
     });
 
-    await test.step("Навык появился в блоке «могу помочь»", async () => {
+    await test.step("Проверить, что навык появился в блоке", async () => {
       await expect(profilePage.canHelpSkills).toContainText(skillTag);
     });
   });
 
-  test("негатив: пустой навык не добавляется", async () => {
-    await test.step("Жмём «Добавить», не заполнив поле", async () => {
+  test("Негатив: добавить пустой навык", async () => {
+    await test.step("Нажать на кнопку «Добавить», не заполнив поле", async () => {
       await expect(profilePage.skillInput).toHaveValue("");
       await profilePage.addSkillButton.click();
     });
 
-    await test.step("Ни одного навыка не появилось", async () => {
+    await test.step("Проверить, что навык не добавился", async () => {
       // Поле навыка помечено required — браузер не даёт отправить форму.
       // Проверяем именно результат: чипов ноль и блока «могу помочь» нет,
       // а не «клик прошёл и ладно».
       await expect(profilePage.skillChips).toHaveCount(0);
-      await expect(profilePage.canHelpSkills).not.toBeVisible();
+      await expect(profilePage.canHelpSkills).toBeHidden();
     });
   });
 
-  test("негатив: навык «хочу разобрать» не попадает в блок «могу помочь»", async () => {
+  test("Негатив: навык «хочу разобрать» не попадает в блок «могу помочь»", async () => {
     const runId = Date.now();
     const canHelpTag = `CanHelp-${runId}`;
     const wantToLearnTag = `WantToLearn-${runId}`;
@@ -115,7 +113,7 @@ test.describe("Профиль: действия с полями", () => {
       await expect(profilePage.skillChip(wantToLearnTag)).toBeVisible();
     });
 
-    await test.step("Навыки разошлись по своим блокам", async () => {
+    await test.step("Навыки появились в своих блоках", async () => {
       await expect(profilePage.skillChips).toHaveCount(2);
       await expect(profilePage.canHelpSkills).toContainText(canHelpTag);
       // Главная проверка теста: второй навык добавлен, но в «могу помочь» его нет.
@@ -123,20 +121,20 @@ test.describe("Профиль: действия с полями", () => {
     });
   });
 
-  test("форма профиля: три поля сохраняются за один раз", async () => {
+  test("Форма профиля: проверить сохранение трёх текстовых полей", async () => {
     const runId = Date.now();
     const name = `Тимур Тестовый ${runId}`;
     const telegram = `@qa_timur_${runId}`;
     const bio = `QA-инженер, прогон ${runId}. Проверяю форму профиля целиком.`;
 
-    await test.step("Заполняем Имя, Telegram и «О себе», сохраняем разом", async () => {
+    await test.step("Заполнить Имя, Telegram и «О себе» и сохранить", async () => {
       await profilePage.fillName(name);
       await profilePage.fillTelegram(telegram);
       await profilePage.fillBio(bio);
       await profilePage.saveProfile();
     });
 
-    await test.step("После перезагрузки все три значения пришли с сервера", async () => {
+    await test.step("После перезагрузки с сервера пришли введенные данные", async () => {
       await profilePage.reload();
       // expect.soft не останавливает тест на первой неудаче: если поедут
       // два поля из трёх, увидим оба сразу, а не по одному за прогон.

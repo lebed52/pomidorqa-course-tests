@@ -71,4 +71,7 @@ export class ProfilePage {
     await this.profileBioInput.fill(newBio);
   }
 
+  async changeTimezone(newTimezone: string) {
+    await this.profileTimezoneSelect.selectOption(newTimezone);
+  }
 }
