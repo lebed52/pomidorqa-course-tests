@@ -179,7 +179,7 @@ test("основной путь + гонка за слот: регистраци
     if (await success2.isVisible().catch(() => false)) {
       throw new Error("Слот должен был быть занят, но бронирование прошло успешно");
     }
-    await expect(success2).toBeVisible();
+    await expect(error2).toBeVisible();
   });
 
   await test.step("Гость: видит бронирование в разделе «Мои встречи»", async () => {
