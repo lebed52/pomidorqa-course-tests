@@ -90,7 +90,7 @@ test.describe("Профиль: действия с полями", () => {
 
     await test.step("Ни одного навыка не появилось", async () => {
       await expect(profile.skillChips).toHaveCount(0);
-      await expect(profile.canHelpSkills).not.toBeVisible();
+      await expect(profile.canHelpSkills).toBeHidden();
     });
   });
 

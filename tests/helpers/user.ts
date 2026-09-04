@@ -1,8 +1,10 @@
-import { expect, type Page } from "@playwright/test";
+import { expect, type Browser, type Page } from "@playwright/test";
 
 export const ROUTES = {
   register: "/pomidorqa/auth/register",
   profile: "/pomidorqa/profile",
+  slots: "/pomidorqa/profile/slots",
+  bookings: "/pomidorqa/bookings",
 };
 
 export type TestUser = {
@@ -26,4 +28,15 @@ export async function registerUser(page: Page, user: TestUser) {
   await page.getByLabel("Пароль").fill(user.password);
   await page.getByRole("button", { name: "Зарегистрироваться" }).click();
   await expect(page).toHaveURL(/\/pomidorqa\/?$/);
+}
+
+export async function registerInNewContext(browser: Browser, user: TestUser): Promise<Page> {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await registerUser(page, user);
+  return page;
+}
+
+export function dateInDays(days: number): string {
+  return new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 }
