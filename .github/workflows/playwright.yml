@@ -1,0 +1,79 @@
+# Имя workflow — так он отображается во вкладке Actions.
+name: Playwright CI
+
+# События, которые запускают проверки.
+on:
+  # Проверяем каждое изменение до слияния через Pull Request.
+  pull_request:
+    # `main` здесь — целевая ветка PR, а не имя рабочей ветки.
+    branches: [main]
+  # Оставляем кнопку ручного запуска во вкладке Actions.
+  workflow_dispatch:
+
+# Все работы, которые выполнит workflow.
+jobs:
+  # Технический идентификатор единственной работы.
+  test:
+    # Читаемое имя работы в интерфейсе GitHub.
+    name: Lint and Playwright tests
+    # Останавливаем зависший прогон через 30 минут.
+    timeout-minutes: 30
+    # Запускаем проверки на чистой Linux-машине GitHub.
+    runs-on: ubuntu-latest
+
+    # Шаги выполняются сверху вниз в одной и той же машине.
+    steps:
+      # Сначала загружаем в runner код из текущего PR.
+      - name: Checkout repository
+        # Официальный action GitHub для клонирования репозитория.
+        uses: actions/checkout@v6
+
+      # Готовим версию Node.js, на которой работает проект.
+      - name: Setup Node.js
+        # Официальный action устанавливает Node.js и настраивает npm.
+        uses: actions/setup-node@v6
+        # Параметры для action `setup-node`.
+        with:
+          # Node.js 24 поддерживается текущими версиями ESLint и Playwright.
+          node-version: 24
+          # Кэшируем скачанные npm-пакеты, но не готовый `node_modules`.
+          cache: npm
+
+      # Устанавливаем JavaScript-зависимости проекта.
+      - name: Install npm dependencies
+        # `npm ci` ставит точные версии из lock-файла и проверяет его согласованность с package.json.
+        run: npm ci
+
+      # Playwright-пакет и браузерный бинарник устанавливаются отдельно.
+      - name: Install Chromium and system dependencies
+        # Для учебного CI достаточно Chromium; `--with-deps` добавляет нужные библиотеки Linux.
+        run: npx playwright install --with-deps chromium
+
+      # Сначала запускаем быструю статическую проверку кода.
+      - name: Lint tests
+        # Используем тот же npm-скрипт, который разработчик запускает локально.
+        run: npm run lint
+
+      # После линтера проверяем реальное поведение тестами.
+      - name: Run Playwright tests
+        # Скрипт `test` из package.json запускает unit, API и E2E-проекты Playwright.
+        run: npm test
+        # Переменные окружения только для этого шага.
+        env:
+          # Включает CI-режим в playwright.config.ts: retry, один worker и reporter без открытия окна.
+          CI: true
+
+      # Сохраняем HTML-отчёт после завершения тестов.
+      - name: Upload Playwright report
+        # Загружаем отчёт и после успеха, и после падения; пропускаем только отменённый run.
+        if: ${{ !cancelled() }}
+        # Официальный action GitHub превращает каталог в artifact текущего run.
+        uses: actions/upload-artifact@v7
+        # Параметры сохраняемого artifact.
+        with:
+          # Уникальный run_id не даёт отчётам разных запусков конфликтовать по имени.
+          name: playwright-report-${{ github.run_id }}
+          # Стандартный каталог, куда HTML reporter Playwright пишет отчёт.
+          path: playwright-report/
+          # Двух недель достаточно для разбора PR, старые учебные отчёты не храним бессрочно.
+          retention-days: 14
