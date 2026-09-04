@@ -1,6 +1,6 @@
 import { test, expect} from "@playwright/test";
-import {ProfilePage} from "../pages/ProfilePage";
-import {makeUser,registerUser, ROUTES} from "../helpers/user";
+import {ProfilePage} from "../pages/profile-page";
+import {makeUser,registerUser} from "../helpers/user";
 
 
 test.describe("Профиль: действия с полями", () => {
@@ -100,7 +100,9 @@ test.describe("Профиль: действия с полями", () => {
 
     await test.step("Добавляем навык «могу помочь»", async () => {
       await profilePage.fillSkillInput(canHelpTag, "can_help");
+    });
 
+    await test.step("Навык «могу помочь» виден", async () => {
       await expect(profilePage.getSkillChip(canHelpTag)).toBeVisible();
     });
 

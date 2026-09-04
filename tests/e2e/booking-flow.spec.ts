@@ -1,7 +1,7 @@
 import { test, expect} from "@playwright/test";
 import {makeUser, registerUser} from "../helpers/user";
-import {ProfilePage} from "../pages/ProfilePage";
-import {BookingPage} from "../pages/BookingPage";
+import {ProfilePage} from "../pages/profile-page";
+import {BookingPage} from "../pages/booking-page";
 
 test("основной путь + гонка за слот: регистрация → навык → слот → поиск в каталоге → бронирование → «Мои встречи» у обоих → второй гость видит ошибку", async ({
   browser,
@@ -119,11 +119,14 @@ test("основной путь + гонка за слот: регистраци
   });
 
   await test.step("Гость2: тоже видит подтверждающий диалог", async () => {
-    await expect(guestBookingPage.bookingConfirmDialog).toBeVisible();
+    await expect(guest2BookingPage.bookingConfirmDialog).toBeVisible();
+  });
+
+  await test.step("Гость: нажимает на подтверждение бронирования", async () => {
+    await guestBookingPage.bookingConfirmButton.click();
   });
 
   await test.step("Гость: подтверждает бронирование первым — успех", async () => {
-    await guestBookingPage.bookingConfirmButton.click();
     const success = guestBookingPage.bookingConfirmSuccess;
     const error = guestBookingPage.bookingConfirmError;
 
@@ -133,9 +136,11 @@ test("основной путь + гонка за слот: регистраци
     }
   });
 
-  await test.step("Гость2: пытается забронировать тот же слот вторым — видит ошибку", async () => {
+  await test.step("Гость2: нажимает на подтверждение бронирования", async () => {
     await guest2BookingPage.bookingConfirmButton.click();
+  });
 
+  await test.step("Гость2: пытается забронировать тот же слот вторым — видит ошибку", async () => {
     const success2 = guest2BookingPage.bookingConfirmSuccess;
     const error2 = guest2BookingPage.bookingConfirmError;
     await expect(success2.or(error2)).toBeVisible({ timeout: 15_000 });
