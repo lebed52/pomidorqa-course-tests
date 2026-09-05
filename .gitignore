@@ -4,3 +4,7 @@ test-results/
 .env
 .env.local
 *.log
+package-lock.json
+tsconfig.json
+package.json
+eslint.config.mjs
