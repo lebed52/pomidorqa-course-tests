@@ -78,9 +78,7 @@ test.describe("Профиль: действия с полями", () => {
     // Комбо из трёх действий: ввод, выбор в списке, нажатие.
     // У этой формы своя кнопка «Добавить», к верхнему «Сохранить» она отношения не имеет.
     await test.step("Добавляем навык «могу помочь»", async () => {
-      await profilePage.skillInput.fill(skillTag);
-      await profilePage.skillTypeSelect.selectOption("can_help");
-      await profilePage.addSkillButton.click();
+      await profilePage.addSkill(skillTag, "can_help");
     });
 
     await test.step("Навык появился в блоке «могу помочь»", async () => {
@@ -109,16 +107,12 @@ test.describe("Профиль: действия с полями", () => {
     const wantToLearnTag = `WantToLearn-${runId}`;
 
     await test.step("Добавляем навык «могу помочь»", async () => {
-      await profilePage.skillInput.fill(canHelpTag);
-      await profilePage.skillTypeSelect.selectOption("can_help");
-      await profilePage.addSkillButton.click();
+      await profilePage.addSkill(canHelpTag, "can_help");
       await expect(profilePage.skillChip(canHelpTag)).toBeVisible();
     });
 
     await test.step("Добавляем навык «хочу разобрать»", async () => {
-      await profilePage.skillInput.fill(wantToLearnTag);
-      await profilePage.skillTypeSelect.selectOption("want_to_learn");
-      await profilePage.addSkillButton.click();
+      await profilePage.addSkill(wantToLearnTag, "want_to_learn");
       await expect(profilePage.skillChip(wantToLearnTag)).toBeVisible();
     });
 
