@@ -1,6 +1,8 @@
 import { Locator, type Page } from "@playwright/test";
 import { ROUTES } from "../helpers/user";
 
+type SkillType = 'can_help' | 'want_to_learn';
+
 export class ProfilePage {
     page: Page;
 
@@ -18,6 +20,7 @@ export class ProfilePage {
     canHelpSkills: Locator;
     skillChips: Locator;
     // skillName: Locator;
+    
   
     constructor( page: Page) {
         this.page = page;
@@ -54,6 +57,11 @@ export class ProfilePage {
   await saved;
 }
 
+async addSkill(tag: string, type: SkillType): Promise<void> {
+  await this.skillInput.fill(tag);
+  await this.skillTypeSelect.selectOption(type);
+  await this.addSkillButton.click();
+}
   getSkillChip(tag: string): Locator {
     return this.page.locator(`[data-skill-tag="${tag}"]`);
   }

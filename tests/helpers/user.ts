@@ -3,7 +3,7 @@ import { test, expect, type Page } from "@playwright/test";
 export const ROUTES = {
   register: "/pomidorqa/auth/register",
   profile: "/pomidorqa/profile",
-  booking: "/pomidorqa/booking",
+  booking: "/pomidorqa/bookings",
   slots: "/pomidorqa/profile/slots",
 };
 

@@ -79,9 +79,7 @@ test.describe("Профиль: действия с полями", () => {
     // Комбо из трёх действий: ввод, выбор в списке, нажатие.
     // У этой формы своя кнопка «Добавить», к верхнему «Сохранить» она отношения не имеет.
     await test.step("Добавляем навык «могу помочь»", async () => {
-      await profilePage.skillInput.fill(skillTag);
-      await profilePage.skillTypeSelect.selectOption("can_help");
-      await profilePage.addSkillButton.click();
+      await profilePage.addSkill(skillTag, 'can_help');
     });
 
     await test.step("Навык появился в блоке «могу помочь»", async () => {

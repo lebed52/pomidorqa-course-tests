@@ -1,4 +1,4 @@
-import { Locator, type Page } from "@playwright/test";
+import { expect, Locator, type Page } from "@playwright/test";
 import { ROUTES } from "../helpers/user";
 
 export class BookingPage {
@@ -64,4 +64,51 @@ export class BookingPage {
     async goto() {
         await this.page.goto(ROUTES.booking);
     }
+    
+    async addSlot(date: string, time: string): Promise<void> {
+        await this.page.goto(ROUTES.slots);
+        await this.slotsDateInput.fill(date);
+        await this.slotsTimeInput.fill(time);
+        await this.slotsAddSubmit.click();
+    }
+    
+    getHostCard(hostName: string): Locator {
+        return this.catalogCard.filter({ hasText: hostName });
+    }
+
+    async searchBySkill(skillTag: string): Promise<void> {
+    await this.catalogFilterInput.fill(skillTag);
+    await this.catalogFilterSubmit.click();
+    }
+
+    async openHostCard(hostName: string): Promise<void> {
+    await this.getHostCard(hostName).click();
+    }
+
+    async waitForFirstAvailableDay(timeout = 10_000): Promise<void> {
+        await expect(async () => {
+            const day = this.bookingCalendarDay.first();
+
+            if (!(await day.isVisible().catch(() => false))) {
+            await this.page.reload();
+            }
+
+            await expect(day).toBeVisible();
+        }).toPass({ timeout });
+    }
+
+    async selectFirstAvailableSlot(): Promise<void> {
+    await this.bookingCalendarDay.first().click();
+    await this.bookingCalendarTime.first().click();
+    }
+
+    getMeetingCard(participantName: string): Locator {
+        return this.bookingsUpcomingSection
+            .locator('[data-booking-id]')
+            .filter({ hasText: participantName });
+        }
+
+    async gotoMeetings(): Promise<void> {
+        await this.page.goto(ROUTES.booking);
+        }
 }
