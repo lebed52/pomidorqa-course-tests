@@ -59,4 +59,8 @@ export class BookingPage {
     async gotoBookings() {
         await this.page.goto(ROUTES.bookings);
     }
+
+    async openCardByName(name: string): Promise<void> {
+        await this.catalogCard.filter({hasText: name}).click();
+    }
 }
