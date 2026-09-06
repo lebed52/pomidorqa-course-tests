@@ -36,10 +36,15 @@ export function makeUser(role: string, runId: number): TestUser {
 }
 
 export async function registerUser(page: Page, user: TestUser) {
-  await page.goto(ROUTES.register);
+  await page.goto(ROUTES.register, { waitUntil: "domcontentloaded" });
+
   await page.getByLabel("Имя").fill(user.name);
   await page.getByLabel("Email").fill(user.email);
   await page.getByLabel("Пароль").fill(user.password);
   await page.getByRole("button", { name: "Зарегистрироваться" }).click();
-  await expect(page).toHaveURL(/\/pomidorqa\/?$/);
+
+  await expect(page.getByRole("button", { name: "Регистрируем…" })).toBeHidden({
+    timeout: 15_000,
+  });
+  await expect(page).toHaveURL(/\/pomidorqa\/?$/, { timeout: 15_000 });
 }

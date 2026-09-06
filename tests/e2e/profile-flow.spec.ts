@@ -7,9 +7,7 @@ test.describe("Профиль: действия с полями", () => {
 
   test.beforeEach(async ({ page }) => {
     profilePage = new ProfilePage(page);
-
     const user = makeUser("hw10", Date.now());
-
     await registerUser(page, user);
     await profilePage.goto();
   });
@@ -20,10 +18,8 @@ test.describe("Профиль: действия с полями", () => {
     await test.step("Заполняем поле и сохраняем", async () => {
       await profilePage.saveName(user.newName);
     });
-
     await test.step("После перезагрузки имя сохранено", async () => {
       await profilePage.page.reload();
-
       await expect(profilePage.nameInput).toHaveValue(user.newName);
     });
   });
@@ -33,10 +29,13 @@ test.describe("Профиль: действия с полями", () => {
 
     await expect(profilePage.timezoneSelect).toHaveValue(user.timezone);
 
-    await profilePage.saveTimezone(user.newTimezone);
-    await profilePage.page.reload();
-
-    await expect(profilePage.timezoneSelect).toHaveValue(user.newTimezone);
+    await test.step("Выбираем новый часовой пояс и сохраняем", async () => {
+      await profilePage.saveTimezone(user.newTimezone);
+      await profilePage.page.reload();
+    });
+    await test.step("После перезагрузки часовой пояс сохранён", async () => {
+      await expect(profilePage.timezoneSelect).toHaveValue(user.newTimezone);
+    });
   });
 
   test("telegram: заполняем пустое поле", async () => {
@@ -44,13 +43,10 @@ test.describe("Профиль: действия с полями", () => {
 
     await test.step("Заполняем Telegram и сохраняем", async () => {
       await expect(profilePage.telegramInput).toHaveValue("");
-
       await profilePage.saveTelegram(user.newTelegram);
     });
-
     await test.step("После перезагрузки Telegram сохранён", async () => {
       await profilePage.page.reload();
-
       await expect(profilePage.telegramInput).toHaveValue(user.newTelegram);
     });
   });
@@ -58,40 +54,51 @@ test.describe("Профиль: действия с полями", () => {
   test("о себе: заполняем многострочное поле", async () => {
     const user = makeUser("bio", Date.now());
 
-    await profilePage.saveBio(user.newBio);
-    await profilePage.page.reload();
-
-    await expect(profilePage.bioInput).toHaveValue(user.newBio);
+    await test.step("Заполняем «О себе» и сохраняем", async () => {
+      await profilePage.saveBio(user.newBio);
+      await profilePage.page.reload();
+    });
+    await test.step("После перезагрузки текст сохранён", async () => {
+      await expect(profilePage.bioInput).toHaveValue(user.newBio);
+    });
   });
 
   test("навык: заполняем, выбираем тип и добавляем", async () => {
     const skillTag = `Playwright-${Date.now()}`;
 
-    await profilePage.addSkill(skillTag, "can_help");
-
-    await expect(profilePage.canHelpSkills).toContainText(skillTag);
+    await test.step("Добавляем навык типа «могу помочь»", async () => {
+      await profilePage.addSkill(skillTag, "can_help");
+    });
+    await test.step("Навык появился в блоке «Могу помочь»", async () => {
+      await expect(profilePage.canHelpSkills).toContainText(skillTag);
+    });
   });
 
   test("негатив: пустой навык не добавляется", async () => {
     await expect(profilePage.skillInput).toHaveValue("");
 
-    await profilePage.addSkill("", "can_help");
-
-    await expect(profilePage.skillChips).toHaveCount(0);
-    await expect(profilePage.canHelpSkills).toBeHidden();
+    await test.step("Пробуем добавить пустой навык", async () => {
+      await profilePage.addSkill("", "can_help");
+    });
+    await test.step("Пустой навык не появился в списке", async () => {
+      await expect(profilePage.skillChips).toHaveCount(0);
+      await expect(profilePage.canHelpSkills).toBeHidden();
+    });
   });
 
   test("негатив: навык «хочу разобрать» не попадает в блок «могу помочь»", async () => {
     const canHelpTag = `CanHelp-${Date.now()}`;
     const wantToLearnTag = `WantToLearn-${Date.now()}`;
 
-    await profilePage.addSkill(canHelpTag, "can_help");
-    await profilePage.addSkill(wantToLearnTag, "want_to_learn");
-
-    await expect(profilePage.skillChips).toHaveCount(2);
-    await expect(profilePage.canHelpSkills).toContainText(canHelpTag);
-
-    await expect(profilePage.canHelpSkills).not.toContainText(wantToLearnTag);
+    await test.step("Добавляем навыки разных типов", async () => {
+      await profilePage.addSkill(canHelpTag, "can_help");
+      await profilePage.addSkill(wantToLearnTag, "want_to_learn");
+    });
+    await test.step("«Хочу разобрать» не попадает в блок «могу помочь»", async () => {
+      await expect(profilePage.skillChips).toHaveCount(2);
+      await expect(profilePage.canHelpSkills).toContainText(canHelpTag);
+      await expect(profilePage.canHelpSkills).not.toContainText(wantToLearnTag);
+    });
   });
 
   test("форма профиля: три поля сохраняются за один раз", async () => {
@@ -103,10 +110,8 @@ test.describe("Профиль: действия с полями", () => {
       await profilePage.bioInput.fill(user.newBio);
       await profilePage.saveProfile();
     });
-
     await test.step("После перезагрузки все три значения пришли с сервера", async () => {
       await profilePage.page.reload();
-
       await expect.soft(profilePage.nameInput).toHaveValue(user.newName);
       await expect.soft(profilePage.telegramInput).toHaveValue(user.newTelegram);
       await expect.soft(profilePage.bioInput).toHaveValue(user.newBio);

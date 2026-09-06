@@ -35,3 +35,23 @@ export async function closeHostGuestContexts(
   await contexts.guestContext.close();
   await contexts.guest2Context.close();
 }
+
+export async function createHostAndGuestContexts(browser: Browser) {
+  const hostContext = await browser.newContext();
+  const guestContext = await browser.newContext();
+
+  const hostPage = await hostContext.newPage();
+  const guestPage = await guestContext.newPage();
+
+  const hostBooking = new BookingPage(hostPage);
+  const guestBooking = new BookingPage(guestPage);
+
+  return { hostContext, guestContext, hostPage, guestPage, hostBooking, guestBooking };
+}
+
+export async function closeHostGuestPairContexts(
+  contexts: Awaited<ReturnType<typeof createHostAndGuestContexts>>
+) {
+  await contexts.hostContext.close();
+  await contexts.guestContext.close();
+}
