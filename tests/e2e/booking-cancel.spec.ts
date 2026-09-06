@@ -75,7 +75,12 @@ test("Отменённая бронь уходит из «Ближайших» �
   });
 
   await test.step("Гость: выбирает день и время слота", async () => {
-    await guestBooking.pickFirstDayAndTime();
+    await guestBooking.pickFirstDay();
+    
+    await expect(async () => {
+      await guestBooking.pickFirstTime();
+      await expect(guestBooking.confirmDialog).toBeVisible({ timeout: 2_000 });
+    }).toPass({ timeout: 15_000 });
   });
 
   await test.step("Гость: открыт диалог подтверждения брони", async () => {

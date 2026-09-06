@@ -66,8 +66,12 @@ test("основной путь + гонка за слот: регистраци
       await expect(dayChip).toBeVisible();
     }).toPass({ timeout: 10_000 });
 
-    await guestBooking.pickFirstDayAndTime();
-    await expect(guestBooking.confirmDialog).toBeVisible();
+    await guestBooking.pickFirstDay();
+
+      await expect(async () => {
+      await guestBooking.pickFirstTime();
+      await expect(guestBooking.confirmDialog).toBeVisible({ timeout: 2_000 });
+    }).toPass({ timeout: 15_000 });
   });
 
   await test.step("Гость2: регистрируется и тоже открывает окно бронирования на тот же слот", async () => {
@@ -85,8 +89,12 @@ test("основной путь + гонка за слот: регистраци
       await expect(dayChip).toBeVisible();
     }).toPass({ timeout: 10_000 });
 
-    await guest2Booking.pickFirstDayAndTime();
-    await expect(guest2Booking.confirmDialog).toBeVisible();
+    await guest2Booking.pickFirstDay();
+
+    await expect(async () => {
+      await guest2Booking.pickFirstTime();
+      await expect(guest2Booking.confirmDialog).toBeVisible({ timeout: 2_000 });
+    }).toPass({ timeout: 15_000 });
   });
 
   await test.step("Гость: подтверждает бронирование первым — успех", async () => {

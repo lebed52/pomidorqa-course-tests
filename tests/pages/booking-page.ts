@@ -139,8 +139,11 @@ export class BookingPage {
     await this.catalogCardByName(name).click();
   }
 
-  async pickFirstDayAndTime() {
+  async pickFirstDay() {
     await this.calendarDays.first().click();
+  }
+
+  async pickFirstTime() {
     await this.calendarTimes.first().click();
   }
 
