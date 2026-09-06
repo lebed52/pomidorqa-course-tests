@@ -35,6 +35,13 @@ export class BookingPage {
   // «Мои встречи»: имя человека на первой карточке
   readonly firstBookingCardName: Locator;
 
+  // «Мои встречи»: секция «Ближайшие» — предстоящие встречи
+  readonly bookingsUpcomingSection: Locator;
+
+  // «Мои встречи»: секция «Прошедшие и отменённые» — сюда карточка
+  // попадает после отмены встречи
+  readonly bookingsPastSection: Locator;
+
   constructor(private readonly page: Page) {
     this.slotsDateInput = page.locator("#pomidorqa-slots-date");
     this.slotsTimeInput = page.locator("#pomidorqa-slots-time");
@@ -54,8 +61,12 @@ export class BookingPage {
     this.confirmSuccess = page.getByRole("dialog").getByRole("status");
     this.confirmError = page.getByRole("dialog").getByRole("alert");
 
-    this.firstBookingCardName = page
-      .getByTestId("upcoming-meetings")
+    this.bookingsUpcomingSection = page.getByTestId("upcoming-meetings");
+    this.bookingsPastSection = page
+      .locator("section")
+      .filter({ has: page.getByRole("heading", { name: "Прошедшие и отменённые" }) });
+
+    this.firstBookingCardName = this.bookingsUpcomingSection
       .locator("[data-booking-id]")
       .first()
       .locator("p")
@@ -66,6 +77,22 @@ export class BookingPage {
   // логика поиска спрятана в класс, спека зовёт метод.
   personCardByName(name: string): Locator {
     return this.page.getByTestId("person-card").filter({ hasText: name });
+  }
+
+  // Карточка встречи по имени второго участника: гость ищет по имени хоста,
+  // хост — по имени гостя. Без .first(): имена уникальны за счёт runId,
+  // и тесту важна именно его встреча, а не чужая с общего стенда.
+  bookingCardByName(participantName: string): Locator {
+    return this.bookingsUpcomingSection
+      .locator("[data-booking-id]")
+      .filter({ hasText: participantName });
+  }
+
+  // Та же встреча, но в секции «Прошедшие и отменённые»
+  pastCardByName(participantName: string): Locator {
+    return this.bookingsPastSection
+      .locator("[data-booking-id]")
+      .filter({ hasText: participantName });
   }
 
   async openSlots() {
@@ -80,5 +107,15 @@ export class BookingPage {
 
   async openBookings() {
     await this.page.goto(BOOKINGS_URL);
+  }
+
+  // Отмена встречи: жмём «Отменить» внутри карточки и ждём, пока карточка
+  // уйдёт из «Ближайших», — это признак, что сервер принял отмену.
+  // Кнопка ищется внутри карточки, а не на всей странице: в списке может
+  // быть несколько встреч, у каждой своя кнопка «Отменить».
+  async cancelBooking(participantName: string) {
+    const card = this.bookingCardByName(participantName);
+    await card.getByRole("button", { name: "Отменить" }).click();
+    await card.waitFor({ state: "hidden", timeout: 10_000 });
   }
 }
