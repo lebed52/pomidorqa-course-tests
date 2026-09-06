@@ -9,16 +9,22 @@ export class BookingPage {
   readonly modalSuccess: Locator;
   readonly modalError: Locator;
   readonly upcomingSession: Locator;
+  readonly btnCancel: Locator;
+  readonly cancelledSection: Locator;
+  readonly cancelledStatus: Locator;
 
   constructor(page: Page) {
     this.page = page;
     this.calendarDay = page.getByRole('group', { name: 'Дни со слотами' }).getByRole('button');
     this.calendarTime = page.getByRole('group', { name: 'Время слотов' }).getByRole('button');
-    this.confirmModalDialog = page.locator('[role="dialog"]');
+    this.confirmModalDialog = page.getByRole('dialog');
     this.modalDialogConfirm = page.getByRole('button', { name: 'Подтвердить' });
     this.modalSuccess = page.getByText('Забронировано');
     this.modalError = page.getByText('Этот слот только что забронировали');
     this.upcomingSession = page.getByTestId('upcoming-meetings');
+    this.btnCancel = page.getByRole('button', { name: 'Отменить' });
+    this.cancelledSection = page.getByRole('heading', { name: 'Прошедшие и отменённые' });
+    this.cancelledStatus = page.getByText('отменено');
   }
 
   async waitForFreeSlot() {
@@ -46,5 +52,15 @@ export class BookingPage {
   }
   async openBookings() {
     await this.page.goto('/pomidorqa/bookings');
+  }
+
+  async cancelFirstBooking(): Promise<'cancelled' | 'not-found'> {
+    const cancelBtn = this.btnCancel.first();
+    if (!(await cancelBtn.isVisible().catch(() => false))) {
+      return 'not-found';
+    }
+    await cancelBtn.click();
+    await expect(this.cancelledStatus).toBeVisible({ timeout: 15_000 });
+    return 'cancelled';
   }
 }
