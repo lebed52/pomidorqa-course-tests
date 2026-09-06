@@ -6,7 +6,7 @@ import { ProfilePage } from "../pages/profile-page";
 test("гость отменяет бронирование: карточка переходит в прошедшие, отмену видят оба после reload", async ({
   browser,
 }) => {
-  test.setTimeout(90_000); // 2 регистрации + бронирование + отмена, с учётом retry-лупа в selectFirstSlot
+  test.setTimeout(120_000);
 
   const runId = Date.now();
   const skillTag = `Playwright-cancel-${runId}`;

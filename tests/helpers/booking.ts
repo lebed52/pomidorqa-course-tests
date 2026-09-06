@@ -1,30 +1,34 @@
-import { type Browser } from "@playwright/test";
+import { type Browser, type BrowserContext, type Page } from "@playwright/test";
 import { BookingPage } from "../pages/booking-page";
+
+type Actor = {
+  context: BrowserContext;
+  page: Page;
+  booking: BookingPage;
+};
+
+async function createActor(browser: Browser): Promise<Actor> {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  return { context, page, booking: new BookingPage(page) };
+}
 
 // Три независимых аккаунта = три независимых браузерных контекста
 export async function createHostAndGuestsContexts(browser: Browser) {
-  const hostContext = await browser.newContext();
-  const guestContext = await browser.newContext();
-  const guest2Context = await browser.newContext();
-
-  const hostPage = await hostContext.newPage();
-  const guestPage = await guestContext.newPage();
-  const guest2Page = await guest2Context.newPage();
-
-  const hostBooking = new BookingPage(hostPage);
-  const guestBooking = new BookingPage(guestPage);
-  const guest2Booking = new BookingPage(guest2Page);
+  const host = await createActor(browser);
+  const guest = await createActor(browser);
+  const guest2 = await createActor(browser);
 
   return {
-    hostContext,
-    guestContext,
-    guest2Context,
-    hostPage,
-    guestPage,
-    guest2Page,
-    hostBooking,
-    guestBooking,
-    guest2Booking,
+    hostContext: host.context,
+    guestContext: guest.context,
+    guest2Context: guest2.context,
+    hostPage: host.page,
+    guestPage: guest.page,
+    guest2Page: guest2.page,
+    hostBooking: host.booking,
+    guestBooking: guest.booking,
+    guest2Booking: guest2.booking,
   };
 }
 
@@ -37,16 +41,17 @@ export async function closeHostGuestContexts(
 }
 
 export async function createHostAndGuestContexts(browser: Browser) {
-  const hostContext = await browser.newContext();
-  const guestContext = await browser.newContext();
+  const host = await createActor(browser);
+  const guest = await createActor(browser);
 
-  const hostPage = await hostContext.newPage();
-  const guestPage = await guestContext.newPage();
-
-  const hostBooking = new BookingPage(hostPage);
-  const guestBooking = new BookingPage(guestPage);
-
-  return { hostContext, guestContext, hostPage, guestPage, hostBooking, guestBooking };
+  return {
+    hostContext: host.context,
+    guestContext: guest.context,
+    hostPage: host.page,
+    guestPage: guest.page,
+    hostBooking: host.booking,
+    guestBooking: guest.booking,
+  };
 }
 
 export async function closeHostGuestPairContexts(

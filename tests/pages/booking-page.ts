@@ -51,18 +51,22 @@ export class BookingPage {
     this.bookingsPastSection = page
       .locator("section")
       .filter({ has: page.getByRole("heading", { name: "Прошедшие и отменённые" }) });
-    }
+  }
 
-    async searchBySkill(skill: string) {
-      await this.catalogFilterInput.fill(skill);
-      await this.catalogFilterSubmit.click();
-    }
+  async searchBySkill(skill: string) {
+    await this.catalogFilterInput.fill(skill);
+    await this.catalogFilterSubmit.click();
+  }
 
-    async openHostCard(hostName: string) {
-      await this.catalogCard.filter({ hasText: hostName }).click();
-    }
+  async openHostCard(hostName: string) {
+    await this.catalogCard.filter({ hasText: hostName }).click();
+  }
 
   async selectFirstSlot() {
+    if (await this.bookingConfirmDialog.isVisible().catch(() => false)) {
+      return;
+    }
+
     const dayChip = this.bookingCalendarDay.first();
     if (!(await dayChip.isVisible().catch(() => false))) {
       await this.page.reload();
@@ -108,7 +112,5 @@ export class BookingPage {
     const card = this.bookingCardByName(participantName);
     await card.getByRole("button", { name: "Отменить" }).click();
     await this.bookingCardByName(participantName).waitFor({ state: "hidden", timeout: 10_000 });
-}
-
-
+  }
 }
