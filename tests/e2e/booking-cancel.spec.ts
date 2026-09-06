@@ -14,6 +14,7 @@ test.describe("Бронирование и отмена встречи", () => {
         const host = makeUser("host", runId);
         const guest = makeUser("guest", runId);
 
+        // фиксируем таймзону, чтобы тест не флакал. Вообще это надо чинить на уровне приложения; так что предположим, отнесли это разработчику
         const contextOptions = {
           timezoneId: 'UTC',
         };
