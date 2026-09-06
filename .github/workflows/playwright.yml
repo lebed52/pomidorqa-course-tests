@@ -17,7 +17,7 @@ jobs:
     timeout-minutes: 30
 
     env:
-      BASE_URL: ${{ vars.BASE_URL }}
+      POMIDORQA_BASE_URL: ${{ vars.POMIDORQA_BASE_URL }}
 
     steps:
       - name: Get repository code

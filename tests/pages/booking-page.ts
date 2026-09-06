@@ -42,9 +42,6 @@ export class BookingPage {
 
   bookingConfirmButton = () =>
     this.page.getByRole("button", { name: "Подтвердить" });
-  
-  cancelBookingButton = () =>
-    this.page.getByRole("button", { name: "Отменить" });
 
   bookingSuccess = () =>
     this.bookingDialog().getByText(/Забронировано|успешно/i);
@@ -57,14 +54,30 @@ export class BookingPage {
   upcomingSection = () =>
     this.page.locator('[data-testid="upcoming-meetings"]');
 
-  upcomingCardName = () =>
-    this.upcomingSection().locator('[data-booking-id]').getByRole("paragraph").first();
+  upcomingBookingCard = (name: string) =>
+    this.upcomingSection()
+      .locator("[data-booking-id]")
+      .filter({ hasText: name });
 
-  pastBookingsSection = () =>
-    this.page.getByRole("heading", { name: "Прошедшие и отменённые" });
+  upcomingCardName = (name: string) =>
+    this.upcomingBookingCard(name)
+      .getByRole("paragraph")
+      .first();
 
-  pastBookingCard = (name: string) =>
-    this.page.locator('[data-booking-id]').filter({ hasText: name });
+  cancelBookingButton = (name: string) =>
+    this.upcomingBookingCard(name).getByRole("button", {
+      name: "Отменить",
+    });
+    
+    pastBookingsSection = () =>
+      this.page
+        .locator("section")
+        .filter({ hasText: "Прошедшие и отменённые" });
+    
+    pastBookingCard = (name: string) =>
+      this.pastBookingsSection()
+        .locator("[data-booking-id]")
+        .filter({ hasText: name });
 
   async addSlot(date: string, time: string) {
     await this.slotDateInput().fill(date);
@@ -83,32 +96,32 @@ export class BookingPage {
 
   async selectDayAndTime(slotDate: string) {
     const dayButton = this.bookingDay(slotDate);
-  
+
     await dayButton.waitFor({
       state: "visible",
       timeout: 10000,
     });
-  
+
     await dayButton.click();
-  
+
     const timeButton = this.anyTime();
-  
+
     await timeButton.waitFor({
       state: "visible",
       timeout: 10000,
     });
-  
+
     await timeButton.click();
   }
 
   async confirmBooking() {
     await this.bookingConfirmButton().click();
   }
-  
-  async cancelBooking() {
-    await this.cancelBookingButton().click();
+
+  async cancelBooking(name: string) {
+    await this.cancelBookingButton(name).click();
   }
-  
+
   async goToBookings() {
     await this.page.goto("/pomidorqa/bookings");
   }
