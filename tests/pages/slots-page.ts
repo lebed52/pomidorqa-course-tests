@@ -18,9 +18,15 @@ export class SlotsPage {
     await this.page.goto(ROUTES.slots);
   }
 
+  // Добавление слота — POST-форма Next.js. Без ожидания ответа проверка
+  // «слот появился» иногда обгоняет сервер и падает на пустом списке.
   async addSlot(date: string, time: string) {
+    const added = this.page.waitForResponse(
+      (response) => response.url().endsWith(ROUTES.slots) && response.request().method() === "POST"
+    );
     await this.dateInput.fill(date);
     await this.timeInput.fill(time);
     await this.addSlotButton.click();
+    await added;
   }
 }

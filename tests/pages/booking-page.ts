@@ -13,6 +13,7 @@ export class BookingPage {
   readonly confirmSuccess: Locator;
   readonly confirmError: Locator;
   readonly upcomingMeetings: Locator;
+  readonly pastMeetings: Locator;
 
   constructor(readonly page: Page) {
     this.catalogFilterInput = page.locator("#pomidorqa-catalog-skill-filter");
@@ -26,6 +27,8 @@ export class BookingPage {
     this.confirmSuccess = this.confirmDialog.getByRole("status");
     this.confirmError = this.confirmDialog.getByRole("alert");
     this.upcomingMeetings = page.getByTestId("upcoming-meetings");
+    // У секции прошедших встреч нет testid — цепляемся за её заголовок.
+    this.pastMeetings = page.locator("section").filter({ hasText: "Прошедшие и отменённые" });
   }
 
   personCard(name: string): Locator {
@@ -66,11 +69,34 @@ export class BookingPage {
     }
   }
 
+  upcomingMeeting(participantName: string): Locator {
+    return this.upcomingMeetings.locator("[data-booking-id]").filter({ hasText: participantName });
+  }
+
+  pastMeeting(participantName: string): Locator {
+    return this.pastMeetings.locator("[data-booking-id]").filter({ hasText: participantName });
+  }
+
+  // Отмена — POST-форма Next.js: дожидаемся ответа сервера, иначе следующий
+  // reload может обогнать сохранение и увести тест в ложное падение.
+  async cancelMeeting(participantName: string) {
+    const cancelled = this.page.waitForResponse(
+      (response) =>
+        response.url().endsWith(ROUTES.bookings) && response.request().method() === "POST"
+    );
+    await this.upcomingMeeting(participantName).getByRole("button", { name: "Отменить" }).click();
+    await cancelled;
+  }
+
   async confirmBooking() {
     await this.confirmButton.click();
   }
 
   async openMyMeetings() {
     await this.page.goto(ROUTES.bookings);
+  }
+
+  async reload() {
+    await this.page.reload();
   }
 }
