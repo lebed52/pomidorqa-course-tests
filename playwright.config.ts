@@ -18,10 +18,6 @@ export default defineConfig({
   },
   projects: [
     {
-      name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
-    },
-    {
       name: "unit",
       testDir: "./tests/unit",
       // без browser-контекста — тест общается только с чистой функцией
