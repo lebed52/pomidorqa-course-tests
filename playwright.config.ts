@@ -7,12 +7,12 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   timeout: 30_000,
   fullyParallel: false,
-  reporter: [["list"], ["html", { open: "never" }]],
-  use: {
-    baseURL: process.env.BASE_URL,
-    trace: 'on-first-retry',
-    screenshot: 'only-on-failure',
-  },
+  // В CI повторяем падение один раз, чтобы заметить флак; локально ошибка видна сразу.
+  retries: process.env.CI ? 1 : 0,
+  // Один CI-worker снижает конкуренцию за пользователей, слоты и бронирования на общем стенде.
+  workers: process.env.CI ? 1 : undefined,
+  // В CI пишем лог и HTML-artifact, но не пытаемся открыть браузерное окно на headless-runner.
+  reporter: [["list"], ["html", { open: process.env.CI ? "never" : "on-failure" }]],
   projects: [
     { name: 'chromium', 
       use: { ...devices['Desktop Chrome'] } },
