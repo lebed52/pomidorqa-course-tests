@@ -1,10 +1,11 @@
 import { test, expect } from "@playwright/test";
-import { ProfilePage } from "../pages/profile-page";
+import { ProfilePage } from "../pages/ProfilePage";
 import { timezones } from "../helpers/user";
 import { makeUser, registerUser } from "../helpers/user";
 
 test.describe("Профиль: действия с полями", () => {
   let profilePage: ProfilePage;
+  
   test.beforeEach(async ({ page }) => {
     const user = makeUser("hw8", Date.now());
     await registerUser(page, user);
@@ -65,7 +66,7 @@ test.describe("Профиль: действия с полями", () => {
     });
   });
 
-  test("навык: заполняем, выбираем тип и добавляем", async ({ page }) => {
+  test("навык: заполняем, выбираем тип и добавляем", async () => {
     const skillTag = `Playwright-demo-${Date.now()}`;
 
     await test.step("Добавляем навык «могу помочь»", async () => {
@@ -77,7 +78,7 @@ test.describe("Профиль: действия с полями", () => {
     });
   });
 
-  test("негатив: пустой навык не добавляется", async ({ page }) => {
+  test("негатив: пустой навык не добавляется", async () => {
     await test.step("Жмём «Добавить», не заполнив поле", async () => {
       await expect(profilePage.skillInput).toHaveValue("");
       await profilePage.addSkillButton.click();
@@ -85,11 +86,11 @@ test.describe("Профиль: действия с полями", () => {
 
     await test.step("Ни одного навыка не появилось", async () => {
       await expect(profilePage.skillChips).toHaveCount(0);
-      await expect(profilePage.canHelpSkills).not.toBeVisible();
+      await expect(profilePage.canHelpSkills).toBeHidden();
     });
   });
 
-  test("негатив: навык «хочу разобрать» не попадает в блок «могу помочь»", async ({ page }) => {
+  test("негатив: навык «хочу разобрать» не попадает в блок «могу помочь»", async () => {
     const runId = Date.now();
     const canHelpTag = `CanHelp-${runId}`;
     const wantToLearnTag = `WantToLearn-${runId}`;

@@ -1,54 +1,32 @@
 import { type Page } from "@playwright/test";
-import { ROUTES } from "../e2e/config/routes";
 
 export class ProfilePage {
+
   constructor (readonly page: Page) {}
 
   // Локаторы
   // Профиль: верхняя форма, все поля сохраняются одной кнопкой
   
-  get nameInput() {
-    return this.page.getByLabel("Имя");
-  }
-  get telegramInput() {
-    return this.page.getByLabel("Telegram");
-  }
-  get timezoneSelect() {
-    return this.page.getByLabel("Часовой пояс");
-  }
-  get bioInput() {
-    return this.page.getByLabel("О себе");
-  }
-  get saveButton() {
-    return this.page.getByRole("button", { name: "Сохранить" });
-  }
+  get nameInput() { return this.page.getByLabel("Имя");}
+  get telegramInput() { return this.page.getByLabel("Telegram");  }
+  get timezoneSelect() { return this.page.getByLabel("Часовой пояс");  }
+  get bioInput() { return this.page.getByLabel("О себе");  }
+  get saveButton() { return this.page.getByRole("button", { name: "Сохранить" });  }
   
   // Профиль: нижняя форма «Навыки», у неё своя кнопка
-  get skillInput() {  
-    return this.page.locator("#pomidorqa-profile-skill-input");
-  }   
-  get skillTypeSelect() {
-    return this.page.locator("#pomidorqa-profile-skill-type");
-  }  
-  get addSkillButton() {
-    return this.page.getByRole("button", { name: "Добавить" });
-  }  
-  get canHelpSkills() {
-    return this.page.getByTestId("can-help-skills");
-  }  
-  get skillChips() {
-    return this.page.locator("[data-skill-tag]");
-  }  
+  get skillInput() {  return this.page.locator("#pomidorqa-profile-skill-input");  }   
+  get skillTypeSelect() { return this.page.locator("#pomidorqa-profile-skill-type");  }  
+  get addSkillButton() { return this.page.getByRole("button", { name: "Добавить" });  }  
+  get canHelpSkills() {  return this.page.getByTestId("can-help-skills");  }  
+  get skillChips() {  return this.page.locator("[data-skill-tag]");  }  
 
   // Методы
 
-  async goto() {
-    await this.page.goto(ROUTES.profile);
-  }  
+  async goto() {  await this.page.goto("/pomidorqa/profile");  }  
  
   async saveProfile(page: Page, profilePage: ProfilePage) {
   const saved = page.waitForResponse(
-    (response) => response.url().endsWith(ROUTES.profile) && response.request().method() === "POST"
+    (response) => response.url().endsWith("/pomidorqa/profile") && response.request().method() === "POST"
   );
   await profilePage.saveButton.click();
   await saved;
