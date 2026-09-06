@@ -22,9 +22,12 @@ export class BookingPage {
  get bookingConfirmError() { return this.page.getByRole("dialog").getByRole("alert"); }
  get bookingsUpcomingSection() { return this.page.getByTestId("upcoming-meetings"); }
  get bookingsCardName() { return this.bookingsUpcomingSection.locator("[data-booking-id]").first().locator("p").first(); }
+ get bookingCanсelButton() {return this.page.getByRole("button", { name: "Отменить" });}
+ get bookingsCancelSection() { return this.page.getByRole("heading", {name: "Прошедшие и отменённые"}); }
+ bookingCancelCard(name: string) {return this.page.locator("[data-booking-id]").filter({hasText: name}); }
  
  
-  // Методы
+    // Методы
 
     async gotoSlots() { await this.page.goto("/pomidorqa/profile/slots");}
     async gotoBookings () { await this.page.goto("/pomidorqa/bookings");}
@@ -81,5 +84,7 @@ export class BookingPage {
             throw new Error("Слот должен был быть занят, но бронирование прошло успешно");
           }
      }
-
+     //отмена
+     async cancelBooking () {
+      await this.bookingCanсelButton.click()}
 }          
