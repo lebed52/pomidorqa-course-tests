@@ -65,11 +65,11 @@ test('основной путь + гонка за слот: регистраци
   });
 
   await test.step('Карточка хоста найдена в каталоге', async () => {
-    await expect(guestCatalog.personCard.filter({ hasText: host.name })).toBeVisible();
+    await expect(guestCatalog.getPersonCard(host.name)).toBeVisible();
   });
 
   await test.step('Гость: открывает карточку хоста', async () => {
-    await guestCatalog.personCard.filter({ hasText: host.name }).click();
+    await guestCatalog.getPersonCard(host.name).click();
   });
 
   await test.step('Открыта карточка хоста', async () => {
@@ -85,10 +85,17 @@ test('основной путь + гонка за слот: регистраци
     await registerUser(guest2Page, guest2);
   });
 
-  await test.step('Гость2: находит и открывает карточку хоста', async () => {
+  await test.step('Гость2: ищет хоста в каталоге по навыку', async () => {
     await guest2Catalog.catalogFilterInput.fill(skillTag);
     await guest2Catalog.btnSearch.click();
-    await guest2Catalog.personCard.filter({ hasText: host.name }).click();
+  });
+
+  await test.step('Карточка хоста найдена в каталоге', async () => {
+    await expect(guest2Catalog.getPersonCard(host.name)).toBeVisible();
+  });
+
+  await test.step('Гость2: открывает карточку хоста', async () => {
+    await guest2Catalog.getPersonCard(host.name).click();
   });
 
   await test.step('Открыта карточка хоста', async () => {

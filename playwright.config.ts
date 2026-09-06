@@ -27,4 +27,22 @@ export default defineConfig({
       },
     },
   ],
+
+  testDir: './tests',
+  forbidOnly: !!process.env.CI,
+  workers: process.env.CI ? 1 : undefined,
+  retries: process.env.CI ? 1 : 0,
+  reporter: [
+    ['list'],
+    ['html', { open: 'never' }],
+  ],
+  use: {
+    baseURL: process.env.BASE_URL,
+    trace: 'on-first-retry',
+    screenshot: 'only-on-failure',
+  },
+  projects: [
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+  ],
+});
 });

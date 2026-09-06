@@ -15,4 +15,8 @@ export class CatalogPage {
     this.personCard = page.locator('[data-testid="person-card"]');
     this.personName = page.locator('h1');
   }
+
+  getPersonCard(name: string): Locator {
+    return this.personCard.filter({ hasText: name });
+  }
 }
