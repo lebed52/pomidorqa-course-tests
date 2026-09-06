@@ -22,9 +22,9 @@ export function makeUser(role: string, runId: number): TestUser {
 }
 
 export function makeUnique(prefix: string) {
-  return `${prefix}-${Date.now()}`;
+  const salt = Math.random().toString(36).slice(2, 6);
+  return `${prefix}-${Date.now()}-${salt}`;
 }
-
 export async function registerUser(page: Page, user: TestUser) {
   await expect(async () => {
     await page.goto(ROUTES.register);

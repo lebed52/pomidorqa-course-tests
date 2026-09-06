@@ -1,5 +1,5 @@
 import type { Browser, BrowserContext, Page } from '@playwright/test';
-import { makeUser, type TestUser } from './user';
+import { makeUnique, makeUser, type TestUser } from './user';
 import { BookingPage } from '../pages/booking';
 import { CatalogPage } from '../pages/catalog';
 import { ProfilePage } from '../pages/profile';
@@ -23,7 +23,7 @@ export type BookingMeet = {
 /** Создаёт актёров, контексты и страницы для сценария брони — данные без действий. */
 export async function bookingMeet(browser: Browser): Promise<BookingMeet> {
   const runId = Date.now();
-  const skillTag = `Playwright-demo-${runId}`;
+  const skillTag = makeUnique('Playwright-demo');
   const host = makeUser('host', runId);
   const guest = makeUser('guest', runId);
 

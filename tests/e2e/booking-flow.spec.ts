@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { makeUser, registerUser } from '../helpers/user';
+import { makeUnique, makeUser, registerUser } from '../helpers/user';
 import { ProfilePage } from '../pages/profile';
 import { CatalogPage } from '../pages/catalog';
 import { BookingPage } from '../pages/booking';
@@ -9,7 +9,7 @@ test('основной путь + гонка за слот: регистраци
   browser,
 }) => {
   const runId = Date.now();
-  const skillTag = `Playwright-demo-${runId}`;
+  const skillTag = makeUnique('Playwright-demo');
   const host = makeUser('host', runId);
   const guest = makeUser('guest', runId);
   const guest2 = makeUser('guest2', runId);
