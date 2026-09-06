@@ -62,7 +62,7 @@ jobs:
         env:
           # Включает CI-режим в playwright.config.ts: retry, один worker и reporter без открытия окна.
           CI: true
-          POMIDORQA_BASE_URL: ${{ vars.BASE_URL }}
+          BASE_URL: ${{ vars.BASE_URL }}
 
       # Сохраняем HTML-отчёт после завершения тестов.
       - name: Upload Playwright report

@@ -1,6 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const baseURL = process.env.POMIDORQA_BASE_URL ?? process.env.BASE_URL ?? "https://aiqa.su";
+const baseURL = process.env.BASE_URL ?? "https://aiqa.su";
 
 export default defineConfig({
   testDir: "./tests",
@@ -24,10 +24,12 @@ export default defineConfig({
     {
       name: "unit",
       testDir: "./tests/unit",
+      // без browser-контекста — тест общается только с чистой функцией
     },
     {
       name: "api",
       testDir: "./tests/api",
+      // без browser-контекста — тест общается только по HTTP с локальным мок-сервером
     },
     {
       name: "e2e",
