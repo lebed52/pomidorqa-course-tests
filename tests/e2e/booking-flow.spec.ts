@@ -35,22 +35,30 @@ test("основной путь + гонка за слот: регистраци
       await expect(hostBooking.slotsCard.first()).toBeVisible();
     });
 
-    await test.step("Гость и Гость2: параллельно регистрируются и открывают диалог брони на один слот", async () => {
-      await Promise.all([
-        (async () => {
-          await registerUser(guestPage, guest);
-          await guestBooking.searchBySkill(skillTag);
-          await guestBooking.openHostCard(host.name);
-          await guestBooking.selectFirstSlot();
-        })(),
-        (async () => {
-          await registerUser(guest2Page, guest2);
-          await guest2Booking.searchBySkill(skillTag);
-          await guest2Booking.openHostCard(host.name);
-          await guest2Booking.selectFirstSlot();
-        })(),
-      ]);
-    });
+await test.step("Гость и Гость2: параллельно регистрируются и открывают диалог брони на один слот", async () => {
+  await Promise.all([
+    (async () => {
+      await registerUser(guestPage, guest);
+      await guestBooking.searchBySkill(skillTag);
+      await guestBooking.openHostCard(host.name);
+      await expect(async () => {
+        await guestBooking.selectFirstSlot();
+        await expect(guestBooking.bookingConfirmDialog).toBeVisible({ timeout: 1_000 });
+      }).toPass({ timeout: 30_000, intervals: [500, 1_000, 2_000] });
+    })(),
+    (async () => {
+      await registerUser(guest2Page, guest2);
+      await guest2Booking.searchBySkill(skillTag);
+      await guest2Booking.openHostCard(host.name);
+      await expect(async () => {
+        await guest2Booking.selectFirstSlot();
+        await expect(guest2Booking.bookingConfirmDialog).toBeVisible({ timeout: 1_000 });
+      }).toPass({ timeout: 30_000, intervals: [500, 1_000, 2_000] });
+    })(),
+  ]);
+});
+
+
     await test.step("У обоих гостей открылся диалог подтверждения брони на один слот", async () => {
       await expect(guestBooking.bookingConfirmDialog).toBeVisible();
       await expect(guest2Booking.bookingConfirmDialog).toBeVisible();

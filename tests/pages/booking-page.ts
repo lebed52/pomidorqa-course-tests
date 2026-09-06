@@ -62,25 +62,17 @@ export class BookingPage {
       await this.catalogCard.filter({ hasText: hostName }).click();
     }
 
-    async selectFirstSlot() {
-      const deadline = Date.now() + 30_000;
-    while (true) {
-      try {
-        const dayChip = this.bookingCalendarDay.first();
-        if (!(await dayChip.isVisible().catch(() => false))) {
-          await this.page.reload();
-        }
-        await dayChip.waitFor({ state: "visible" });
-        await dayChip.click();
-        const timeSlot = this.bookingCalendarTime.first();
-        await timeSlot.waitFor({ state: "visible" });
-        await timeSlot.click();
-        await this.bookingConfirmDialog.waitFor({ state: "visible", timeout: 5_000 });
-        return;
-      } catch (err) {
-        if (Date.now() > deadline) throw err;
-      }
+  async selectFirstSlot() {
+    const dayChip = this.bookingCalendarDay.first();
+    if (!(await dayChip.isVisible().catch(() => false))) {
+      await this.page.reload();
     }
+    await dayChip.waitFor({ state: "visible", timeout: 8_000 }); // было 3_000 — мало после reload
+    await dayChip.click();
+
+    const timeSlot = this.bookingCalendarTime.first();
+    await timeSlot.waitFor({ state: "visible", timeout: 3_000 });
+    await timeSlot.click();
   }
 
   async confirmBooking() {
