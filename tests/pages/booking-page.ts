@@ -29,6 +29,8 @@ export class BookingPage {
 
     bookingsUpcomingSection: Locator;
     bookingsCardName: Locator;
+    bookingCancelButton: Locator;
+    bookingsPastSection: Locator;
 
     constructor(page: Page) {
         this.page = page;
@@ -59,6 +61,8 @@ export class BookingPage {
 
         this.bookingsUpcomingSection = page.getByTestId("upcoming-meetings");
         this.bookingsCardName = this.bookingsUpcomingSection.locator("[data-booking-id]").first().locator("p").first();
+        this.bookingCancelButton = this.bookingsCardName.locator("button");
+        this.bookingsPastSection = page.getByRole("heading", { name: ("Прошедшие и отменённые") });
     }
 
     async goto() {
