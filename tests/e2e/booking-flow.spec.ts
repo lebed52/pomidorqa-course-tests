@@ -15,16 +15,22 @@ test.describe("Бронирование встречи>", () => {
   const guest = makeUser("guest", runId);
   const guest2 = makeUser("guest2", runId);
 
+  const contextOptions = {
+    timezoneId: 'UTC',
+  };
+
   // Три независимых аккаунта = три независимых браузерных контекста
-  const hostContext = await browser.newContext();
-  const guestContext = await browser.newContext();
-  const guest2Context = await browser.newContext();
+  const hostContext = await browser.newContext(contextOptions);
+  const guestContext = await browser.newContext(contextOptions);
+  const guest2Context = await browser.newContext(contextOptions);
   const hostPage = await hostContext.newPage();
   const guestPage = await guestContext.newPage();
   const guest2Page = await guest2Context.newPage();
 
   // экземпляры страниц
   const hostProfilePage = new ProfilePage(hostPage);
+  const guestProfilePage = new ProfilePage(guestPage);
+  const guest2ProfilePage = new ProfilePage(guest2Page);
 
   const hostBookingPage = new BookingPage(hostPage);
   const guestBookingPage = new BookingPage(guestPage);

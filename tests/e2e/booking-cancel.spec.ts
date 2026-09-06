@@ -3,6 +3,7 @@ import { makeUser, registerUser, ROUTES } from "../helpers/user";
 import { BookingPage } from "../pages/booking-page";
 import { ProfilePage } from "../pages/profile-page";
 
+
 test.describe("Бронирование и отмена встречи", () => {
     test("{Хост добавляет слот -> Гость бронирует слот -> Гость отменяет встречу -> Карточка переходит в прошедшие", async ({
 
@@ -13,17 +14,20 @@ test.describe("Бронирование и отмена встречи", () => {
         const host = makeUser("host", runId);
         const guest = makeUser("guest", runId);
 
+        const contextOptions = {
+          timezoneId: 'UTC',
+        };
         // Три независимых аккаунта = три независимых браузерных контекста
-        const hostContext = await browser.newContext();
-        const guestContext = await browser.newContext();
+        const hostContext = await browser.newContext(contextOptions);
+        const guestContext = await browser.newContext(contextOptions);
         const hostPage = await hostContext.newPage();
         const guestPage = await guestContext.newPage();
 
         // экземпляры страниц
         const hostProfilePage = new ProfilePage(hostPage);
-
         const hostBookingPage = new BookingPage(hostPage);
         const guestBookingPage = new BookingPage(guestPage);
+
 
   await test.step("Хост: регистрируется в PomidorQA", async () => {
     await registerUser(hostPage, host);
@@ -55,6 +59,7 @@ test.describe("Бронирование и отмена встречи", () => {
   });
 
   await test.step('Гость: ищет хоста в каталоге по навыку (сценарий 9)', async () => {
+      await guestPage.goto(ROUTES.home);
       await guestBookingPage.searchBySkill(skillTag);
     });
 
@@ -93,15 +98,22 @@ test.describe("Бронирование и отмена встречи", () => {
       if (await error.isVisible().catch(() => false)) {
         throw new Error(`Бронирование не удалось: ${await error.textContent()}`);
       }
+      await guestBookingPage.page.reload();
     });
 
     await test.step('Гость: отменяет бронирование', async () => {
-      await guestBookingPage.bookingCancelButton.click();
+      await guestBookingPage.gotoMeetings();
+      await guestBookingPage.getCancelButton(host.name).click();
     });
 
     await test.step('Бронирование отменено', async () => {
       await expect(guestBookingPage.bookingsUpcomingSection).toContainText("Пока пусто");
-      await expect(guestBookingPage.bookingsPastSection).toHaveText(host.name);
+      await expect(guestBookingPage.getPastMeetingCard(host.name), ).toBeVisible();
     });
+
+    await test.step('Хост: обновляет страницу и видит отмену бронирования', async () => {
+      await hostBookingPage.gotoMeetings();
+      await expect(hostBookingPage.getPastMeetingCard(guest.name), ).toBeVisible();
     });
+  });
 });

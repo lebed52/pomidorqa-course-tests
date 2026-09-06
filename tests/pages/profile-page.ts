@@ -1,4 +1,4 @@
-import { Locator, type Page } from "@playwright/test";
+import { expect, Locator, type Page } from "@playwright/test";
 import { ROUTES } from "../helpers/user";
 
 type SkillType = 'can_help' | 'want_to_learn';
@@ -62,6 +62,17 @@ async addSkill(tag: string, type: SkillType): Promise<void> {
   await this.skillTypeSelect.selectOption(type);
   await this.addSkillButton.click();
 }
+
+async setTimezone(timezone: string): Promise<void> {
+  await this.goto();
+
+  await this.profileTimezoneSelect.selectOption(timezone);
+  await this.saveProfile(this.page);
+
+  await this.page.reload();
+  await expect(this.profileTimezoneSelect).toHaveValue(timezone);
+}
+
   getSkillChip(tag: string): Locator {
     return this.page.locator(`[data-skill-tag="${tag}"]`);
   }
@@ -78,4 +89,6 @@ async addSkill(tag: string, type: SkillType): Promise<void> {
   saveButton() {
     return this.page.getByRole("button", { name: "Сохранить" });
   }
+
+  
 }

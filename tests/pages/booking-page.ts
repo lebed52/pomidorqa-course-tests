@@ -61,8 +61,9 @@ export class BookingPage {
 
         this.bookingsUpcomingSection = page.getByTestId("upcoming-meetings");
         this.bookingsCardName = this.bookingsUpcomingSection.locator("[data-booking-id]").first().locator("p").first();
-        this.bookingCancelButton = this.bookingsCardName.locator("button");
+        // this.bookingCancelButton = this.bookingsUpcomingSection.locator("[data-booking-id]").first().getByRole("button", { name: "Отменить" });
         this.bookingsPastSection = page.getByRole("heading", { name: ("Прошедшие и отменённые") });
+        this.bookingsPastSection = page.locator('section').filter({has: page.getByRole('heading', { name: 'Прошедшие и отменённые', exact: true, }),});
     }
 
     async goto() {
@@ -79,6 +80,16 @@ export class BookingPage {
     getHostCard(hostName: string): Locator {
         return this.catalogCard.filter({ hasText: hostName });
     }
+
+    getCancelButton(participantName: string): Locator {
+        return this.bookingsUpcomingSection.locator('[data-booking-id]').filter({ hasText: participantName }).getByRole('button', { name: 'Отменить', exact: true });
+    }
+
+    getPastMeetingCard(participantName: string): Locator {
+        return this.bookingsPastSection
+            .locator('[data-booking-id]')
+            .filter({ hasText: participantName });
+        }
 
     async searchBySkill(skillTag: string): Promise<void> {
     await this.catalogFilterInput.fill(skillTag);
@@ -102,8 +113,27 @@ export class BookingPage {
     }
 
     async selectFirstAvailableSlot(): Promise<void> {
-    await this.bookingCalendarDay.first().click();
-    await this.bookingCalendarTime.first().click();
+        const day = this.bookingCalendarDay.first();
+        const time = this.bookingCalendarTime.first();
+    
+        // await this.bookingCalendarDay.first().click();
+        // await this.bookingCalendarTime.first().click();
+
+        await day.click();
+            await expect(time).toBeVisible();
+
+            await expect(async () => {
+                if (!(await this.bookingConfirmDialog.isVisible())) {
+                await time.click();
+                }
+
+                await expect(this.bookingConfirmDialog).toBeVisible({
+                timeout: 1_000,
+                });
+            }).toPass({
+                timeout: 10_000,
+                intervals: [100, 250, 500],
+            });
     }
 
     getMeetingCard(participantName: string): Locator {

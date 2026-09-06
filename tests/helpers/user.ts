@@ -5,6 +5,7 @@ export const ROUTES = {
   profile: "/pomidorqa/profile",
   booking: "/pomidorqa/bookings",
   slots: "/pomidorqa/profile/slots",
+  home: "/pomidorqa",
 };
 
 // Регистрация
@@ -33,5 +34,5 @@ export async function registerUser(page: Page, user: TestUser) {
   await registerEmailInput(page).fill(user.email);
   await registerPasswordInput(page).fill(user.password);
   await registerSubmitButton(page).click();
-  await expect(page).toHaveURL(/\/pomidorqa\/?$/);
+  await expect(page).toHaveURL(ROUTES.home);
 }
