@@ -2,6 +2,7 @@ import type { Page, Locator } from "@playwright/test";
 
 const SLOTS_ROUTE = "/pomidorqa/profile/slots";
 const BOOKINGS_ROUTE = "/pomidorqa/bookings";
+const PAST_SECTION_HEADING = "Прошедшие и отменённые";
 
 export class BookingPage {
   readonly page: Page;
@@ -84,6 +85,32 @@ export class BookingPage {
     return this.upcomingSection.locator("[data-booking-id]").first().locator("p").first();
   }
 
+  get upcomingCards(): Locator {
+    return this.upcomingSection.locator("[data-booking-id]");
+  }
+
+  upcomingCardByName(name: string): Locator {
+    return this.upcomingCards.filter({ hasText: name });
+  }
+
+  cancelButton(name: string): Locator {
+    return this.upcomingCardByName(name).getByRole("button", { name: "Отменить" });
+  }
+
+  get pastSection(): Locator {
+    return this.page
+      .locator("section")
+      .filter({ has: this.page.getByRole("heading", { name: PAST_SECTION_HEADING }) });
+  }
+
+  get pastCards(): Locator {
+    return this.pastSection.locator("[data-booking-id]");
+  }
+
+  pastCardByName(name: string): Locator {
+    return this.pastCards.filter({ hasText: name });
+  }
+
   // Действия
   async openSlots() {
     await this.page.goto(SLOTS_ROUTE);
@@ -119,5 +146,9 @@ export class BookingPage {
 
   async confirmBooking() {
     await this.confirmButton.click();
+  }
+
+  async cancelBooking(name: string) {
+    await this.cancelButton(name).click();
   }
 }
