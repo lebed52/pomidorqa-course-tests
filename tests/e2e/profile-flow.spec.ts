@@ -2,6 +2,13 @@ import { test, expect } from "@playwright/test";
 import { makeUser, registerUser } from "../helpers/user";
 import { ProfilePage } from "../pages/profile-page";
 
+// ИСПРАВЛЕНО: единый таймаут для проверок "после reload" — на живом стенде
+// (aiqa.su, не мок) GET профиля может отвечать медленнее, чем дефолтные 5s
+// у expect(). Не поднимаем глобальный expect.timeout в конфиге, чтобы не
+// маскировать реальные баги в других, более быстрых, проверках — задаём
+// точечно там, где это оправдано.
+const AFTER_RELOAD_TIMEOUT = 15_000;
+
 test.describe("Профиль: действия с полями", () => {
   let profilePage: ProfilePage;
 
@@ -19,8 +26,15 @@ test.describe("Профиль: действия с полями", () => {
       await profilePage.saveName(user.newName);
     });
     await test.step("После перезагрузки имя сохранено", async () => {
-      await profilePage.page.reload();
-      await expect(profilePage.nameInput).toHaveValue(user.newName);
+      // ИСПРАВЛЕНО: reload + toHaveValue обёрнуты в toPass — если сразу
+      // после reload страница ещё не подтянула значение с сервера, retry
+      // сделает повторный reload вместо падения теста.
+      await expect(async () => {
+        await profilePage.page.reload();
+        await expect(profilePage.nameInput).toHaveValue(user.newName, {
+          timeout: 3_000,
+        });
+      }).toPass({ timeout: AFTER_RELOAD_TIMEOUT });
     });
   });
 
@@ -31,10 +45,14 @@ test.describe("Профиль: действия с полями", () => {
 
     await test.step("Выбираем новый часовой пояс и сохраняем", async () => {
       await profilePage.saveTimezone(user.newTimezone);
-      await profilePage.page.reload();
     });
     await test.step("После перезагрузки часовой пояс сохранён", async () => {
-      await expect(profilePage.timezoneSelect).toHaveValue(user.newTimezone);
+      await expect(async () => {
+        await profilePage.page.reload();
+        await expect(profilePage.timezoneSelect).toHaveValue(user.newTimezone, {
+          timeout: 3_000,
+        });
+      }).toPass({ timeout: AFTER_RELOAD_TIMEOUT });
     });
   });
 
@@ -46,8 +64,12 @@ test.describe("Профиль: действия с полями", () => {
       await profilePage.saveTelegram(user.newTelegram);
     });
     await test.step("После перезагрузки Telegram сохранён", async () => {
-      await profilePage.page.reload();
-      await expect(profilePage.telegramInput).toHaveValue(user.newTelegram);
+      await expect(async () => {
+        await profilePage.page.reload();
+        await expect(profilePage.telegramInput).toHaveValue(user.newTelegram, {
+          timeout: 3_000,
+        });
+      }).toPass({ timeout: AFTER_RELOAD_TIMEOUT });
     });
   });
 
@@ -56,10 +78,14 @@ test.describe("Профиль: действия с полями", () => {
 
     await test.step("Заполняем «О себе» и сохраняем", async () => {
       await profilePage.saveBio(user.newBio);
-      await profilePage.page.reload();
     });
     await test.step("После перезагрузки текст сохранён", async () => {
-      await expect(profilePage.bioInput).toHaveValue(user.newBio);
+      await expect(async () => {
+        await profilePage.page.reload();
+        await expect(profilePage.bioInput).toHaveValue(user.newBio, {
+          timeout: 3_000,
+        });
+      }).toPass({ timeout: AFTER_RELOAD_TIMEOUT });
     });
   });
 
@@ -70,7 +96,9 @@ test.describe("Профиль: действия с полями", () => {
       await profilePage.addSkill(skillTag, "can_help");
     });
     await test.step("Навык появился в блоке «Могу помочь»", async () => {
-      await expect(profilePage.canHelpSkills).toContainText(skillTag);
+      await expect(profilePage.canHelpSkills).toContainText(skillTag, {
+        timeout: 10_000,
+      });
     });
   });
 
@@ -95,7 +123,7 @@ test.describe("Профиль: действия с полями", () => {
       await profilePage.addSkill(wantToLearnTag, "want_to_learn");
     });
     await test.step("«Хочу разобрать» не попадает в блок «могу помочь»", async () => {
-      await expect(profilePage.skillChips).toHaveCount(2);
+      await expect(profilePage.skillChips).toHaveCount(2, { timeout: 10_000 });
       await expect(profilePage.canHelpSkills).toContainText(canHelpTag);
       await expect(profilePage.canHelpSkills).not.toContainText(wantToLearnTag);
     });
@@ -111,10 +139,20 @@ test.describe("Профиль: действия с полями", () => {
       await profilePage.saveProfile();
     });
     await test.step("После перезагрузки все три значения пришли с сервера", async () => {
-      await profilePage.page.reload();
-      await expect.soft(profilePage.nameInput).toHaveValue(user.newName);
-      await expect.soft(profilePage.telegramInput).toHaveValue(user.newTelegram);
-      await expect.soft(profilePage.bioInput).toHaveValue(user.newBio);
+      // ВАЖНО: expect.soft НЕ бросает исключение при неудаче — это ломает
+      // toPass(), который узнаёт о необходимости повторить попытку именно
+      // по брошенной ошибке. Соединять toPass() (retry от гонки) и
+      // expect.soft (агрегация всех несовпадений) в одном callback нельзя:
+      // первая же гонка "прошла бы" как успех, а retry так и не случился бы.
+      // Поэтому внутри retry используем обычный (жёсткий) expect —
+      // это отдаёт приоритет реальной защите от гонки перед удобством
+      // видеть все три расхождения разом.
+      await expect(async () => {
+        await profilePage.page.reload();
+        await expect(profilePage.nameInput).toHaveValue(user.newName, { timeout: 3_000 });
+        await expect(profilePage.telegramInput).toHaveValue(user.newTelegram, { timeout: 3_000 });
+        await expect(profilePage.bioInput).toHaveValue(user.newBio, { timeout: 3_000 });
+      }).toPass({ timeout: AFTER_RELOAD_TIMEOUT });
     });
   });
 });

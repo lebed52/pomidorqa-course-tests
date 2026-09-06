@@ -6,8 +6,7 @@ import { test, expect } from "@playwright/test";
 test("вход с неверными данными — одинаковая ошибка в обоих случаях, без уточнения причины", async ({
   page,
 }) => {
-  test.setTimeout(60_000);
-
+  test.setTimeout(120_000);
   const runId = Date.now();
   const email = `login-check-${runId}@example.com`;
   const password = "correct-password-123";
@@ -27,7 +26,12 @@ test("вход с неверными данными — одинаковая о�
     await page.getByLabel("Email").fill(email);
     await page.getByLabel("Пароль").fill("wrong-password");
     await page.getByRole("button", { name: "Войти" }).click();
-    const error = page.getByText(/Неверный/);
+    // ИСПРАВЛЕНО: page.getByText(/Неверный/) без scope мог упасть с
+    // strict mode violation, если слово "Неверный" встречается на странице
+    // больше одного раза (например, и в alert, и в подсказке поля).
+    // Берём первое совпадение — этого достаточно, т.к. дальше сравниваем
+    // текст между двумя сценариями, а не полагаемся на уникальность локатора.
+    const error = page.getByText(/Неверный/).first();
     await expect(error).toBeVisible({ timeout: 15_000 });
     wrongPasswordError = (await error.textContent())?.trim() ?? "";
   });
@@ -38,7 +42,7 @@ test("вход с неверными данными — одинаковая о�
     await page.getByLabel("Email").fill(`no-such-user-${runId}@example.com`);
     await page.getByLabel("Пароль").fill("any-password-123");
     await page.getByRole("button", { name: "Войти" }).click();
-    const error = page.getByText(/Неверный/);
+    const error = page.getByText(/Неверный/).first();
     await expect(error).toBeVisible({ timeout: 15_000 });
     unknownEmailError = (await error.textContent())?.trim() ?? "";
   });

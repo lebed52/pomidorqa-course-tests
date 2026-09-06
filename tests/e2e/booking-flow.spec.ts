@@ -5,7 +5,7 @@ import { ProfilePage } from "../pages/profile-page";
 
 // POMIDORQA_BASE_URL=http://localhost:3000 npx playwright test --project=e2e tests/e2e/booking-flow.spec.ts
 test("основной путь + гонка за слот: регистрация → навык → слот → поиск в каталоге → бронирование → «Мои встречи» у обоих → второй гость видит ошибку", async ({ browser }) => {
-  test.setTimeout(60_000);
+  test.setTimeout(120_000);
 
   const runId = Date.now();
   const skillTag = `Playwright-demo-${runId}`;

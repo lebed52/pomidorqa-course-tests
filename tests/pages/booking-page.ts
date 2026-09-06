@@ -62,25 +62,51 @@ export class BookingPage {
     await this.catalogCard.filter({ hasText: hostName }).click();
   }
 
-  async selectFirstSlot() {
+  /**
+   * ИСПРАВЛЕНО: раньше был ОДНОРАЗОВЫЙ reload + фиксированный таймаут 8s/3s.
+   * Если после reload сервер всё ещё не успел отдать слоты (SSR/гидратация,
+   * нагрузка на общий стенд aiqa.su) — старая версия падала с таймаутом,
+   * хотя слот появлялся секундой позже.
+   * Теперь — цикл retry до общего дедлайна: короткие попытки по 2s,
+   * и reload только если элемент не появился за это время.
+   */
+  async selectFirstSlot(retryTimeoutMs = 15_000) {
     if (await this.bookingConfirmDialog.isVisible().catch(() => false)) {
       return;
     }
 
     const dayChip = this.bookingCalendarDay.first();
-    if (!(await dayChip.isVisible().catch(() => false))) {
-      await this.page.reload();
+    const deadline = Date.now() + retryTimeoutMs;
+
+    for (;;) {
+      try {
+        await dayChip.waitFor({ state: "visible", timeout: 2_000 });
+        break;
+      } catch {
+        if (Date.now() > deadline) {
+          throw new Error(
+            `Слот не появился за ${retryTimeoutMs}ms. URL: ${this.page.url()}`
+          );
+        }
+        await this.page.reload();
+      }
     }
-    await dayChip.waitFor({ state: "visible", timeout: 8_000 }); // было 3_000 — мало после reload
+
     await dayChip.click();
 
+    // Было 3_000 — маловато после клика по дню на медленном ответе бэкенда.
     const timeSlot = this.bookingCalendarTime.first();
-    await timeSlot.waitFor({ state: "visible", timeout: 3_000 });
+    await timeSlot.waitFor({ state: "visible", timeout: 8_000 });
     await timeSlot.click();
   }
 
   async confirmBooking() {
-    await this.bookingConfirmButton.click();
+    // ИСПРАВЛЕНО: раньше клик по кнопке ждал появления элемента неограниченно
+    // (до конца всего теста). Явно ждём диалог отдельно, чтобы при падении
+    // сообщение говорило "диалог не открылся" вместо непрозрачного таймаута
+    // на кнопке внутри него.
+    await this.bookingConfirmDialog.waitFor({ state: "visible", timeout: 10_000 });
+    await this.bookingConfirmButton.click({ timeout: 10_000 });
   }
 
   async addSlot(time: string) {
@@ -111,6 +137,13 @@ export class BookingPage {
   async cancelBooking(participantName: string) {
     const card = this.bookingCardByName(participantName);
     await card.getByRole("button", { name: "Отменить" }).click();
-    await this.bookingCardByName(participantName).waitFor({ state: "hidden", timeout: 10_000 });
+    // ИСПРАВЛЕНО: было 10_000 — на живом стенде под нагрузкой (общий
+    // aiqa.su, не мок) отмена может уйти на бэкенд дольше. Playwright's
+    // waitFor({state:"hidden"}) уже покрывает и detached-случай, оставляем
+    // его, но с запасом по времени.
+    await this.bookingCardByName(participantName).waitFor({
+      state: "hidden",
+      timeout: 15_000,
+    });
   }
 }

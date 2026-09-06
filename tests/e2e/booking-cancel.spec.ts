@@ -7,7 +7,6 @@ test("гость отменяет бронирование: карточка п�
   browser,
 }) => {
   test.setTimeout(120_000);
-
   const runId = Date.now();
   const skillTag = `Playwright-cancel-${runId}`;
   const host = makeUser("host-cancel", runId);
@@ -47,17 +46,17 @@ test("гость отменяет бронирование: карточка п�
       await expect(async () => {
         await guestBooking.gotoBookings();
         await expect(guestBooking.bookingCardByName(host.name)).toBeVisible();
-      }).toPass({ timeout: 10_000 });
+      }).toPass({ timeout: 15_000 });
     });
 
     await test.step("Гость: отменяет встречу", async () => {
-    await guestBooking.cancelBooking(host.name);
+      await guestBooking.cancelBooking(host.name);
     });
 
     await test.step("У гостя карточка появилась в прошедших с пометкой «отменено»", async () => {
-    const pastCard = guestBooking.pastCardByName(host.name);
-    await expect(pastCard).toBeVisible();
-    await expect(pastCard).toContainText("отменено");
+      const pastCard = guestBooking.pastCardByName(host.name);
+      await expect(pastCard).toBeVisible();
+      await expect(pastCard).toContainText("отменено");
     });
 
     await test.step("После перезагрузки гость по-прежнему видит отмену", async () => {

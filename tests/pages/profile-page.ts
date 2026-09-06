@@ -3,13 +3,11 @@ import { ROUTES } from "../helpers/user";
 
 export class ProfilePage {
   page: Page;
-
   nameInput: Locator;
   telegramInput: Locator;
   timezoneSelect: Locator;
   bioInput: Locator;
   saveButton: Locator;
-
   skillInput: Locator;
   skillTypeSelect: Locator;
   addButton: Locator;
@@ -18,13 +16,11 @@ export class ProfilePage {
 
   constructor(page: Page) {
     this.page = page;
-
     this.nameInput = page.getByLabel("Имя");
     this.telegramInput = page.getByLabel("Telegram");
     this.timezoneSelect = page.getByLabel("Часовой пояс");
     this.bioInput = page.getByLabel("О себе");
     this.saveButton = page.getByRole("button", { name: "Сохранить" });
-
     this.skillInput = page.locator("#pomidorqa-profile-skill-input");
     this.skillTypeSelect = page.locator("#pomidorqa-profile-skill-type");
     this.addButton = page.getByRole("button", { name: "Добавить" });
@@ -57,12 +53,13 @@ export class ProfilePage {
   }
 
   async saveProfile() {
+    // Подписка на ответ ДО клика — иначе при быстром ответе сервера промис
+    // может создаться уже после того, как response пришёл, и зависнуть.
     const saved = this.page.waitForResponse(
       (response) =>
         response.url().endsWith(ROUTES.profile) &&
         response.request().method() === "POST"
     );
-
     await this.saveButton.click();
     await saved;
   }
