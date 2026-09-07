@@ -21,6 +21,7 @@ constructor(page: Page) {
     const date = tomorrow.toISOString().slice(0, 10);
     await this.dateInput.fill(date);
     await this.timeInput.fill(time);
+    await this.addSubmit.click();
     
   };
 

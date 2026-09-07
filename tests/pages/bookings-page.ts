@@ -8,18 +8,30 @@ export function catalogLoc(page: Page) {
   card: page.getByTestId("person-card")
   }
 }
+export function personCardByName(page: Page, name: string) {
+  catalogLoc(page).card.filter({ hasText: name }).click();
+}
 
 export class BookingPage {
     page: Page;
     upcomingSection: Locator;
+    locCancelFirstMeeting: Locator;
+    pastAndCancelledSection: Locator;
        
 constructor(page: Page) {
     this.page = page;
     this.upcomingSection = page.getByTestId("upcoming-meetings");
+    this.locCancelFirstMeeting = page.locator("[data-booking-id]").first().getByRole("button", { name: "Отменить" });
+    this.pastAndCancelledSection = page.locator("section").
+    filter({ has: page.getByRole("heading", { name: "Прошедшие и отменённые" }) });
     }
 
  get cardName() {
         return this.upcomingSection.locator("[data-booking-id]").first().locator("p").first();
+    }
+
+ get cardNameForCancelled() {
+        return this.pastAndCancelledSection.locator("[data-booking-id]").first().locator("p").first();
     }
 
  async searchBySkill (skillTag: string)  {
@@ -27,5 +39,9 @@ constructor(page: Page) {
     await catalogLoc(this.page).filterSubmit.click();
     
   };
+
+  async cancelFirstMeeting ()  {
+    await this.locCancelFirstMeeting.click();
+  }; 
 
 }

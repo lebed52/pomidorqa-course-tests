@@ -7,31 +7,26 @@ import { BookingPage, catalogLoc, personCardByName } from "../pages/bookings-pag
 
 //POMIDORQA_BASE_URL=http://localhost:3000 npx playwright test --project=e2e tests/e2e/booking-flow.spec.ts
 
-test.describe("Длинные e2e-сценарии, включающие основной путь", () => {
+test.describe("E2e-сценарии с отменой бронирования", () => {
   let profilePage: ProfilePage;
   let slotsPage: SlotsPage;
   let peoplePageGuest: PeoplePage;
-  let peoplePageGuest2: PeoplePage;
   let bookingPageGuest: BookingPage;
-  let bookingPageGuest2: BookingPage;
   let bookingPageHost: BookingPage;
 
-test("основной путь + гонка за слот: регистрация → навык → слот → поиск в каталоге → бронирование → «Мои встречи» у обоих → второй гость видит ошибку", async ({
+test("основной путь + отмена: регистрация → навык → слот → поиск в каталоге → бронирование → отмена → в прошедших встречах у обоих", async ({
   browser,
 }) => {
   const runId = Date.now();
   const skillTag = `Playwright-demo-${runId}`;
   const host = makeUser("host", runId);
   const guest = makeUser("guest", runId);
-  const guest2 = makeUser("guest2", runId);
 
-  // Три независимых аккаунта = три независимых браузерных контекста
+  // Два независимых аккаунта = два независимых браузерных контекста
   const hostContext = await browser.newContext();
   const guestContext = await browser.newContext();
-  const guest2Context = await browser.newContext();
   const hostPage = await hostContext.newPage();
   const guestPage = await guestContext.newPage();
-  const guest2Page = await guest2Context.newPage();
 
   await test.step("Хост: регистрируется в PomidorQA", async () => {
     await registerUser(hostPage, host);
@@ -90,42 +85,7 @@ test("основной путь + гонка за слот: регистраци
     await expect(peoplePageGuest.confirmDialog).toBeVisible();
   });  
 
-  await test.step("Гость2: регистрируется", async () => {
-    await registerUser(guest2Page, guest2);
-  });
-
-  await test.step("Гость2: ищет хоста в каталоге по навыку и открывает карточку", async () => {
-    peoplePageGuest2 = new PeoplePage(guest2Page);
-    bookingPageGuest2 = new BookingPage(guest2Page);
-    await bookingPageGuest2.searchBySkill(skillTag);
-    await personCardByName(guest2Page, host.name);
-  });
-
-
-  await test.step("Карточка хоста у Гостя2 открыта", async () => {
-    await expect(peoplePageGuest2.personName).toHaveText(host.name);
-  });
-
-
-  await test.step("Гость2: кликает по дню и времени в календаре слотов", async () => {
-    peoplePageGuest2 = new PeoplePage(guest2Page);
-    await expect(async () => {
-      const dayChip = peoplePageGuest2.calendarDay.first();
-      if (!(await dayChip.isVisible().catch(() => false))) {
-        await guest2Page.reload();
-      }
-      await expect(dayChip).toBeVisible();
-    }).toPass({ timeout: 10_000 });
-
-    await peoplePageGuest2.calendarDay.first().click();
-    await peoplePageGuest2.calendarTime.first().click();
-  });
-
-  await test.step("У Гостя2 появилось модальное окно с подтверждением", async () => {
-    await expect(peoplePageGuest2.confirmDialog).toBeVisible();
-  });  
-
-  await test.step("Гость: подтверждает бронирование первым", async () => {
+  await test.step("Гость: подтверждает бронирование", async () => {
     peoplePageGuest = new PeoplePage(guestPage);
     await peoplePageGuest.confirmButton.click();
   });
@@ -139,32 +99,7 @@ test("основной путь + гонка за слот: регистраци
     }
   });  
   
-  await test.step("Гость2: пытается забронировать тот же слот вторым", async () => {
-    peoplePageGuest2 = new PeoplePage(guest2Page);
-    await peoplePageGuest2.confirmButton.click();
-  });
-
-  await test.step("Гость2 видит ошибку бронирования", async () => {
-    const success2 = peoplePageGuest2.confirmSuccess;
-    const error2 = peoplePageGuest2.confirmError;
-    await expect(success2.or(error2)).toBeVisible({ timeout: 15_000 });
-
-    // Полярность наоборот относительно гостя 1: ошибка — ожидаемый результат
-    if (await success2.isVisible().catch(() => false)) {
-      throw new Error("Слот должен был быть занят, но бронирование прошло успешно");
-    }
-    await expect(error2).toBeVisible();
-  });  
-
-  await test.step("Гость: видит бронирование в разделе «Мои встречи»", async () => {
-    bookingPageGuest = new BookingPage(guestPage);
-    await expect(async () => {
-      await guestPage.goto(ROUTES.bookings);
-      await expect(bookingPageGuest.cardName).toHaveText(host.name);
-    }).toPass({ timeout: 10_000 });
-  });
-
-  await test.step("Хост: тоже видит это бронирование в своих «Мои встречи»", async () => {
+  await test.step("Хост видит это бронирование в своих «Мои встречи»", async () => {
     bookingPageHost = new BookingPage(hostPage);
     await expect(async () => {
       await hostPage.goto(ROUTES.bookings);
@@ -172,9 +107,38 @@ test("основной путь + гонка за слот: регистраци
     }).toPass({ timeout: 10_000 });
   });
 
+  await test.step("Гость видит это бронирование в своих «Мои встречи»", async () => {
+    bookingPageGuest = new BookingPage(guestPage);
+    await expect(async () => {
+      await guestPage.goto(ROUTES.bookings);
+      await expect(bookingPageGuest.cardName).toHaveText(host.name);
+    }).toPass({ timeout: 10_000 });
+  });
+
+  await test.step("Гость отменяет созданное бронирование", async () => {
+    bookingPageGuest = new BookingPage(guestPage);
+      await guestPage.goto(ROUTES.bookings);
+      await bookingPageGuest.cancelFirstMeeting();
+  });  
+
+  await test.step("Гость видит это бронирование в отмененных в «Мои встречи»", async () => {
+    bookingPageGuest = new BookingPage(guestPage);
+    await expect(async () => {
+      await guestPage.goto(ROUTES.bookings);
+      await expect(bookingPageGuest.cardNameForCancelled).toHaveText(host.name);
+    }).toPass({ timeout: 10_000 });
+  });
+
+  await test.step("Хост видит это бронирование в отмененных в «Мои встречи»", async () => {
+    bookingPageHost = new BookingPage(hostPage);
+    await expect(async () => {
+      await hostPage.goto(ROUTES.bookings);
+      await expect(bookingPageHost.cardNameForCancelled).toHaveText(guest.name);
+    }).toPass({ timeout: 10_000 });
+  });
+
   await hostContext.close();
   await guestContext.close();
-  await guest2Context.close();
 });
 
 })
