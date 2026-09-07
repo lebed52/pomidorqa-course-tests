@@ -1,4 +1,4 @@
-import { type Locator, type Page } from "@playwright/test";
+import { type Locator, type Page, expect } from "@playwright/test";
 import { ROUTES } from "../helpers/user";
 
 export class BookingPage {
@@ -108,9 +108,11 @@ export class BookingPage {
   }
 
   async selectFirstSlot() {
-    await this.calendarDays.first().click();
-    await this.calendarTimes.first().waitFor({ state: "visible" });
-    await this.calendarTimes.first().click();
+    await expect(async () => {
+      await this.calendarDays.first().click();
+      await this.calendarTimes.first().click();
+      await expect(this.confirmDialog).toBeVisible();
+    }).toPass({ timeout: 15_000 });
   }
 
   async confirmBooking() {
