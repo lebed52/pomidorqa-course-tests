@@ -23,6 +23,9 @@ export class BookingPage {
 
     bookingPersonName: Locator;
 
+    bookingCancelButton: Locator;
+    bookingPastSection: Locator;
+
     constructor( page: Page ) {
         this.page = page;
 
@@ -45,5 +48,28 @@ export class BookingPage {
         this.bookingCatalogCard = page.getByTestId("person-card");
 
         this.bookingPersonName = page.getByRole("heading", { level: 1 });
+
+        this.bookingCancelButton = page.getByRole("button", { name: "Отменить" });
+
+        this.bookingPastSection = page.locator("section").filter({ hasText: "Прошедшие и отменённые" });
+    }
+
+    async searchHost(skill: string) {
+        await this.bookingCatalogFilterInput.fill(skill);
+        await this.bookingCatalogFilterSubmit.click();
+    }
+
+    async openHost(name: string) {
+        await this.bookingCatalogCard.filter({ hasText: name }).click();
+    }
+
+    async bookFirstAvailableSlot() {
+        await this.bookingCalendarDay.first().click();
+        await this.bookingCalendarTime.first().click();
+        await this.bookingConfirmButton.click();
+    }
+
+    async cancelBooking() {
+        await this.bookingCancelButton.click();
     }
 }
