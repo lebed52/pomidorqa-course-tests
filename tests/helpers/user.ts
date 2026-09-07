@@ -16,7 +16,7 @@ export type TestUser = {
 export function makeUser(role: string, runId: number): TestUser {
   const someRandom = Math.random().toString(36).slice(2, 6);
   return {
-    name: `${role} Автотест`,
+    name: `${role}-${runId} Автотест`,
     email: `${role}-${runId}-${someRandom}@example.com`,
     password: "testpass123",
   };

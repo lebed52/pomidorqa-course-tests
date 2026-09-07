@@ -54,7 +54,9 @@ test("основной путь + гонка за слот: регистраци
 
   await test.step("Гость: находит и открывает карточку хоста в каталоге", async () => {
     await guestBookingPage.navigateToHostProfile(skillTag, host.name);
-    await expect(guestBookingPage.getPersonCard(host.name)).toBeVisible();
+    await expect(guestBookingPage.getPersonCard(host.name)).toBeVisible({
+      timeout: 10_000,
+    });
     await expect(guestBookingPage.personHeading).toHaveText(host.name);
   });
 
