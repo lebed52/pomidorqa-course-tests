@@ -29,8 +29,11 @@ test.describe("Профиль: действия с полями", () => {
         const profilePage = new ProfilePage(page);
         const timezone = "Asia/Yekaterinburg";
 
-        await test.step("Выбираем часовой пояс и сохраняем", async () => {
+        await test.step("Часовой пояс по умолчанию — Москва", async () => {
             await expect(profilePage.profileTimezoneSelect).toHaveValue("Europe/Moscow");
+        });
+
+        await test.step("Выбираем часовой пояс и сохраняем", async () => {
             await profilePage.selectTimezone(timezone);
             await profilePage.saveProfile();
         });
@@ -45,8 +48,11 @@ test.describe("Профиль: действия с полями", () => {
         const profilePage = new ProfilePage(page);
         const telegram = `@qa_timur_cat${Date.now()}`;
 
-        await test.step("Заполняем Telegram и сохраняем", async () => {
+        await test.step("Поле Telegram изначально пустое", async () => {
             await expect(profilePage.profileTelegramInput).toHaveValue("");
+        });
+
+        await test.step("Заполняем Telegram и сохраняем", async () => {
             await profilePage.fillTelegram(telegram);
             await profilePage.saveProfile();
         });
@@ -88,8 +94,11 @@ test.describe("Профиль: действия с полями", () => {
     test("негатив: пустой навык не добавляется", async ({ page }) => {
         const profilePage = new ProfilePage(page);
 
-        await test.step("Жмём «Добавить», не заполнив поле", async () => {
+        await test.step("Поле навыка изначально пустое", async () => {
             await expect(profilePage.skillInput).toHaveValue("");
+        });
+
+        await test.step("Жмём «Добавить», не заполнив поле", async () => {
             await profilePage.clickAddSkill();
         });
 
@@ -107,11 +116,17 @@ test.describe("Профиль: действия с полями", () => {
 
         await test.step("Добавляем навык «могу помочь»", async () => {
             await profilePage.addCanHelpSkill(canHelpTag);
+        });
+
+        await test.step("Навык появился в блоке «могу помочь»", async () => {
             await expect(profilePage.canHelpSkills).toContainText(canHelpTag);
         });
 
         await test.step("Добавляем навык «хочу разобрать»", async () => {
             await profilePage.addWantToLearnSkill(wantToLearnTag);
+        });
+
+        await test.step("Оба навыка теперь на странице", async () => {
             await expect(profilePage.skillChips).toHaveCount(2);
         });
 

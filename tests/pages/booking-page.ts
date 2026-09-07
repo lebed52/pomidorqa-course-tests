@@ -9,11 +9,6 @@ const ROUTES = {
 export class BookingPage {
     readonly page: Page;
 
-    readonly profileSkillInput: Locator;
-    readonly profileSkillTypeSelect: Locator;
-    readonly profileSkillSubmit: Locator;
-    readonly profileCanHelpSkills: Locator;
-
     readonly slotsDateInput: Locator;
     readonly slotsTimeInput: Locator;
     readonly slotsAddSubmit: Locator;
@@ -38,11 +33,6 @@ export class BookingPage {
 
     constructor(page: Page) {
         this.page = page;
-
-        this.profileSkillInput = page.locator("#pomidorqa-profile-skill-input");
-        this.profileSkillTypeSelect = page.locator("#pomidorqa-profile-skill-type");
-        this.profileSkillSubmit = page.getByRole("button", { name: "Добавить" });
-        this.profileCanHelpSkills = page.getByTestId("can-help-skills");
 
         this.slotsDateInput = page.locator("#pomidorqa-slots-date");
         this.slotsTimeInput = page.locator("#pomidorqa-slots-time");
@@ -85,12 +75,6 @@ export class BookingPage {
 
     async openBookings(): Promise<void> {
         await this.page.goto(ROUTES.bookings);
-    }
-
-    async addCanHelpSkill(skillTag: string): Promise<void> {
-        await this.profileSkillInput.fill(skillTag);
-        await this.profileSkillTypeSelect.selectOption("can_help");
-        await this.profileSkillSubmit.click();
     }
 
     async addSlot(date: string, time: string): Promise<void> {

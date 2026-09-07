@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { makeUser, registerUser } from "../helpers/user";
 import { BookingPage } from "../pages/booking-page";
+import { ProfilePage } from "../pages/profile-page";
 
 test.describe("Бронирование: основной путь и гонка за слот", () => {
   test("основной путь + гонка за слот: регистрация → навык → слот → поиск в каталоге → бронирование → «Мои встречи» у обоих → второй гость видит ошибку", async ({
@@ -25,15 +26,19 @@ test.describe("Бронирование: основной путь и гонка
     const hostBookingPage = new BookingPage(hostPage);
     const guestBookingPage = new BookingPage(guestPage);
     const guest2BookingPage = new BookingPage(guest2Page);
+    const hostProfilePage = new ProfilePage(hostPage);
 
     await test.step("Хост: регистрируется в PomidorQA", async () => {
       await registerUser(hostPage, host);
     });
 
     await test.step("Хост: добавляет навык «могу помочь» в профиле", async () => {
-      await hostBookingPage.openProfile();
-      await hostBookingPage.addCanHelpSkill(skillTag);
-      await expect(hostBookingPage.profileCanHelpSkills).toContainText(skillTag);
+      await hostProfilePage.open();
+      await hostProfilePage.addCanHelpSkill(skillTag);
+    });
+
+    await test.step("Навык появился в блоке «могу помочь»", async () => {
+      await expect(hostProfilePage.canHelpSkills).toContainText(skillTag);
     });
 
     await test.step("Хост: добавляет свободный слот на завтра", async () => {
@@ -43,6 +48,9 @@ test.describe("Бронирование: основной путь и гонка
       const date = tomorrow.toISOString().slice(0, 10);
 
       await hostBookingPage.addSlot(date, "12:00");
+    });
+
+    await test.step("Слот появился в списке", async () => {
       await expect(hostBookingPage.slotsCards.first()).toBeVisible();
     });
 
@@ -52,11 +60,17 @@ test.describe("Бронирование: основной путь и гонка
 
     await test.step("Гость: ищет хоста в каталоге по навыку", async () => {
       await guestBookingPage.findPersonBySkill(skillTag);
+    });
+
+    await test.step("Хост найден в каталоге", async () => {
       await expect(guestBookingPage.personCard(host.name)).toBeVisible();
     });
 
     await test.step("Гость: открывает карточку хоста", async () => {
       await guestBookingPage.openPersonCard(host.name);
+    });
+
+    await test.step("Открыта карточка нужного хоста", async () => {
       await expect(guestBookingPage.personName).toHaveText(host.name);
     });
 
