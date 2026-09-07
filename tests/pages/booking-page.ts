@@ -29,7 +29,9 @@ export class BookingPage {
     readonly bookingConfirmError: Locator;
 
     readonly bookingsUpcomingSection: Locator;
+    readonly bookingsPastSection: Locator;
     readonly bookingsCards: Locator;
+    readonly pastBookingsCards: Locator;
 
     constructor(page: Page) {
         this.page = page;
@@ -62,7 +64,12 @@ export class BookingPage {
         this.bookingConfirmError = page.getByRole("dialog").getByRole("alert");
 
         this.bookingsUpcomingSection = page.getByTestId("upcoming-meetings");
+        this.bookingsPastSection = page.locator("section").filter({
+            has: page.getByRole("heading", { name: "Прошедшие и отменённые" }),
+        });
+
         this.bookingsCards = this.bookingsUpcomingSection.locator("[data-booking-id]");
+        this.pastBookingsCards = this.bookingsPastSection.locator("[data-booking-id]");
     }
 
     async openProfile(): Promise<void> {
@@ -121,5 +128,23 @@ export class BookingPage {
 
     bookingCardName(): Locator {
         return this.bookingsCards.first().locator("p").first();
+    }
+
+    bookingCancelButton(): Locator {
+        return this.bookingsUpcomingSection.getByRole("button", {
+            name: "Отменить",
+        });
+    }
+
+    async cancelFirstBooking(): Promise<void> {
+        await this.bookingCancelButton().click();
+    }
+
+    pastBookingCardName(): Locator {
+        return this.pastBookingsCards.first().locator("p").first();
+    }
+
+    pastBookingCardStatus(): Locator {
+        return this.pastBookingsCards.first().locator("p").nth(1);
     }
 }
