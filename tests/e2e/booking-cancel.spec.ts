@@ -9,7 +9,8 @@ test("отмена встречи гостем, после reload отмену �
   browser,
 }) => {
   const runId = Date.now();
-  const skillTag = `Playwright-demo-${runId}`;
+  const uniqueId = Math.random().toString(36).slice(2, 8);
+  const skillTag = `Playwright-demo-${runId}-${uniqueId}`;
 
   const host = makeUser("host", runId);
   const guest = makeUser("guest", runId);

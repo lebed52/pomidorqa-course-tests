@@ -8,7 +8,8 @@ test("основной путь + гонка за слот: регистраци
   browser,
 }) => {
   const runId = Date.now();
-  const skillTag = `Playwright-demo-${runId}`;
+  const uniqueId = Math.random().toString(36).slice(2, 8);
+  const skillTag = `Playwright-demo-${runId}-${uniqueId}`;
   const host = makeUser("host", runId);
   const guest = makeUser("guest", runId);
   const guest2 = makeUser("guest2", runId);
