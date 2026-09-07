@@ -21,7 +21,7 @@ export type TestUser = {
 export function makeUser(role: string, runId: number = Date.now()): TestUser {
     const uniqueHash = Math.floor(Math.random() * 1_000_000);
     return {
-        name: `${role} Автотест`,
+        name: `${role} Автотест ${runId}-${uniqueHash}`, // <--- Теперь Имя тоже 100% уникально!
         email: `${role}-${runId}-${uniqueHash}@example.com`,
         password: "testpass123",
     };

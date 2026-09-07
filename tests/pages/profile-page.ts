@@ -34,7 +34,8 @@ export class ProfilePage {
 
     async saveProfile() {
         const saved = this.page.waitForResponse(
-            (response) => response.url().endsWith(ROUTES.profile) && response.request().method() === "POST"
+            (response) => response.url().endsWith(ROUTES.profile) && response.request().method() === "POST",
+            { timeout: 15_000 }
         );
         await this.profileSaveButton.click();
         await saved;

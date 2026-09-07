@@ -105,8 +105,13 @@ export class BookingPage {
     };
 
     async selectFirstTime() {
-        await this.bookingCalendarTime.first().click();
-    };
+        const timeChip = this.bookingCalendarTime.first();
+        await timeChip.click();
+
+        if (!(await this.bookingConfirmDialog.isVisible().catch(() => false))) {
+            await timeChip.click().catch(() => {});
+        }
+    }
 
     async confirmBooking() {
         await this.bookingConfirmButton.click();
@@ -116,6 +121,6 @@ export class BookingPage {
     async cancelBooking() {
         await this.gotoBooking();
         await this.bookingCancelButton.click();
-
-    };
+        await this.bookingCancelButton.waitFor({ state: "hidden", timeout: 5000 }).catch(() => {});
+    }
 }
