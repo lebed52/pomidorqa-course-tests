@@ -12,11 +12,12 @@ export class BookingPage {
 
   readonly confirmDialog: Locator;
   readonly confirmButton: Locator;
+  readonly cancelButton: Locator;
   readonly confirmSuccess: Locator;
   readonly confirmError: Locator;
 
   readonly upcomingSection: Locator;
-  readonly bookingCardName: Locator;
+  readonly canceledSection: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -31,11 +32,12 @@ export class BookingPage {
 
     this.confirmDialog = page.getByRole('dialog');
     this.confirmButton = page.getByRole('dialog').getByRole('button', { name: 'Подтвердить' });
+    this.cancelButton = page.getByRole('button', { name: 'Отменить' });
     this.confirmSuccess = page.getByRole('dialog').getByRole('status');
     this.confirmError = page.getByRole('dialog').getByRole('alert');
 
     this.upcomingSection = page.getByTestId('upcoming-meetings');
-    this.bookingCardName = page.locator('[data-booking-id]').first().locator('p').first();
+    this.canceledSection = page.locator('section').filter({ hasText: 'Прошедшие и отменённые' });
   }
 
   async searchBySkill(skillTag: string) {
@@ -57,7 +59,36 @@ export class BookingPage {
     await this.confirmButton.click();
   }
 
+  async bookingCancel() {
+    await this.cancelButton.click();
+  }
+
   async goToBookings() {
     await this.page.goto('/pomidorqa/bookings');
+  }
+
+  async getFirstUpcomingBookingId(): Promise<string> {
+    const id = await this.upcomingSection
+      .locator('[data-booking-id]')
+      .first()
+      .getAttribute('data-booking-id');
+    if (!id) throw new Error('Не найден booking-id в разделе "Предстоящие"');
+    return id;
+  }
+
+  getBookingCardById(bookingId: string, section: 'upcoming' | 'canceled'): Locator {
+    const sectionLocator = section === 'upcoming' ? this.upcomingSection : this.canceledSection;
+    return sectionLocator.locator(`[data-booking-id="${bookingId}"]`);
+  }
+
+  async getBookingName(bookingId: string, section: 'upcoming' | 'canceled'): Promise<string> {
+    const card = this.getBookingCardById(bookingId, section);
+    const name = await card.locator('p').first().textContent();
+    return name?.trim() || '';
+  }
+
+  async cancelBookingById(bookingId: string): Promise<void> {
+    const card = this.getBookingCardById(bookingId, 'upcoming');
+    await card.getByRole('button', { name: 'Отменить' }).click();
   }
 }

@@ -23,7 +23,6 @@ test.describe('Бронирование, гонка за слот', () => {
     const guestBooking = new BookingPage(guestPage);
     const guest2Booking = new BookingPage(guest2Page);
 
-    // ===== Хост =====
     await test.step('Хост: регистрация', async () => {
       await registerUser(hostPage, host);
     });
@@ -42,7 +41,6 @@ test.describe('Бронирование, гонка за слот', () => {
       await expect(hostProfile.slotCard.first()).toBeVisible();
     });
 
-    // ===== Гость: открывает модалку (НЕ подтверждает!) =====
     await test.step('Гость: регистрация', async () => {
       await registerUser(guestPage, guest);
     });
@@ -60,7 +58,6 @@ test.describe('Бронирование, гонка за слот', () => {
       }).toPass({ timeout: 15_000 });
     });
 
-    // ===== Гость2: открывает ТУ ЖЕ модалку (пока слот свободен) =====
     await test.step('Гость2: регистрация', async () => {
       await registerUser(guest2Page, guest2);
     });
@@ -76,24 +73,23 @@ test.describe('Бронирование, гонка за слот', () => {
       await expect(guest2Booking.confirmDialog).toBeVisible();
     });
 
-    // ===== Гость: подтверждает бронирование ПЕРВЫМ =====
     await test.step('Гость: подтверждает бронирование', async () => {
       await guestBooking.clickConfirm();
       await expect(guestBooking.confirmSuccess).toBeVisible({ timeout: 15_000 });
     });
 
-    // ===== Гость2: пытается подтвердить — видит ошибку =====
     await test.step('Гость2: пытается забронировать занятый слот — видит ошибку', async () => {
       await guest2Booking.clickConfirm();
       await expect(guest2Booking.confirmError).toBeVisible({ timeout: 15_000 });
       await expect(guest2Booking.confirmSuccess).toBeHidden();
     });
 
-    // ===== Проверки =====
     await test.step('Гость видит бронирование в "Мои встречи"', async () => {
       await expect(async () => {
         await guestBooking.goToBookings();
-        await expect(guestBooking.bookingCardName).toHaveText(host.name);
+        const bookingId = await guestBooking.getFirstUpcomingBookingId();
+        const name = await guestBooking.getBookingName(bookingId, 'upcoming');
+        expect(name).toBe(host.name);
       }).toPass({ timeout: 10_000 });
     });
 
@@ -101,7 +97,9 @@ test.describe('Бронирование, гонка за слот', () => {
       const hostBooking = new BookingPage(hostPage);
       await expect(async () => {
         await hostBooking.goToBookings();
-        await expect(hostBooking.bookingCardName).toHaveText(guest.name);
+        const bookingId = await hostBooking.getFirstUpcomingBookingId();
+        const name = await hostBooking.getBookingName(bookingId, 'upcoming');
+        expect(name).toBe(guest.name);
       }).toPass({ timeout: 10_000 });
     });
 

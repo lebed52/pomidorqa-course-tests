@@ -95,7 +95,14 @@ test.describe('Профиль: действия с полями', () => {
     });
 
     await test.step('Удаляем навык', async () => {
+      const removeButton = profilePage.page.locator(
+        `span[data-skill-tag="${tag}"] button[type="submit"]`,
+      );
+      await expect(removeButton).toBeVisible({ timeout: 5_000 });
+
       await profilePage.removeSkill(tag);
+
+      await expect(profilePage.skillTag(tag)).toHaveCount(0, { timeout: 5_000 });
     });
 
     await test.step('Навык исчез из блока "Могу помочь"', async () => {

@@ -26,3 +26,8 @@ export async function registerUser(page: Page, user: TestUser) {
 export async function reload(page: Page) {
   await page.reload();
 }
+
+export function addDate() {
+  const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  return tomorrow.toISOString().slice(0, 10);
+}

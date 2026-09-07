@@ -42,7 +42,6 @@ export class ProfilePage {
     this.slotCard = page.locator('[data-slot-id]');
   }
 
-  // ===== Действия: профиль =====
   async changeName(name: string) {
     await this.nameInput.fill(name);
     await this.saveProfile();
@@ -71,7 +70,6 @@ export class ProfilePage {
     await saved;
   }
 
-  // ===== Действия: навыки =====
   async addSkill(tag: string, type: 'can_help' | 'want_to_learn') {
     await this.skillInput.fill(tag);
     await this.skillTypeSelect.selectOption(type);
@@ -82,7 +80,6 @@ export class ProfilePage {
     await this.page.locator(`span[data-skill-tag="${tag}"] button[type="submit"]`).click();
   }
 
-  // ===== Действия: слоты =====
   async addSlot(date: string, time: string) {
     await this.slotsDate.fill(date);
     await this.slotsTime.fill(time);
@@ -93,7 +90,6 @@ export class ProfilePage {
     await this.page.goto('/pomidorqa/profile/slots');
   }
 
-  // ===== Навигация =====
   async goto() {
     await this.page.goto('/pomidorqa/profile');
   }
