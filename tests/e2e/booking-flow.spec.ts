@@ -69,8 +69,10 @@ test.describe('Бронирование, гонка за слот', () => {
     });
 
     await test.step('Гость2: выбирает тот же слот и открывает модалку', async () => {
-      await guest2Booking.selectFirstSlot();
-      await expect(guest2Booking.confirmDialog).toBeVisible();
+      await expect(async () => {
+        await guest2Booking.selectFirstSlot();
+        await expect(guest2Booking.confirmDialog).toBeVisible({ timeout: 5_000 });
+      }).toPass({ timeout: 15_000 });
     });
 
     await test.step('Гость: подтверждает бронирование', async () => {

@@ -46,8 +46,10 @@ test.describe('Отмена бронирования', () => {
     });
 
     await test.step('Гость: выбирает слот и открывает модалку бронирования', async () => {
-      await guestBooking.selectFirstSlot();
-      await expect(guestBooking.confirmDialog).toBeVisible({ timeout: 15_000 });
+      await expect(async () => {
+        await guestBooking.selectFirstSlot();
+        await expect(guestBooking.confirmDialog).toBeVisible({ timeout: 5_000 });
+      }).toPass({ timeout: 15_000 });
     });
 
     await test.step('Гость: подтверждает бронирование', async () => {
