@@ -111,6 +111,7 @@ export class BookingPage {
 
   async selectFirstSlot() {
     await this.calendarDays.first().click();
+    await this.calendarTimes.first().waitFor({ state: "visible" });
     await this.calendarTimes.first().click();
   }
 
