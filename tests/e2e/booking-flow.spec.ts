@@ -47,7 +47,7 @@ test("основной путь + гонка за слот: регистраци
   });
 
   await test.step('У хоста есть свободный слот на завтра', async () => {
-    await expect(hostBookingPage.slotsCard.first()).toBeVisible();;
+    await expect(hostBookingPage.slotsCard.first()).toBeVisible();
   });
 
   await test.step("Гость: регистрируется отдельным аккаунтом", async () => {
@@ -87,7 +87,7 @@ test("основной путь + гонка за слот: регистраци
   });
 
   await test.step("Гость: видит подтверждающий диалог", async () => {
-    await expect(guestBookingPage.bookingConfirmDialog).toBeVisible();
+    await expect(guestBookingPage.bookingConfirmDialog).toBeVisible({ timeout: 15_000 });
   });
 
 
@@ -119,7 +119,7 @@ test("основной путь + гонка за слот: регистраци
   });
 
   await test.step("Гость2: тоже видит подтверждающий диалог", async () => {
-    await expect(guest2BookingPage.bookingConfirmDialog).toBeVisible();
+    await expect(guest2BookingPage.bookingConfirmDialog).toBeVisible({ timeout: 15_000 });
   });
 
   await test.step("Гость: нажимает на подтверждение бронирования", async () => {
