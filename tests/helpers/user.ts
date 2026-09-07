@@ -22,6 +22,11 @@ export function makeUser(role: string, runId: number): TestUser {
   };
 }
 
+export function makeRandom(prefix: string) {
+  const someRandom = Math.random().toString(36).slice(2, 6);
+  return `${prefix}-${Date.now()}-${someRandom}`;
+}
+
 export async function registerUser(page: Page, user: TestUser) {
   const registerNameInput = (page: Page) => page.getByLabel("Имя");
   const registerEmailInput = (page: Page) => page.getByLabel("Email");

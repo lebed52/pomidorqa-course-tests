@@ -80,9 +80,7 @@ export class BookingPage {
 
   async ensureCalendarVisible(): Promise<Locator> {
     const dayChip = this.calendarDays.first();
-    const isVisible = await dayChip
-      .isVisible({ timeout: 5000 })
-      .catch(() => false);
+    const isVisible = await dayChip.isVisible().catch(() => false);
 
     if (!isVisible) {
       await this.page.reload();
