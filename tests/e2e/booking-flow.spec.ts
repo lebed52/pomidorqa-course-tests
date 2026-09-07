@@ -162,13 +162,12 @@ test("основной путь + гонка за слот: регистраци
     }).toPass({ timeout: 10_000 });
   });
 
-  await test.step("Хост: тоже переходит в раздел «Мои встречи»", async () => {
+  await test.step("Хост: переходит в раздел «Мои встречи»", async () => {
       await hostBookingPage.gotoBookings();
   });
 
   await test.step("Хост: тоже видит это бронирование в своих «Мои встречи»", async () => {
     await expect(async () => {
-      await hostBookingPage.gotoBookings();
       const card = hostBookingPage.bookingsCardName;
       await expect(card).toHaveText(guest.name);
     }).toPass({ timeout: 10_000 });
