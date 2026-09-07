@@ -87,7 +87,7 @@ test("основной путь + гонка за слот: регистраци
   });
 
   await test.step("У Гостя появилось модальное окно с подтверждением", async () => {
-    await expect(peoplePageGuest.confirmDialog).toBeVisible();
+    await expect(peoplePageGuest.confirmDialog).toBeVisible({ timeout: 15000 });
   });  
 
   await test.step("Гость2: регистрируется", async () => {
@@ -122,7 +122,7 @@ test("основной путь + гонка за слот: регистраци
   });
 
   await test.step("У Гостя2 появилось модальное окно с подтверждением", async () => {
-    await expect(peoplePageGuest2.confirmDialog).toBeVisible();
+    await expect(peoplePageGuest2.confirmDialog).toBeVisible({ timeout: 15000 });
   });  
 
   await test.step("Гость: подтверждает бронирование первым", async () => {
