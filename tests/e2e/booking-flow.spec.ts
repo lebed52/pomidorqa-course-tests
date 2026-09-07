@@ -13,9 +13,13 @@ test("основной путь + гонка за слот: регистраци
   const guest = makeUser("guest", runId);
   const guest2 = makeUser("guest2", runId);
 
-  const hostContext = await browser.newContext();
-  const guestContext = await browser.newContext();
-  const guest2Context = await browser.newContext();
+  const contextOptions = {
+    timezoneId: "UTC",
+  };
+
+  const hostContext = await browser.newContext(contextOptions);
+  const guestContext = await browser.newContext(contextOptions);
+  const guest2Context = await browser.newContext(contextOptions);
 
   const hostPage = await hostContext.newPage();
   const guestPage = await guestContext.newPage();

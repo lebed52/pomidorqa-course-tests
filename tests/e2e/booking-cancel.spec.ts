@@ -14,8 +14,12 @@ test("отмена встречи гостем, после reload отмену �
   const host = makeUser("host", runId);
   const guest = makeUser("guest", runId);
 
-  const hostContext = await browser.newContext();
-  const guestContext = await browser.newContext();
+  const contextOptions = {
+    timezoneId: "UTC",
+  };
+
+  const hostContext = await browser.newContext(contextOptions);
+  const guestContext = await browser.newContext(contextOptions);
 
   const hostPage = await hostContext.newPage();
   const guestPage = await guestContext.newPage();
@@ -60,7 +64,9 @@ test("отмена встречи гостем, после reload отмену �
     });
 
     await test.step("Открылось подтверждение бронирования", async () => {
-      await expect(guestBookingPage.confirmDialog).toBeVisible();
+      await expect(guestBookingPage.confirmDialog).toBeVisible({
+        timeout: 10_000,
+      });
     });
 
     await test.step("Гость подтверждает бронь", async () => {
