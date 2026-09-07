@@ -156,8 +156,8 @@ test("основной путь + гонка за слот: регистраци
   });
 
   await test.step("Гость: видит бронирование в разделе «Мои встречи»", async () => {
+    const card = guestBookingPage.bookingsCardName;
     await expect(async () => {
-      const card = guestBookingPage.bookingsCardName;
       await expect(card).toHaveText(host.name);
     }).toPass({ timeout: 10_000 });
   });
@@ -167,8 +167,8 @@ test("основной путь + гонка за слот: регистраци
   });
 
   await test.step("Хост: тоже видит это бронирование в своих «Мои встречи»", async () => {
+    const card = hostBookingPage.bookingsCardName;
     await expect(async () => {
-      const card = hostBookingPage.bookingsCardName;
       await expect(card).toHaveText(guest.name);
     }).toPass({ timeout: 10_000 });
   });
