@@ -32,9 +32,6 @@ export class BookingPage {
   readonly confirmSuccess: Locator;
   readonly confirmError: Locator;
 
-  // «Мои встречи»: имя человека на первой карточке
-  readonly firstBookingCardName: Locator;
-
   // «Мои встречи»: секция «Ближайшие» — предстоящие встречи
   readonly bookingsUpcomingSection: Locator;
 
@@ -65,12 +62,6 @@ export class BookingPage {
     this.bookingsPastSection = page
       .locator("section")
       .filter({ has: page.getByRole("heading", { name: "Прошедшие и отменённые" }) });
-
-    this.firstBookingCardName = this.bookingsUpcomingSection
-      .locator("[data-booking-id]")
-      .first()
-      .locator("p")
-      .first();
   }
 
   // Карточка конкретного человека в каталоге: фильтр по имени —
@@ -105,17 +96,55 @@ export class BookingPage {
     await this.slotsAddSubmit.click();
   }
 
+  async searchInCatalog(skillTag: string) {
+    await this.catalogFilterInput.fill(skillTag);
+    await this.catalogFilterSubmit.click();
+  }
+
+  async openPersonCard(name: string) {
+    await this.personCardByName(name).click();
+  }
+
+  // Календарь на карточке догидратируется не сразу: если дней ещё нет —
+  // перезагружаем страницу. Повторные попытки делает toPass в спеке.
+  async ensureCalendarLoaded() {
+    if (!(await this.calendarDay.first().isVisible().catch(() => false))) {
+      await this.page.reload();
+    }
+  }
+
+  async selectFirstSlot() {
+    await this.calendarDay.first().click();
+    await this.calendarTime.first().click();
+  }
+
+  async confirmBooking() {
+    await this.confirmButton.click();
+  }
+
   async openBookings() {
     await this.page.goto(BOOKINGS_URL);
   }
 
-  // Отмена встречи: жмём «Отменить» внутри карточки и ждём, пока карточка
-  // уйдёт из «Ближайших», — это признак, что сервер принял отмену.
-  // Кнопка ищется внутри карточки, а не на всей странице: в списке может
-  // быть несколько встреч, у каждой своя кнопка «Отменить».
+  // Встреча появляется в «Моих встречах» не сразу после подтверждения:
+  // если карточки ещё нет — перезагружаем страницу, список приходит
+  // при загрузке. Повторные попытки делает toPass в спеке.
+  async openBookingsUntilCardVisible(participantName: string) {
+    await this.openBookings();
+    if (!(await this.bookingCardByName(participantName).isVisible().catch(() => false))) {
+      await this.page.reload();
+    }
+  }
+
+  // Отмена встречи: кнопка ищется внутри карточки, а не на всей странице —
+  // в списке может быть несколько встреч, у каждой своя кнопка «Отменить».
+  // Страница только кликает; что карточка ушла из «Ближайших», проверяет тест.
   async cancelBooking(participantName: string) {
     const card = this.bookingCardByName(participantName);
     await card.getByRole("button", { name: "Отменить" }).click();
-    await card.waitFor({ state: "hidden", timeout: 10_000 });
+  }
+
+  async reload() {
+    await this.page.reload();
   }
 }

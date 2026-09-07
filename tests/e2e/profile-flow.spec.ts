@@ -37,8 +37,11 @@ test.describe("Профиль: действия с полями", () => {
     // иначе проверка прошла бы и без всякого выбора.
     const timezone = "Asia/Yekaterinburg";
 
-    await test.step("Выбираем часовой пояс и сохраняем", async () => {
+    await test.step("По умолчанию выбран Europe/Moscow", async () => {
       await expect(profilePage.timezoneSelect).toHaveValue("Europe/Moscow");
+    });
+
+    await test.step("Выбираем другой часовой пояс и сохраняем", async () => {
       await profilePage.timezoneSelect.selectOption(timezone);
       await profilePage.save();
     });
@@ -52,8 +55,11 @@ test.describe("Профиль: действия с полями", () => {
   test("telegram: заполняем пустое поле", async ({ page }) => {
     const telegram = `@qa_timur_cat${Date.now()}`;
 
-    await test.step("Заполняем Telegram и сохраняем", async () => {
+    await test.step("Поле Telegram пустое", async () => {
       await expect(profilePage.telegramInput).toHaveValue("");
+    });
+
+    await test.step("Заполняем Telegram и сохраняем", async () => {
       await profilePage.telegramInput.fill(telegram);
       await profilePage.save();
     });
@@ -92,8 +98,11 @@ test.describe("Профиль: действия с полями", () => {
   });
 
   test("негатив: пустой навык не добавляется", async () => {
-    await test.step("Жмём «Добавить», не заполнив поле", async () => {
+    await test.step("Поле навыка пустое", async () => {
       await expect(profilePage.skillInput).toHaveValue("");
+    });
+
+    await test.step("Жмём «Добавить», не заполнив поле", async () => {
       await profilePage.addSkillButton.click();
     });
 
@@ -113,11 +122,17 @@ test.describe("Профиль: действия с полями", () => {
 
     await test.step("Добавляем навык «могу помочь»", async () => {
       await profilePage.addSkill(canHelpTag, "can_help");
+    });
+
+    await test.step("Навык «могу помочь» появился", async () => {
       await expect(profilePage.skillChip(canHelpTag)).toBeVisible();
     });
 
     await test.step("Добавляем навык «хочу разобрать»", async () => {
       await profilePage.addSkill(wantToLearnTag, "want_to_learn");
+    });
+
+    await test.step("Навык «хочу разобрать» появился", async () => {
       await expect(profilePage.skillChip(wantToLearnTag)).toBeVisible();
     });
 
