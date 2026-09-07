@@ -47,7 +47,6 @@ test("Отмена встречи гостем", async ({browser}) => {
 
         await test.step('У хоста есть свободный слот на завтра', async () => {
             await expect(hostBookingPage.slotsCard.first()).toBeVisible();
-            ;
         });
 
         await test.step("Гость: ищет хоста в каталоге по навыку (сценарий 9)", async () => {
@@ -87,7 +86,7 @@ test("Отмена встречи гостем", async ({browser}) => {
         });
 
 
-        await test.step("Гость: нажимает на отмену бронирования", async () => {
+        await test.step("Гость: подтверждает бронирование", async () => {
             await guestBookingPage.bookingConfirmButton.click();
         });
 
