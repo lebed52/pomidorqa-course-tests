@@ -18,7 +18,9 @@ export class BookingPage {
     readonly bookingConfirmSuccess: Locator;
     readonly bookingConfirmError: Locator;
     readonly bookingsUpcomingSection: Locator;
-    readonly bookingsCardName: Locator;
+    readonly firstUpcomingCardName: Locator;
+    readonly cancelMeetingButton: Locator;
+    readonly bookingsPastAndCanceledMeetingSectionLocator;
 
     constructor(page: Page) {
         this.page = page;
@@ -37,7 +39,13 @@ export class BookingPage {
         this.bookingConfirmSuccess = page.getByRole("dialog").getByRole("status");
         this.bookingConfirmError = page.getByRole("dialog").getByRole("alert");
         this.bookingsUpcomingSection = page.getByTestId("upcoming-meetings");
-        this.bookingsCardName = this.bookingsUpcomingSection.locator("[data-booking-id]").first().locator("p").first();
+        this.bookingsPastAndCanceledMeetingSection = page
+            .locator("section")
+            .filter({has: page.getByRole("heading", {name: "Прошедшие и отменённые"})});
+        this.bookingsCardName = this.bookingsUpcomingSection.locator("[data-booking-id]")
+            .first().locator("p")
+            .first();
+        this.cancelMeetingButton = page.getByRole('button', {name: 'Отменить'});
     }
 
     async fillSlotDateAndTimeInput(date: string, time: string): Promise<void> {
@@ -60,7 +68,21 @@ export class BookingPage {
         await this.page.goto(ROUTES.bookings);
     }
 
-    async openCardByName(name: string): Promise<void> {
+    async openCatalogCardByName(name: string): Promise<void> {
         await this.catalogCard.filter({hasText: name}).click();
+    }
+
+    upcomingBookingCardByName(name: string): Locator {
+        return this.bookingsUpcomingSection.locator("[data-booking-id]").filter({hasText: name});
+    }
+
+    pastAndCanceledBookingCardByName(name: string): Locator {
+        return this.bookingsPastAndCanceledMeetingSection.locator("[data-booking-id]").filter({hasText: name});
+    }
+
+    async cancelBooking(name: string) {
+        const card = this.upcomingBookingCardByName(name);
+        await card.getByRole("button", { name: "Отменить" }).click();
+        await card.waitFor({ state: "hidden", timeout: 10_000 });
     }
 }
