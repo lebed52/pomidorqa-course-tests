@@ -18,9 +18,9 @@ export class BookingPage {
     readonly bookingConfirmSuccess: Locator;
     readonly bookingConfirmError: Locator;
     readonly bookingsUpcomingSection: Locator;
-    readonly firstUpcomingCardName: Locator;
+    readonly bookingsCardName: Locator;
     readonly cancelMeetingButton: Locator;
-    readonly bookingsPastAndCanceledMeetingSectionLocator;
+    readonly bookingsPastAndCanceledMeetingSection: Locator;
 
     constructor(page: Page) {
         this.page = page;

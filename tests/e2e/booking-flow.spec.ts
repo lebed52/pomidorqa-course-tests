@@ -151,12 +151,19 @@ test("основной путь + гонка за слот: регистраци
     await expect(error2).toBeVisible();
   });
 
+  await test.step("Гость: переходит в раздел «Мои встречи»", async () => {
+      await guestBookingPage.gotoBookings();
+  });
+
   await test.step("Гость: видит бронирование в разделе «Мои встречи»", async () => {
     await expect(async () => {
-      await guestBookingPage.gotoBookings();
       const card = guestBookingPage.bookingsCardName;
       await expect(card).toHaveText(host.name);
     }).toPass({ timeout: 10_000 });
+  });
+
+  await test.step("Хост: тоже переходит в раздел «Мои встречи»", async () => {
+      await hostBookingPage.gotoBookings();
   });
 
   await test.step("Хост: тоже видит это бронирование в своих «Мои встречи»", async () => {
