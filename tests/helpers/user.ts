@@ -18,10 +18,11 @@ export type TestUser = {
     password: string;
 };
 
-export function makeUser(role: string, runId: number): TestUser {
+export function makeUser(role: string, runId: number = Date.now()): TestUser {
+    const uniqueHash = Math.floor(Math.random() * 1_000_000);
     return {
         name: `${role} Автотест`,
-        email: `${role}-${runId}@example.com`,
+        email: `${role}-${runId}-${uniqueHash}@example.com`,
         password: "testpass123",
     };
 }

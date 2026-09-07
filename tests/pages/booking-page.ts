@@ -65,15 +65,15 @@ export class BookingPage {
             .locator("[data-booking-id]")
             .filter({ hasText: "отменено" })
             .first();
-    }
+    };
 
     async gotoSlots() {
         await this.page.goto(ROUTES.slots);
-    }
+    };
 
     async gotoBooking() {
         await this.page.goto(ROUTES.bookings);
-    }
+    };
 
     async addSlot(
         date: string = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
@@ -82,37 +82,40 @@ export class BookingPage {
         await this.slotsDateInput.fill(date);
         await this.slotsTimeInput.fill(time);
         await this.slotsAddSubmit.click();
-    }
+    };
 
     async fillFilter(tag: string) {
         await this.catalogFilterInput.fill(tag);
         await this.catalogFilterSubmit.click();
-    }
+    };
 
     async openCard(hostName: string) {
         await this.catalogCard.filter({ hasText: hostName }).click()
-    }
+    };
 
     async getChip() {
         const dayChip = this.bookingCalendarDay.first();
         if (!(await dayChip.isVisible().catch(() => false))) {
             await this.page.reload();
         }
-    }
+    };
 
-    async selectFirstSlot() {
+    async selectFirstDay() {
         await this.bookingCalendarDay.first().click();
+    };
+
+    async selectFirstTime() {
         await this.bookingCalendarTime.first().click();
-    }
+    };
 
     async confirmBooking() {
         await this.bookingConfirmButton.click();
 
-    }
+    };
 
     async cancelBooking() {
         await this.gotoBooking();
         await this.bookingCancelButton.click();
 
-    }
+    };
 }

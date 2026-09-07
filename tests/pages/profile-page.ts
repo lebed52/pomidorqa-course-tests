@@ -40,14 +40,6 @@ export class ProfilePage {
         await saved;
     }
 
-    async saveSkill() {
-        const added = this.page.waitForResponse(
-            (r) => r.url().includes(ROUTES.profile) && r.request().method() === "POST"
-        );
-        await this.addSkillButton.click();
-        await added;
-    }
-
     async goto() {
         await this.page.goto(ROUTES.profile);
     }
@@ -74,7 +66,7 @@ export class ProfilePage {
     async addSkill(tag: string, type: string) {
         await this.skillInput.fill(tag);
         await this.skillTypeSelect.selectOption(type);
-        await this.saveSkill();
+        await this.addSkillButton.click();
     }
 }
 

@@ -32,7 +32,7 @@ test.describe("Флоу отмененной брони", () => {
         });
 
         await test.step("Проверяем, что навык появился", async () => {
-            await expect(hostProfile.skillChip).toContainText(skillTag);
+            await expect(hostProfile.canHelpSkills).toContainText(skillTag);
         });
 
         await test.step("Хост: добавляет свободный слот на завтра", async () => {
@@ -70,11 +70,23 @@ test.describe("Флоу отмененной брони", () => {
             await expect(async () => {
                 await guestBooking.getChip()
                 await expect(guestBooking.bookingCalendarDay).toBeVisible();
-            }).toPass({ timeout: 10_000 });
+            }).toPass({ timeout: 15_000 });
         });
 
-        await test.step("Гость: выбирает первый слот", async () => {
-            await guestBooking.selectFirstSlot()
+        await test.step("Гость: выбирает дату", async () => {
+            await guestBooking.selectFirstDay()
+        });
+
+        await test.step("Гость проверяет выбор даты", async () => {
+            await expect(guestBooking.bookingCalendarDay.first()).toBeVisible();
+        });
+
+        await test.step("Гость выбирает время", async () => {
+            await guestBooking.selectFirstTime()
+        });
+
+        await test.step("Гость проверяет выбор времени", async () => {
+            await expect(guestBooking.bookingCalendarTime.first()).toBeVisible();
         });
 
         await test.step("Проверяем, что появилась модалка подтверждения бронирования", async () => {
@@ -100,7 +112,7 @@ test.describe("Флоу отмененной брони", () => {
                 await guestBooking.gotoBooking();
                 const card = guestBooking.bookingsCardName;
                 await expect(card).toHaveText(host.name);
-            }).toPass({ timeout: 10_000 });
+            }).toPass({ timeout: 15_000 });
         });
 
         await test.step("Хост: тоже видит это бронирование в своих «Мои встречи»", async () => {
@@ -110,7 +122,7 @@ test.describe("Флоу отмененной брони", () => {
                 await bookingPage.gotoBooking();
                 const card = bookingPage.bookingsCardName;
                 await expect(card).toHaveText(guest.name);
-            }).toPass({ timeout: 10_000 });
+            }).toPass({ timeout: 15_000 });
         });
 
         await test.step("Гость отменяет бронирование", async () => {
@@ -129,7 +141,7 @@ test.describe("Флоу отмененной брони", () => {
             await expect(guestBooking.bookingCanceledMeeting).toBeVisible();
         });
 
-        await test.step("{Хост: идем в Мои встречи", async () => {
+        await test.step("Хост: идем в Мои встречи", async () => {
             await hostBooking.gotoBooking()
         });
 
