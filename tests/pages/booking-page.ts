@@ -1,21 +1,26 @@
 import { type Locator, type Page } from "@playwright/test";
 
 export class BookingPage {
-  readonly page: Page;
-  readonly slotsDateInput: Locator;
-  readonly slotsTimeInput: Locator;
-  readonly addSlotButton: Locator;
-  readonly slotCard: Locator;
-  readonly catalogFilterInput: Locator;
-  readonly catalogSearchButton: Locator;
-  readonly personCard: Locator;
-  readonly personName: Locator;
-  readonly bookingCalendarDay: Locator;
-  readonly bookingCalendarTime: Locator;
-  readonly bookingConfirmDialog: Locator;
-  readonly bookingConfirmButton: Locator;
-  readonly bookingConfirmSuccess: Locator;
-  readonly bookingConfirmError: Locator;
+  page: Page;
+  slotsDateInput: Locator;
+  slotsTimeInput: Locator;
+  addSlotButton: Locator;
+  slotCard: Locator;
+  catalogFilterInput: Locator;
+  catalogSearchButton: Locator;
+  personCard: Locator;
+  personName: Locator;
+  bookingCalendarDay: Locator;
+  bookingCalendarTime: Locator;
+  bookingConfirmDialog: Locator;
+  bookingConfirmButton: Locator;
+  bookingConfirmSuccess: Locator;
+  bookingConfirmError: Locator;
+  upcomingHeading: Locator;
+  pastHeading: Locator;
+  upcomingEmpty: Locator;
+  cancelledStatus: Locator;
+  bookingCancelButton: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -39,6 +44,19 @@ export class BookingPage {
       .getByRole("button", { name: "Подтвердить" });
     this.bookingConfirmSuccess = page.getByRole("dialog").getByRole("status");
     this.bookingConfirmError = page.getByRole("dialog").getByRole("alert");
+    this.upcomingHeading = page.getByRole("heading", { name: "Ближайшие" });
+    this.pastHeading = page.getByRole("heading", {
+      name: "Прошедшие и отменённые",
+    });
+    this.upcomingEmpty = page
+      .getByTestId("upcoming-meetings")
+      .getByText("Пока пусто");
+    this.cancelledStatus = page.getByText(/отменено/i);
+    this.bookingCancelButton = page.getByRole("button", { name: "Отменить" });
+  }
+
+  meetingByName(name: string) {
+    return this.page.getByText(name, { exact: true });
   }
 
   cardByName(name: string) {
@@ -78,10 +96,27 @@ export class BookingPage {
     }
 
     await day.click();
-    await this.bookingCalendarTime.first().click();
+
+    for (let attempt = 0; attempt < 5; attempt++) {
+      if (await this.bookingConfirmDialog.isVisible().catch(() => false)) {
+        return;
+      }
+      await this.bookingCalendarTime.first().click();
+    }
   }
 
   async confirm() {
     await this.bookingConfirmButton.click();
   }
+
+  async gotoBookings() {
+    await this.page.goto("/pomidorqa/bookings");
+  }
+
+  async cancelBooking() {
+    await this.gotoBookings();
+    await this.bookingCancelButton.click();
+  }
 }
+
+
