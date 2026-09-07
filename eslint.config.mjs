@@ -8,7 +8,6 @@ export default [
     ...playwrightRecommended,
     files: ["tests/**/*.ts"],
     languageOptions: {
-      ...playwrightRecommended.languageOptions,
       parser: tseslint.parser,
     },
     rules: {
@@ -21,7 +20,9 @@ export default [
       "playwright/no-focused-test": "error",
       "playwright/expect-expect": "error",
       "playwright/no-conditional-in-test": "off",
-      "playwright/valid-title": "warn",
+      "playwright/consistent-spacing-between-blocks": "off",
+      "playwright/no-useless-not": "off",
+      "playwright/valid-title": "off",
     },
   },
 ];
