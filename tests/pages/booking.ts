@@ -9,9 +9,9 @@ export class BookingPage {
   readonly modalSuccess: Locator;
   readonly modalError: Locator;
   readonly upcomingSession: Locator;
-  readonly btnCancel: Locator;
+  readonly upcomingBookings: Locator;
   readonly cancelledSection: Locator;
-  readonly cancelledStatus: Locator;
+  readonly pastBookings: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -22,9 +22,12 @@ export class BookingPage {
     this.modalSuccess = page.getByText('Забронировано');
     this.modalError = page.getByText('Этот слот только что забронировали');
     this.upcomingSession = page.getByTestId('upcoming-meetings');
-    this.btnCancel = page.getByRole('button', { name: 'Отменить' });
+    this.upcomingBookings = this.upcomingSession.locator('[data-booking-id]');
     this.cancelledSection = page.getByRole('heading', { name: 'Прошедшие и отменённые' });
-    this.cancelledStatus = page.getByText('отменено');
+    this.pastBookings = page
+      .locator('section')
+      .filter({ hasText: 'Прошедшие и отменённые' })
+      .locator('[data-booking-id]');
   }
 
   async waitForFreeSlot() {
@@ -54,13 +57,24 @@ export class BookingPage {
     await this.page.goto('/pomidorqa/bookings');
   }
 
-  async cancelFirstBooking(): Promise<'cancelled' | 'not-found'> {
-    const cancelBtn = this.btnCancel.first();
+  upcomingBookingWith(name: string): Locator {
+    return this.upcomingBookings.filter({ hasText: name });
+  }
+
+  pastBookingWith(name: string): Locator {
+    return this.pastBookings.filter({ hasText: name });
+  }
+
+  async cancelBookingWith(participantName: string): Promise<'cancelled' | 'not-found'> {
+    const booking = this.upcomingBookingWith(participantName);
+    const cancelBtn = booking.getByRole('button', { name: 'Отменить' });
     if (!(await cancelBtn.isVisible().catch(() => false))) {
       return 'not-found';
     }
     await cancelBtn.click();
-    await expect(this.cancelledStatus).toBeVisible({ timeout: 15_000 });
+    await expect(this.pastBookingWith(participantName)).toContainText('отменено', {
+      timeout: 15_000,
+    });
     return 'cancelled';
   }
 }
