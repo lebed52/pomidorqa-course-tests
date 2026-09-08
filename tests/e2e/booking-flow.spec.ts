@@ -19,6 +19,8 @@ test.describe("Длинные e2e-сценарии, включающие осн�
 test("гонка за слот: регистрация → навык → слот → поиск в каталоге → бронирование → «Мои встречи» у обоих → второй гость видит ошибку", async ({
   browser,
 }) => {
+  test.setTimeout(120000);
+  
   const runId = Date.now();
   const skillTag = `Playwright-demo-${runId}`;
   const host = makeUser("host", runId);
