@@ -11,7 +11,14 @@ type TestUser = {
   password: string;
 };
 
-// Локаторы
+function makeUser(role: string, runId: number): TestUser {
+  return {
+    name: `${role} Автотест`,
+    email: `${role}-${runId}@example.com`,
+    password: 'testpass123',
+  };
+}
+//Локаторы
 // Область регистрации
 const registerNameInput = (page: Page) => page.getByLabel('Имя');
 const registerEmailInput = (page: Page) => page.getByLabel('Email');
@@ -38,7 +45,6 @@ const catalogCard = (page: Page) => page.getByTestId('person-card');
 
 const personName = (page: Page) => page.getByRole('heading', { level: 1 });
 
-// Область бронирования
 const bookingCalendarDay = (page: Page) =>
   page.getByRole('group', { name: 'Дни со слотами' }).getByRole('button');
 const bookingCalendarTime = (page: Page) =>
@@ -53,14 +59,6 @@ const bookingConfirmError = (page: Page) => page.getByRole('dialog').getByRole('
 const bookingsUpcomingSection = (page: Page) => page.getByTestId('upcoming-meetings');
 const bookingsCardName = (page: Page) =>
   bookingsUpcomingSection(page).locator('[data-booking-id]').first().locator('p').first();
-
-function makeUser(role: string, runId: number): TestUser {
-  return {
-    name: `${role} Автотест`,
-    email: `${role}-${runId}@example.com`,
-    password: 'testpass123',
-  };
-}
 
 async function registerUser(page: Page, user: TestUser) {
   await page.goto('/pomidorqa/auth/register');
