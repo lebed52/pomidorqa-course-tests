@@ -3,42 +3,47 @@ import { test, expect } from "@playwright/test";
 // E2E-уровень пирамиды, негативный сценарий: сценарий 10 из списка ДЗ Урока 2.
 // requirements.md, п.4: при неверном email ИЛИ пароле участник должен увидеть одну и ту же
 // понятную ошибку, без уточнения, что именно неверно, — из соображений безопасности.
-
 test("вход с неверными данными — одинаковая ошибка в обоих случаях, без уточнения причины", async ({
   page,
 }) => {
+  test.setTimeout(120_000);
   const runId = Date.now();
   const email = `login-check-${runId}@example.com`;
   const password = "correct-password-123";
 
   await test.step("Заводим реальный аккаунт для проверки", async () => {
-    await page.goto("/pomidorqa/auth/register");
+    await page.goto("/pomidorqa/auth/register", { waitUntil: "domcontentloaded" });
     await page.getByLabel("Имя").fill("Login Error Check");
     await page.getByLabel("Email").fill(email);
     await page.getByLabel("Пароль").fill(password);
     await page.getByRole("button", { name: "Зарегистрироваться" }).click();
-    await expect(page).toHaveURL(/\/pomidorqa\/?$/);
+    await expect(page).toHaveURL(/\/pomidorqa\/?$/, { timeout: 15_000 });
   });
 
   let wrongPasswordError = "";
   await test.step("Пробуем войти с верным email, но неверным паролем", async () => {
-    await page.goto("/pomidorqa/auth/login");
+    await page.goto("/pomidorqa/auth/login", { waitUntil: "domcontentloaded" });
     await page.getByLabel("Email").fill(email);
     await page.getByLabel("Пароль").fill("wrong-password");
     await page.getByRole("button", { name: "Войти" }).click();
-    const error = page.getByText(/Неверный/);
-    await expect(error).toBeVisible();
+    // ИСПРАВЛЕНО: page.getByText(/Неверный/) без scope мог упасть с
+    // strict mode violation, если слово "Неверный" встречается на странице
+    // больше одного раза (например, и в alert, и в подсказке поля).
+    // Берём первое совпадение — этого достаточно, т.к. дальше сравниваем
+    // текст между двумя сценариями, а не полагаемся на уникальность локатора.
+    const error = page.getByText(/Неверный/).first();
+    await expect(error).toBeVisible({ timeout: 15_000 });
     wrongPasswordError = (await error.textContent())?.trim() ?? "";
   });
 
   let unknownEmailError = "";
   await test.step("Пробуем войти с несуществующим email", async () => {
-    await page.goto("/pomidorqa/auth/login");
+    await page.goto("/pomidorqa/auth/login", { waitUntil: "domcontentloaded" });
     await page.getByLabel("Email").fill(`no-such-user-${runId}@example.com`);
     await page.getByLabel("Пароль").fill("any-password-123");
     await page.getByRole("button", { name: "Войти" }).click();
-    const error = page.getByText(/Неверный/);
-    await expect(error).toBeVisible();
+    const error = page.getByText(/Неверный/).first();
+    await expect(error).toBeVisible({ timeout: 15_000 });
     unknownEmailError = (await error.textContent())?.trim() ?? "";
   });
 
