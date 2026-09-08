@@ -21,3 +21,13 @@ export function getCancelledBookingCheck(
     pastBookingLocator: bookingPage.pastBookingByParticipant(participantName),
   };
 }
+
+export const expectBookingIsCancelled = async (
+  bookingPage: BookingPage,
+  participantName: string,
+) => {
+  const check = getCancelledBookingCheck(bookingPage, participantName);
+  await expect(check.upcomingCountLocator).toHaveCount(0);
+  await expect(check.pastBookingLocator).toBeVisible();
+  await expect(check.pastBookingLocator).toContainText("отменено");
+};

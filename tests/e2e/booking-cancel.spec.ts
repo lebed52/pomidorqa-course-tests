@@ -3,7 +3,7 @@ import { makeUser, registerUser } from "../helpers/user";
 import { SlotsPage } from "../pages/slots-page";
 import { ProfilePage } from "../pages/profile-page";
 import { BookingPage } from "../pages/booking-page";
-import { expectEventually, getCancelledBookingCheck } from "../helpers/booking";
+import { expectEventually, expectBookingIsCancelled } from "../helpers/booking";
 
 test("отмена встречи гостем, после reload отмену видят гость и хост", async ({
   browser,
@@ -29,19 +29,6 @@ test("отмена встречи гостем, после reload отмену �
   const hostSlots = new SlotsPage(hostPage);
   const hostBookingsPage = new BookingPage(hostPage);
   const guestBookingPage = new BookingPage(guestPage);
-
-  const expectBookingIsCancelled = async (
-    bookingPage: BookingPage,
-    participantName: string,
-  ) => {
-    await expect(
-      bookingPage.upcomingBookingByParticipant(participantName),
-    ).toHaveCount(0);
-    const cancelledMeeting =
-      bookingPage.pastBookingByParticipant(participantName);
-    await expect(cancelledMeeting).toBeVisible();
-    await expect(cancelledMeeting).toContainText("отменено");
-  };
 
   try {
     await test.step("Хост: регистрируется в PomidorQA и добавляет уникальный навык", async () => {
@@ -94,14 +81,7 @@ test("отмена встречи гостем, после reload отмену �
     });
 
     await test.step("Встреча исчезла из ближайших и появилась в отмененных", async () => {
-      await expect(
-        guestBookingPage.upcomingBookingByParticipant(host.name),
-      ).toHaveCount(0);
-      const cancelledMeeting = guestBookingPage.pastBookingByParticipant(
-        host.name,
-      );
-      await expect(cancelledMeeting).toBeVisible();
-      await expect(cancelledMeeting).toContainText("отменено");
+      await expectBookingIsCancelled(guestBookingPage, host.name);
     });
 
     await test.step("После reload гость видит отмену", async () => {
@@ -109,12 +89,7 @@ test("отмена встречи гостем, после reload отмену �
 
       await expectEventually(
         () => guestPage.reload(),
-        async () => {
-          const check = getCancelledBookingCheck(guestBookingPage, host.name);
-          await expect(check.upcomingCountLocator).toHaveCount(0);
-          await expect(check.pastBookingLocator).toBeVisible();
-          await expect(check.pastBookingLocator).toContainText("отменено");
-        },
+        () => expectBookingIsCancelled(guestBookingPage, host.name),
       );
     });
 
@@ -123,12 +98,7 @@ test("отмена встречи гостем, после reload отмену �
 
       await expectEventually(
         () => hostPage.reload(),
-        async () => {
-          const check = getCancelledBookingCheck(hostBookingsPage, guest.name);
-          await expect(check.upcomingCountLocator).toHaveCount(0);
-          await expect(check.pastBookingLocator).toBeVisible();
-          await expect(check.pastBookingLocator).toContainText("отменено");
-        },
+        () => expectBookingIsCancelled(hostBookingsPage, guest.name),
       );
     });
   } finally {
