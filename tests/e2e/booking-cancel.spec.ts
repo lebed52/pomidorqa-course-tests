@@ -67,8 +67,10 @@ test("отмена встречи: гость отменяет бронь, от�
     });
 
     await test.step("Карточка ушла из «Ближайших» в «Прошедшие и отменённые»", async () => {
-      await expect(guestBooking.upcomingMeeting(host.name)).toHaveCount(0);
+      // Сначала ждём положительный признак: пока страница не перерисовалась,
+      // toHaveCount(0) прошёл бы мгновенно и по неправильной причине.
       await expect(guestBooking.pastMeeting(host.name)).toContainText("отменено");
+      await expect(guestBooking.upcomingMeeting(host.name)).toHaveCount(0);
     });
 
     await test.step("Гость перезагружает страницу", async () => {
@@ -76,15 +78,25 @@ test("отмена встречи: гость отменяет бронь, от�
     });
 
     await test.step("После перезагрузки отмена никуда не делась", async () => {
-      await expect(guestBooking.upcomingMeeting(host.name)).toHaveCount(0);
+      // Сначала ждём положительный признак: пока страница не перерисовалась,
+      // toHaveCount(0) прошёл бы мгновенно и по неправильной причине.
       await expect(guestBooking.pastMeeting(host.name)).toContainText("отменено");
+      await expect(guestBooking.upcomingMeeting(host.name)).toHaveCount(0);
     });
 
-    await test.step("Хост видит ту же встречу отменённой, с именем гостя", async () => {
+    await test.step("Хост открывает «Мои встречи»", async () => {
       await expect(async () => {
         await hostBooking.openMyMeetings();
-        await expect(hostBooking.pastMeeting(guest.name)).toContainText("отменено");
+        await expect(hostBooking.pastMeeting(guest.name)).toBeVisible();
       }).toPass({ timeout: 10_000 });
+    });
+
+    await test.step("Хост перезагружает страницу", async () => {
+      await hostBooking.reload();
+    });
+
+    await test.step("После перезагрузки хост видит встречу отменённой, с именем гостя", async () => {
+      await expect(hostBooking.pastMeeting(guest.name)).toContainText("отменено");
       await expect(hostBooking.upcomingMeeting(guest.name)).toHaveCount(0);
     });
   } finally {
