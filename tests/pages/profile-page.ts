@@ -47,9 +47,17 @@ export class ProfilePage {
     await saved;
   }
 
+  // Добавление навыка — POST-форма Next.js. Без ожидания ответа два вызова
+  // подряд наезжают друг на друга: второй начинает заполнять поле, пока
+  // страница ещё перерисовывается после первого.
   async addSkill(tag: string, type: string) {
+    const added = this.page.waitForResponse(
+      (response) =>
+        response.url().endsWith(ROUTES.profile) && response.request().method() === "POST"
+    );
     await this.skillInput.fill(tag);
     await this.skillTypeSelect.selectOption(type);
     await this.addSkillButton.click();
+    await added;
   }
 }

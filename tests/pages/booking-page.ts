@@ -35,6 +35,17 @@ export class BookingPage {
     return this.personCards.filter({ hasText: name });
   }
 
+  // Счётчик в карточке каталога: «N своб. слотов». Форма слова не склоняется —
+  // при 1, 2 и 5 слотах суффикс один и тот же.
+  personCardSlots(name: string): Locator {
+    return this.personCard(name).getByText(/своб\. слотов/);
+  }
+
+  // Чипы навыков внутри карточки каталога.
+  personCardSkills(name: string): Locator {
+    return this.personCard(name).locator("[data-skill-tag]");
+  }
+
   firstMeetingName(): Locator {
     return this.upcomingMeetings.locator("[data-booking-id]").first().locator("p").first();
   }
