@@ -44,10 +44,11 @@ export class ProfilePage {
     await this.page.goto(ROUTES.profile);
   }
 
-  async saveName(name: string) {
+  /* async saveName(name: string) {
     await this.profileNameInput.fill(name);
     await this.profileSaveButton.click();
   }
+    */
 
   async saveProfile(page: Page) {
   const saved = page.waitForResponse(
@@ -61,16 +62,6 @@ async addSkill(tag: string, type: SkillType): Promise<void> {
   await this.skillInput.fill(tag);
   await this.skillTypeSelect.selectOption(type);
   await this.addSkillButton.click();
-}
-
-async setTimezone(timezone: string): Promise<void> {
-  await this.goto();
-
-  await this.profileTimezoneSelect.selectOption(timezone);
-  await this.saveProfile(this.page);
-
-  await this.page.reload();
-  await expect(this.profileTimezoneSelect).toHaveValue(timezone);
 }
 
   getSkillChip(tag: string): Locator {

@@ -113,9 +113,6 @@ export class BookingPage {
     async selectFirstAvailableSlot(): Promise<void> {
         const day = this.bookingCalendarDay.first();
         const time = this.bookingCalendarTime.first();
-    
-        // await this.bookingCalendarDay.first().click();
-        // await this.bookingCalendarTime.first().click();
 
         await day.click();
             await expect(time).toBeVisible();

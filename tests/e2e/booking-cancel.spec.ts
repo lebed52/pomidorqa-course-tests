@@ -99,12 +99,12 @@ test.describe("Бронирование и отмена встречи", () => {
       if (await error.isVisible().catch(() => false)) {
         throw new Error(`Бронирование не удалось: ${await error.textContent()}`);
       }
-      await guestBookingPage.page.reload();
     });
 
     await test.step('Гость: отменяет бронирование', async () => {
       await guestBookingPage.gotoMeetings();
       await guestBookingPage.getCancelButton(host.name).click();
+      await guestBookingPage.page.reload();
     });
 
     await test.step('Бронирование отменено', async () => {
