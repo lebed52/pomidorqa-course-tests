@@ -11,7 +11,7 @@ test.describe('Гость бронирует встречу, отменяет е
   const host = makeUser("host", runId);
   const guest = makeUser("guest", runId);
 
-  // Три независимых аккаунта = три независимых браузерных контекста
+  // Два независимых аккаунта = два независимых браузерных контекста
   const hostContext = await browser.newContext();
   const guestContext = await browser.newContext();
   
@@ -31,12 +31,18 @@ test.describe('Гость бронирует встречу, отменяет е
   await test.step('Хост: добавляет навык «могу помочь» в профиле', async () => {
     await hostProfile.goto();
     await hostProfile.addSkill(skillTag, "can_help")
+  });
+
+  await test.step('Хост: проверяет наличие навыка «могу помочь» в профиле', async () => {
     await expect(hostProfile.canHelpSkills).toContainText(skillTag);
   });
 
   await test.step("Хост: добавляет свободный слот на завтра", async () => {
     await hostBooking.gotoSlots()
     await hostBooking.addSlot()
+    });
+
+    await test.step("Хост: проверяет наличие свободного слота на завтра", async () => {
     await expect(hostBooking.slotsCard.first()).toBeVisible();
   });
 
@@ -46,17 +52,26 @@ test.describe('Гость бронирует встречу, отменяет е
 
   await test.step("Гость: ищет хоста в каталоге по навыку", async () => {
     await guestBooking.searchBySkill(skillTag)
+   });
+
+  await test.step("Гость: проверяет карточку хоста в каталоге", async () => {
     await expect(guestBooking.catalogCard.filter({ hasText: host.name })
     ).toBeVisible();
   });
 
   await test.step("Гость: открывает карточку хоста", async () => {
     await guestBooking.openCard(host.name)
-    await expect(guestBooking.personName).toHaveText(host.name);
+  });
+
+  await test.step("Гость: проверяет наличие имени хоста в карточке хоста", async () => {
+  await expect(guestBooking.personName).toHaveText(host.name);
   });
 
   await test.step("Гость: кликает по дню и времени в календаре слотов", async () => {
     await guestBooking.selectSlot();
+    });
+
+    await test.step("Гость: проверяет наличие диалога подтверждения бронирования", async () => {
     await expect(guestBooking.bookingConfirmDialog).toBeVisible();
   });
 
@@ -64,9 +79,12 @@ test.describe('Гость бронирует встречу, отменяет е
     await guestBooking.bookingConfirm()
   });
 
+  await test.step("Гость: переходит к бронированию в разделе «Мои встречи»", async () => {
+    await guestBooking.gotoBookings();
+  });
+
   await test.step("Гость: видит бронирование в разделе «Мои встречи»", async () => {
     await expect(async () => {
-      await guestBooking.gotoBookings();
       const card = guestBooking.bookingsCardName;
       await expect(card).toHaveText(host.name);
     }).toPass({ timeout: 10_000 });
@@ -93,6 +111,7 @@ test.describe('Гость бронирует встречу, отменяет е
 
     await test.step("Хост: открывает раздел «Мои встречи»", async () => {
       await hostBooking.gotoBookings();
+      await hostPage.reload()
     });
 
     await test.step(

@@ -17,6 +17,9 @@ test("вход с неверными данными — одинаковая о�
     await page.getByLabel("Email").fill(email);
     await page.getByLabel("Пароль").fill(password);
     await page.getByRole("button", { name: "Зарегистрироваться" }).click();
+  });
+
+  await test.step("Заводим реальный аккаунт для проверки — проверка редиректа", async () => {
     await expect(page).toHaveURL(/\/pomidorqa\/?$/);
   });
 
@@ -27,6 +30,9 @@ test("вход с неверными данными — одинаковая о�
     await page.getByLabel("Email").fill(email);
     await page.getByLabel("Пароль").fill("wrong-password");
     await page.getByRole("button", { name: "Войти" }).click();
+  });
+
+  await test.step("Пробуем войти с верным email, но неверным паролем — проверка ошибки", async () => {
     const error = page.getByText(/Неверный/);
     await expect(error).toBeVisible();
     wrongPasswordError = (await error.textContent())?.trim() ?? "";
@@ -39,6 +45,9 @@ test("вход с неверными данными — одинаковая о�
     await page.getByLabel("Email").fill(`no-such-user-${runId}@example.com`);
     await page.getByLabel("Пароль").fill("any-password-123");
     await page.getByRole("button", { name: "Войти" }).click();
+  });
+
+  await test.step("Пробуем войти с несуществующим email — проверка ошибки", async () => {
     const error = page.getByText(/Неверный/);
     await expect(error).toBeVisible();
     unknownEmailError = (await error.textContent())?.trim() ?? "";
