@@ -18,7 +18,10 @@ test("вход с неверными данными — одинаковая о�
     await page.getByLabel("Пароль").fill(password);
     await page.getByRole("button", { name: "Зарегистрироваться" }).click();
     await expect(page).toHaveURL(/\/pomidorqa\/?$/);
+
+    await page.context().clearCookies();
   });
+
 
   let wrongPasswordError = "";
   await test.step("Пробуем войти с верным email, но неверным паролем", async () => {
@@ -26,8 +29,8 @@ test("вход с неверными данными — одинаковая о�
     await page.getByLabel("Email").fill(email);
     await page.getByLabel("Пароль").fill("wrong-password");
     await page.getByRole("button", { name: "Войти" }).click();
-    const error = page.getByText(/Неверный/);
-    await expect(error).toBeVisible();
+    const error = page.getByRole("alert").filter({ hasText: "Неверный" });
+    await expect(error).toContainText("Неверный");
     wrongPasswordError = (await error.textContent())?.trim() ?? "";
   });
 
@@ -37,8 +40,8 @@ test("вход с неверными данными — одинаковая о�
     await page.getByLabel("Email").fill(`no-such-user-${runId}@example.com`);
     await page.getByLabel("Пароль").fill("any-password-123");
     await page.getByRole("button", { name: "Войти" }).click();
-    const error = page.getByText(/Неверный/);
-    await expect(error).toBeVisible();
+    const error = page.getByRole("alert").filter({ hasText: "Неверный" });
+    await expect(error).toContainText("Неверный");
     unknownEmailError = (await error.textContent())?.trim() ?? "";
   });
 
