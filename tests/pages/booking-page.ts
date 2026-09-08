@@ -13,11 +13,14 @@ export class BookingPage {
   bookingConfirmSuccess: Locator;
   bookingConfirmError: Locator;
   bookingsUpcomingSection: Locator;
+  bookingsPastSection: Locator;
   bookingsCardName: Locator;
   slotsDateInput: Locator;
   slotsTimeInput: Locator;
   slotsAddSubmit: Locator;
   slotsCard: Locator;
+  bookingCard: Locator;
+  bookingCancelButton: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -32,11 +35,14 @@ export class BookingPage {
     this.bookingConfirmSuccess = page.getByRole("dialog").getByRole("status");
     this.bookingConfirmError = page.getByRole("dialog").getByRole("alert");
     this.bookingsUpcomingSection = page.getByTestId("upcoming-meetings");
+    this.bookingsPastSection = page.getByRole("heading", { name: "Прошедшие и отменённые" }).locator("..");
     this.bookingsCardName = this.bookingsUpcomingSection.locator("[data-booking-id]").first().locator("p").first();
     this.slotsDateInput = page.locator("#pomidorqa-slots-date");
     this.slotsTimeInput = page.locator("#pomidorqa-slots-time");
     this.slotsAddSubmit = page.getByRole("button", { name: "Добавить слот" });
     this.slotsCard = page.locator("[data-slot-id]");
+    this.bookingCard = this.bookingsUpcomingSection.locator("[data-booking-id]");
+    this.bookingCancelButton = this.bookingCard.getByRole("button", { name: "Отменить" });
   }
 
   async gotoBookings() {
@@ -69,4 +75,19 @@ export class BookingPage {
     await this.slotsTimeInput.fill(time);
     await this.slotsAddSubmit.click();
   }
+
+  async cancelBooking(name: string) {
+    const card = this.bookingCard.filter({ hasText: name });
+    await card.getByRole("button", { name: "Отменить" }).click();
+    await card.waitFor({ state: "hidden", timeout: 10000 });
+  }
+
+  bookingCancelCardByName(name: string): Locator {
+    return this.bookingsPastSection.locator("[data-booking-id]").filter({ hasText: name });
+  }
+
+  async reload() {
+    await this.page.reload();
+  }
 }
+

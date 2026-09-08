@@ -117,6 +117,10 @@ test.describe("свой мир на каждый тест", () => {
       await profilePage.saveTimezone(host.newTimezone);
     });
 
+    await test.step("Хост: дожидается сохранения в профиле", async () => {
+      await profilePage.saveProfile(page);
+    });
+
     await test.step("Хост: перезагружает страницу", async () => {
       await page.reload();
     });
