@@ -16,7 +16,7 @@ test.describe("Длинные e2e-сценарии, включающие осн�
   let bookingPageGuest2: BookingPage;
   let bookingPageHost: BookingPage;
 
-test("основной путь + гонка за слот: регистрация → навык → слот → поиск в каталоге → бронирование → «Мои встречи» у обоих → второй гость видит ошибку", async ({
+test("гонка за слот: регистрация → навык → слот → поиск в каталоге → бронирование → «Мои встречи» у обоих → второй гость видит ошибку", async ({
   browser,
 }) => {
   const runId = Date.now();
@@ -33,6 +33,7 @@ test("основной путь + гонка за слот: регистраци
   const guestPage = await guestContext.newPage();
   const guest2Page = await guest2Context.newPage();
 
+  try{
   await test.step("Хост: регистрируется в PomidorQA", async () => {
     await registerUser(hostPage, host);
   });
@@ -80,14 +81,14 @@ test("основной путь + гонка за слот: регистраци
         await guestPage.reload();
       }
       await expect(dayChip).toBeVisible();
-    }).toPass({ timeout: 10_000 });
-
     await peoplePageGuest.calendarDay.first().click();
-    await peoplePageGuest.calendarTime.first().click();
+    await peoplePageGuest.calendarTime.first().click();    
+    await expect(peoplePageGuest.confirmDialog).toBeVisible();  //внутренняя проверка, чтобы следующий шаг не падал
+    }).toPass({ timeout: 10_000 });
   });
 
   await test.step("У Гостя появилось модальное окно с подтверждением", async () => {
-    await expect(peoplePageGuest.confirmDialog).toBeVisible({ timeout: 15000 });
+    await expect(peoplePageGuest.confirmDialog).toBeVisible();
   });  
 
   await test.step("Гость2: регистрируется", async () => {
@@ -101,11 +102,9 @@ test("основной путь + гонка за слот: регистраци
     await personCardByName(guest2Page, host.name);
   });
 
-
   await test.step("Карточка хоста у Гостя2 открыта", async () => {
     await expect(peoplePageGuest2.personName).toHaveText(host.name);
   });
-
 
   await test.step("Гость2: кликает по дню и времени в календаре слотов", async () => {
     peoplePageGuest2 = new PeoplePage(guest2Page);
@@ -115,14 +114,14 @@ test("основной путь + гонка за слот: регистраци
         await guest2Page.reload();
       }
       await expect(dayChip).toBeVisible();
-    }).toPass({ timeout: 10_000 });
-
     await peoplePageGuest2.calendarDay.first().click();
     await peoplePageGuest2.calendarTime.first().click();
+    await expect(peoplePageGuest2.confirmDialog).toBeVisible(); //внутренняя проверка, чтобы следующий шаг не падал
+    }).toPass({ timeout: 10_000 });
   });
 
   await test.step("У Гостя2 появилось модальное окно с подтверждением", async () => {
-    await expect(peoplePageGuest2.confirmDialog).toBeVisible({ timeout: 15000 });
+    await expect(peoplePageGuest2.confirmDialog).toBeVisible();
   });  
 
   await test.step("Гость: подтверждает бронирование первым", async () => {
@@ -171,10 +170,10 @@ test("основной путь + гонка за слот: регистраци
       await expect(bookingPageHost.cardName).toHaveText(guest.name);
     }).toPass({ timeout: 10_000 });
   });
-
+} finally {
   await hostContext.close();
   await guestContext.close();
   await guest2Context.close();
+}
 });
-
 })

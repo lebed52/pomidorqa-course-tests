@@ -28,6 +28,7 @@ test("основной путь + отмена: регистрация → на�
   const hostPage = await hostContext.newPage();
   const guestPage = await guestContext.newPage();
 
+  try{
   await test.step("Хост: регистрируется в PomidorQA", async () => {
     await registerUser(hostPage, host);
   });
@@ -75,10 +76,10 @@ test("основной путь + отмена: регистрация → на�
         await guestPage.reload();
       }
       await expect(dayChip).toBeVisible();
-    }).toPass({ timeout: 10_000 });
-
     await peoplePageGuest.calendarDay.first().click();
     await peoplePageGuest.calendarTime.first().click();
+    await expect(peoplePageGuest.confirmDialog).toBeVisible(); //внутренняя проверка, чтоб следующий шаг не падал
+    }).toPass({ timeout: 10_000 });
   });
 
   await test.step("У Гостя появилось модальное окно с подтверждением", async () => {
@@ -136,9 +137,10 @@ test("основной путь + отмена: регистрация → на�
       await expect(bookingPageHost.cardNameForCancelled).toHaveText(guest.name);
     }).toPass({ timeout: 10_000 });
   });
-
+  } finally {
   await hostContext.close();
   await guestContext.close();
+}
 });
 
 })

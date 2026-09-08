@@ -8,8 +8,8 @@ export function catalogLoc(page: Page) {
   card: page.getByTestId("person-card")
   }
 }
-export function personCardByName(page: Page, name: string) {
-  catalogLoc(page).card.filter({ hasText: name }).click();
+export async function personCardByName(page: Page, name: string) {
+  await catalogLoc(page).card.filter({ hasText: name }).click();
 }
 
 export class BookingPage {
