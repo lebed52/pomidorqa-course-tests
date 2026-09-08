@@ -24,9 +24,35 @@ export function makeUser(role: string): TestUser {
   };
 }
 
-export async function registerUser(page: Page, user: TestUser) {
+export async function registerUser(
+  page: Page,
+  user: TestUser,
+): Promise<void> {
   await test.step(`Хелпер: Регистрация пользователя ${user.name}`, async () => {
-    await page.goto(ROUTES.register);
+    let registrationPageResponse;
+
+    try {
+      registrationPageResponse = await page.goto(ROUTES.register);
+    } catch (error) {
+      const reason =
+        error instanceof Error ? error.message : String(error);
+
+      throw new Error(
+        `Не удалось открыть страницу регистрации для ${user.email}. ` +
+          `URL: ${page.url()}. Причина: ${reason}`,
+      );
+    }
+
+    if (
+      registrationPageResponse &&
+      registrationPageResponse.status() >= 400
+    ) {
+      throw new Error(
+        `Страница регистрации для ${user.email} вернула ` +
+          `HTTP ${registrationPageResponse.status()} ` +
+          `${registrationPageResponse.statusText()}`,
+      );
+    }
 
     await page.getByLabel("Имя").fill(user.name);
     await page.getByLabel("Email").fill(user.email);
@@ -36,7 +62,10 @@ export async function registerUser(page: Page, user: TestUser) {
       .getByRole("button", { name: "Зарегистрироваться" })
       .click();
 
-    await expect(page).toHaveURL(/\/pomidorqa\/?$/, {
+    await expect(
+      page,
+      `После регистрации ${user.email} ожидается переход на главную PomidorQA`,
+    ).toHaveURL(/\/pomidorqa\/?$/, {
       timeout: 15_000,
     });
   });

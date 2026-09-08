@@ -1,4 +1,4 @@
-import { Locator, Page } from "@playwright/test";
+import { type Locator, type Page } from "@playwright/test";
 import { ROUTES } from "../helpers/user";
 
 function toDateInputValue(date: Date): string {
@@ -34,20 +34,42 @@ export class SlotsPage {
     this.slotCards = page.locator("[data-slot-id]");
   }
 
-  async goto() {
+  async goto(): Promise<void> {
     await this.page.goto(ROUTES.slots);
   }
 
-  async addSlot(time: string, dateStr?: string) {
+  async addSlot(
+    time: string,
+    dateStr?: string,
+  ): Promise<void> {
     const targetDate = dateStr ?? getTomorrowDate();
     const slotsBefore = await this.slotCards.count();
 
     await this.dateInput.fill(targetDate);
     await this.timeInput.fill(time);
-    await this.addSubmitButton.click();
+
+    const slotCreatedResponse = this.page.waitForResponse(
+      (response) =>
+        new URL(response.url()).pathname === ROUTES.slots &&
+        response.request().method() === "POST",
+      { timeout: 15_000 },
+    );
+
+    const [response] = await Promise.all([
+      slotCreatedResponse,
+      this.addSubmitButton.click(),
+    ]);
+
+    if (response.status() >= 400) {
+      throw new Error(
+        `Создание слота ${targetDate} ${time} завершилось с ` +
+          `HTTP ${response.status()} ${response.statusText()}`,
+      );
+    }
 
     await this.slotCards.nth(slotsBefore).waitFor({
       state: "visible",
+      timeout: 10_000,
     });
   }
 }

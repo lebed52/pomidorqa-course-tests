@@ -1,6 +1,10 @@
 import { type Page, type Locator } from "@playwright/test";
 import { ROUTES } from "../helpers/user";
 
+export type BookingResult =
+  | { status: "success" }
+  | { status: "error"; message: string };
+
 export class BookingPage {
   private readonly catalogFilterInput: Locator;
   private readonly catalogFilterButton: Locator;
@@ -69,11 +73,11 @@ export class BookingPage {
       this.pastMeetingsSection.locator("[data-booking-id]");
   }
 
-  async goToCatalog() {
+  async goToCatalog(): Promise<void> {
     await this.page.goto(ROUTES.catalog);
   }
 
-  async searchCatalog(skillTag: string) {
+  async searchCatalog(skillTag: string): Promise<void> {
     await this.catalogFilterInput.fill(skillTag);
     await this.catalogFilterButton.click();
   }
@@ -84,7 +88,7 @@ export class BookingPage {
     });
   }
 
-  async openPerson(name: string) {
+  async openPerson(name: string): Promise<void> {
     const personCard = this.personCard(name);
 
     await Promise.all([
@@ -100,7 +104,9 @@ export class BookingPage {
     });
   }
 
-  private async waitForFirstAvailableDay(timeoutMs = 10_000) {
+  private async waitForFirstAvailableDay(
+    timeoutMs = 10_000,
+  ): Promise<void> {
     const deadline = Date.now() + timeoutMs;
     let reloadCount = 0;
 
@@ -131,11 +137,14 @@ export class BookingPage {
     }
 
     throw new Error(
-      `Слот не появился за ${timeoutMs} мс после ${reloadCount} reload. URL: ${this.page.url()}`,
+      `Слот не появился за ${timeoutMs} мс после ` +
+        `${reloadCount} reload. URL: ${this.page.url()}`,
     );
   }
 
-  async pickFirstSlot(retryTimeoutMs = 10_000) {
+  async pickFirstSlot(
+    retryTimeoutMs = 10_000,
+  ): Promise<void> {
     if (
       await this.confirmDialog
         .isVisible()
@@ -156,7 +165,7 @@ export class BookingPage {
     await this.timeChip.click();
   }
 
-  async confirmBooking() {
+  async confirmBooking(): Promise<void> {
     await this.confirmButton.waitFor({
       state: "visible",
     });
@@ -166,10 +175,7 @@ export class BookingPage {
 
   async waitForBookingResult(
     timeout = 15_000,
-  ): Promise<
-    | { status: "success" }
-    | { status: "error"; message: string }
-  > {
+  ): Promise<BookingResult> {
     await this.confirmSuccess
       .or(this.confirmError)
       .waitFor({
@@ -195,7 +201,7 @@ export class BookingPage {
     };
   }
 
-  async goToBookings() {
+  async goToBookings(): Promise<void> {
     await this.page.goto(ROUTES.bookings);
   }
 
@@ -211,13 +217,32 @@ export class BookingPage {
     });
   }
 
-  async cancelBookingWith(name: string) {
+  async cancelBookingWith(
+    name: string,
+  ): Promise<void> {
     const booking =
       this.upcomingBookingByParticipant(name);
 
-    await booking
-      .getByRole("button", { name: "Отменить" })
-      .click();
+    const cancelResponse = this.page.waitForResponse(
+      (response) =>
+        new URL(response.url()).pathname === ROUTES.bookings &&
+        response.request().method() === "POST",
+      { timeout: 15_000 },
+    );
+
+    const [response] = await Promise.all([
+      cancelResponse,
+      booking
+        .getByRole("button", { name: "Отменить" })
+        .click(),
+    ]);
+
+    if (response.status() >= 400) {
+      throw new Error(
+        `Отмена встречи с ${name} завершилась с ` +
+          `HTTP ${response.status()} ${response.statusText()}`,
+      );
+    }
 
     await booking.waitFor({
       state: "hidden",
