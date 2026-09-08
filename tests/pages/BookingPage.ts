@@ -54,17 +54,23 @@ export class BookingPage {
 
     //Кликает по дню и времени в календаре слотов
     async selectSlot () {
-    await expect(async () => {
-        const dayChip = this.bookingCalendarDay.first();
-        const isVisible = await dayChip.isVisible().catch(() => false);
-          if (!isVisible) {
-            await this.page.reload();
-          }
-          await expect(dayChip).toBeVisible();
-        }).toPass({ timeout: 10_000 });
-    
-        await this.bookingCalendarDay.first().click();
-        await this.bookingCalendarTime.first().click();     
+    const dayChip = this.bookingCalendarDay.first();
+    const isVisible = await dayChip.isVisible().catch(() => false);
+    if (!isVisible) {
+      await this.page.reload();
+    }
+
+    // Wait for the day button to be visible (no test assertion here)
+    await dayChip.waitFor({ state: "visible", timeout: 10_000 });
+    const dayBtn = this.bookingCalendarDay.first();
+    await dayBtn.click();
+
+    const timeBtn = this.bookingCalendarTime.first();
+    await timeBtn.waitFor({ state: "visible", timeout: 10_000 });
+    await timeBtn.click();
+
+    // Wait for the booking confirmation dialog to appear (action-level wait, test still asserts)
+    await this.bookingConfirmDialog.waitFor({ state: "visible", timeout: 15_000 });
     }
     //Успешное подтверждение бронирования
     async bookingConfirm () {
