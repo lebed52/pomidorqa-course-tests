@@ -4,6 +4,7 @@ import { ProfilePage } from "../pages/profile-page";
 import { SlotsPage } from "../pages/slots-page";
 import { PeoplePage } from "../pages/people-page";
 import { BookingPage, catalogLoc, personCardByName } from "../pages/bookings-page";
+import { createUsersContext, createAdditionalContext } from "../helpers/contexts";
 
 //POMIDORQA_BASE_URL=http://localhost:3000 npx playwright test --project=e2e tests/e2e/booking-flow.spec.ts
 
@@ -20,7 +21,7 @@ test("гонка за слот: регистрация → навык → сло
   browser,
 }) => {
   test.setTimeout(120000);
-  
+
   const runId = Date.now();
   const skillTag = `Playwright-demo-${runId}`;
   const host = makeUser("host", runId);
@@ -28,12 +29,9 @@ test("гонка за слот: регистрация → навык → сло
   const guest2 = makeUser("guest2", runId);
 
   // Три независимых аккаунта = три независимых браузерных контекста
-  const hostContext = await browser.newContext();
-  const guestContext = await browser.newContext();
-  const guest2Context = await browser.newContext();
-  const hostPage = await hostContext.newPage();
-  const guestPage = await guestContext.newPage();
-  const guest2Page = await guest2Context.newPage();
+  const userContexts = await createUsersContext(browser);
+  const {hostContext, guestContext, hostPage, guestPage} = userContexts;
+  const { additionalContext: guest2Context, additionalPage: guest2Page } = await createAdditionalContext(browser);
 
   try{
   await test.step("Хост: регистрируется в PomidorQA", async () => {
@@ -167,6 +165,7 @@ test("гонка за слот: регистрация → навык → сло
 
   await test.step("Хост: тоже видит это бронирование в своих «Мои встречи»", async () => {
     bookingPageHost = new BookingPage(hostPage);
+    /*await expect(hostPage.getByTestId('upcoming-meetings').locator('[data-booking-id]')).toHaveCount(1, { timeout: 10000 })*/
     await expect(async () => {
       await hostPage.goto(ROUTES.bookings);
       await expect(bookingPageHost.cardName).toHaveText(guest.name);

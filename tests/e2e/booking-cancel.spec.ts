@@ -4,6 +4,7 @@ import { ProfilePage } from "../pages/profile-page";
 import { SlotsPage } from "../pages/slots-page";
 import { PeoplePage } from "../pages/people-page";
 import { BookingPage, catalogLoc, personCardByName } from "../pages/bookings-page";
+import { createUsersContext } from "../helpers/contexts";
 
 //POMIDORQA_BASE_URL=http://localhost:3000 npx playwright test --project=e2e tests/e2e/booking-flow.spec.ts
 
@@ -23,10 +24,8 @@ test("основной путь + отмена: регистрация → на�
   const guest = makeUser("guest", runId);
 
   // Два независимых аккаунта = два независимых браузерных контекста
-  const hostContext = await browser.newContext();
-  const guestContext = await browser.newContext();
-  const hostPage = await hostContext.newPage();
-  const guestPage = await guestContext.newPage();
+  const userContexts = await createUsersContext(browser);
+  const {hostContext, guestContext, hostPage, guestPage} = userContexts;
 
   try{
   await test.step("Хост: регистрируется в PomidorQA", async () => {
