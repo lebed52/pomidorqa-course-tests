@@ -25,6 +25,8 @@
 С Урока 11 на ревью открывай [CODEX.md](./CODEX.md). Чеклист — [REVIEW.md](./REVIEW.md).
 Комментарий пиши `кодекс N`, не «тут плохо».
 
+Экспериментальный AI-ревьюер для Pull Request описан в [docs/ai-reviewer.md](./docs/ai-reviewer.md).
+
 ## Установка
 
 ```bash
