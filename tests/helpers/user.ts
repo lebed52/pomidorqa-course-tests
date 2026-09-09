@@ -15,7 +15,7 @@ const registerSubmitButton = (page: Page) => page.getByRole("button", { name: "�
 
 export function makeUser(role: string, runId: number): TestUser {
   return {
-    name: `${role} Автотест`,
+    name: `${role} Автотест ${runId}`,
     email: `${role}-${runId}@example.com`,
     password: "testpass123",
   };

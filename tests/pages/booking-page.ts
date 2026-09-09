@@ -1,5 +1,6 @@
 import type { Page, Locator } from "@playwright/test";
 
+const CATALOG_ROUTE = "/pomidorqa";
 const SLOTS_ROUTE = "/pomidorqa/profile/slots";
 const BOOKINGS_ROUTE = "/pomidorqa/bookings";
 const PAST_SECTION_HEADING = "Прошедшие и отменённые";
@@ -112,6 +113,10 @@ export class BookingPage {
   }
 
   // Действия
+  async openCatalog() {
+    await this.page.goto(CATALOG_ROUTE);
+  }
+
   async openSlots() {
     await this.page.goto(SLOTS_ROUTE);
   }
