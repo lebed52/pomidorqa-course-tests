@@ -10,7 +10,7 @@ import {
   type AppContext,
 } from "../helpers/booking";
 
-const TEST_TIMEOUT = 120_000;
+const TEST_TIMEOUT = 60_000;
 const CATALOG_RESULT_TIMEOUT = 30_000;
 
 function makeRunId(prefix: string): string {
