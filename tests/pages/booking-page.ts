@@ -12,6 +12,7 @@ export class BookingPage {
     readonly catalogFilterInput: Locator;
     readonly catalogFilterSubmit: Locator;
     readonly catalogCards: Locator;
+    readonly catalogEmptyState: Locator;
 
     readonly personName: Locator;
 
@@ -39,6 +40,9 @@ export class BookingPage {
         this.catalogFilterInput = page.locator("#pomidorqa-catalog-skill-filter");
         this.catalogFilterSubmit = page.getByRole("button", { name: "Найти" });
         this.catalogCards = page.getByTestId("person-card");
+        this.catalogEmptyState = page.getByText(
+            "Пока никого не нашли по этому фильтру",
+        );
 
         this.personName = page.getByRole("heading", { level: 1 });
 
