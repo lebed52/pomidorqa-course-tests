@@ -4,34 +4,28 @@ import { ProfilePage } from "../pages/profile-page";
 import { SlotsPage } from "../pages/slots-page";
 import { PeoplePage } from "../pages/people-page";
 import { BookingPage, catalogLoc, personCardByName } from "../pages/bookings-page";
-import { createUsersContext, createAdditionalContext } from "../helpers/contexts";
+import { createUsersContext } from "../helpers/contexts";
 
 //POMIDORQA_BASE_URL=http://localhost:3000 npx playwright test --project=e2e tests/e2e/booking-flow.spec.ts
 
-test.describe("Длинные e2e-сценарии, включающие основной путь", () => {
+test.describe("E2e-сценарии с отменой бронирования", () => {
   let profilePage: ProfilePage;
   let slotsPage: SlotsPage;
   let peoplePageGuest: PeoplePage;
-  let peoplePageGuest2: PeoplePage;
   let bookingPageGuest: BookingPage;
-  let bookingPageGuest2: BookingPage;
   let bookingPageHost: BookingPage;
 
-test("гонка за слот: регистрация → навык → слот → поиск в каталоге → бронирование → «Мои встречи» у обоих → второй гость видит ошибку", async ({
+test("основной путь + отмена: регистрация → навык → слот → поиск в каталоге → бронирование → отмена → в прошедших встречах у обоих", async ({
   browser,
 }) => {
-  test.setTimeout(120000);
-
   const runId = Date.now();
   const skillTag = `Playwright-demo-${runId}`;
   const host = makeUser("host", runId);
   const guest = makeUser("guest", runId);
-  const guest2 = makeUser("guest2", runId);
 
-  // Три независимых аккаунта = три независимых браузерных контекста
+  // Два независимых аккаунта = два независимых браузерных контекста
   const userContexts = await createUsersContext(browser);
   const {hostContext, guestContext, hostPage, guestPage} = userContexts;
-  const { additionalContext: guest2Context, additionalPage: guest2Page } = await createAdditionalContext(browser);
 
   try{
   await test.step("Хост: регистрируется в PomidorQA", async () => {
@@ -82,8 +76,8 @@ test("гонка за слот: регистрация → навык → сло
       }
       await expect(dayChip).toBeVisible();
     await peoplePageGuest.calendarDay.first().click();
-    await peoplePageGuest.calendarTime.first().click();    
-    await expect(peoplePageGuest.confirmDialog).toBeVisible();  //внутренняя проверка, чтобы следующий шаг не падал
+    await peoplePageGuest.calendarTime.first().click();
+    await expect(peoplePageGuest.confirmDialog).toBeVisible(); //внутренняя проверка, чтоб следующий шаг не падал
     }).toPass({ timeout: 10_000 });
   });
 
@@ -91,40 +85,7 @@ test("гонка за слот: регистрация → навык → сло
     await expect(peoplePageGuest.confirmDialog).toBeVisible();
   });  
 
-  await test.step("Гость2: регистрируется", async () => {
-    await registerUser(guest2Page, guest2);
-  });
-
-  await test.step("Гость2: ищет хоста в каталоге по навыку и открывает карточку", async () => {
-    peoplePageGuest2 = new PeoplePage(guest2Page);
-    bookingPageGuest2 = new BookingPage(guest2Page);
-    await bookingPageGuest2.searchBySkill(skillTag);
-    await personCardByName(guest2Page, host.name);
-  });
-
-  await test.step("Карточка хоста у Гостя2 открыта", async () => {
-    await expect(peoplePageGuest2.personName).toHaveText(host.name);
-  });
-
-  await test.step("Гость2: кликает по дню и времени в календаре слотов", async () => {
-    peoplePageGuest2 = new PeoplePage(guest2Page);
-    await expect(async () => {
-      const dayChip = peoplePageGuest2.calendarDay.first();
-      if (!(await dayChip.isVisible().catch(() => false))) {
-        await guest2Page.reload();
-      }
-      await expect(dayChip).toBeVisible();
-    await peoplePageGuest2.calendarDay.first().click();
-    await peoplePageGuest2.calendarTime.first().click();
-    await expect(peoplePageGuest2.confirmDialog).toBeVisible(); //внутренняя проверка, чтобы следующий шаг не падал
-    }).toPass({ timeout: 10_000 });
-  });
-
-  await test.step("У Гостя2 появилось модальное окно с подтверждением", async () => {
-    await expect(peoplePageGuest2.confirmDialog).toBeVisible();
-  });  
-
-  await test.step("Гость: подтверждает бронирование первым", async () => {
+  await test.step("Гость: подтверждает бронирование", async () => {
     peoplePageGuest = new PeoplePage(guestPage);
     await peoplePageGuest.confirmButton.click();
   });
@@ -138,24 +99,15 @@ test("гонка за слот: регистрация → навык → сло
     }
   });  
   
-  await test.step("Гость2: пытается забронировать тот же слот вторым", async () => {
-    peoplePageGuest2 = new PeoplePage(guest2Page);
-    await peoplePageGuest2.confirmButton.click();
+  await test.step("Хост видит это бронирование в своих «Мои встречи»", async () => {
+    bookingPageHost = new BookingPage(hostPage);
+    await expect(async () => {
+      await hostPage.goto(ROUTES.bookings);
+      await expect(bookingPageHost.cardName).toHaveText(guest.name);
+    }).toPass({ timeout: 10_000 });
   });
 
-  await test.step("Гость2 видит ошибку бронирования", async () => {
-    const success2 = peoplePageGuest2.confirmSuccess;
-    const error2 = peoplePageGuest2.confirmError;
-    await expect(success2.or(error2)).toBeVisible({ timeout: 15_000 });
-
-    // Полярность наоборот относительно гостя 1: ошибка — ожидаемый результат
-    if (await success2.isVisible().catch(() => false)) {
-      throw new Error("Слот должен был быть занят, но бронирование прошло успешно");
-    }
-    await expect(error2).toBeVisible();
-  });  
-
-  await test.step("Гость: видит бронирование в разделе «Мои встречи»", async () => {
+  await test.step("Гость видит это бронирование в своих «Мои встречи»", async () => {
     bookingPageGuest = new BookingPage(guestPage);
     await expect(async () => {
       await guestPage.goto(ROUTES.bookings);
@@ -163,18 +115,31 @@ test("гонка за слот: регистрация → навык → сло
     }).toPass({ timeout: 10_000 });
   });
 
-  await test.step("Хост: тоже видит это бронирование в своих «Мои встречи»", async () => {
-    bookingPageHost = new BookingPage(hostPage);
-    /*await expect(hostPage.getByTestId('upcoming-meetings').locator('[data-booking-id]')).toHaveCount(1, { timeout: 10000 })*/
+  await test.step("Гость отменяет созданное бронирование", async () => {
+    bookingPageGuest = new BookingPage(guestPage);
+      await guestPage.goto(ROUTES.bookings);
+      await bookingPageGuest.cancelFirstMeeting();
+  });  
+
+  await test.step("Гость видит это бронирование в отмененных в «Мои встречи»", async () => {
+    bookingPageGuest = new BookingPage(guestPage);
     await expect(async () => {
-      await hostPage.goto(ROUTES.bookings);
-      await expect(bookingPageHost.cardName).toHaveText(guest.name);
+      await guestPage.goto(ROUTES.bookings);
+      await expect(bookingPageGuest.cardNameForCancelled).toHaveText(host.name);
     }).toPass({ timeout: 10_000 });
   });
-} finally {
+
+  await test.step("Хост видит это бронирование в отмененных в «Мои встречи»", async () => {
+    bookingPageHost = new BookingPage(hostPage);
+    await expect(async () => {
+      await hostPage.goto(ROUTES.bookings);
+      await expect(bookingPageHost.cardNameForCancelled).toHaveText(guest.name);
+    }).toPass({ timeout: 10_000 });
+  });
+  } finally {
   await hostContext.close();
   await guestContext.close();
-  await guest2Context.close();
 }
 });
+
 })
