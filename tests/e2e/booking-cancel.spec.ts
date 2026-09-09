@@ -33,8 +33,8 @@ test.describe('Отмена бронирования', () => {
     });
 
     await test.step('Хост: добавляет свободный слот на завтра', async () => {
-      await hostProfile.goToSlots();
       const date = addDate();
+      await hostProfile.goToSlots();
       await hostProfile.addSlot(date, '12:00');
       await expect(hostProfile.slotCard.first()).toBeVisible();
     });
@@ -60,51 +60,55 @@ test.describe('Отмена бронирования', () => {
     await test.step('Гость видит бронирование в "Мои встречи"', async () => {
       await guestBooking.goToBookings();
 
-      await expect(guestBooking.upcomingSection.locator('[data-booking-id]').first()).toBeVisible({
-        timeout: 10_000,
-      });
+      const firstCard = guestBooking.getFirstUpcomingCard();
+      await expect(firstCard).toBeVisible({ timeout: 10_000 });
 
       bookingId = await guestBooking.getFirstUpcomingBookingId();
 
-      const guestCard = guestBooking.getBookingCardById(bookingId, 'upcoming');
-      await expect(guestCard.locator('p').first()).toHaveText(host.name);
+      const guestCardName = guestBooking.getUpcomingCardName(bookingId);
+      await expect(guestCardName).toHaveText(host.name);
     });
 
     await test.step('Хост видит бронирование в "Мои встречи"', async () => {
       const hostBooking = new BookingPage(hostPage);
-      await hostBooking.goToBookings();
-
       const hostCard = hostBooking.getBookingCardById(bookingId, 'upcoming');
+      const hostCardName = hostBooking.getUpcomingCardName(bookingId);
+
+      await hostBooking.goToBookings();
       await expect(hostCard).toBeVisible({ timeout: 10_000 });
-      await expect(hostCard.locator('p').first()).toHaveText(guest.name);
+      await expect(hostCardName).toHaveText(guest.name);
     });
 
     await test.step('Гость отменяет бронирование', async () => {
+      const upcomingCard = guestBooking.getBookingCardById(bookingId, 'upcoming');
       await guestBooking.cancelBookingById(bookingId);
 
-      const upcomingCard = guestBooking.getBookingCardById(bookingId, 'upcoming');
       await expect(upcomingCard).toBeHidden({ timeout: 10_000 });
     });
 
     await test.step('Гость: бронирование переместилось в "Отменённые"', async () => {
       const canceledCard = guestBooking.getBookingCardById(bookingId, 'canceled');
+      const canceledName = guestBooking.getCanceledCardName(bookingId);
+      const status = guestBooking.getCanceledCardStatus(bookingId);
       await expect(canceledCard).toBeVisible({ timeout: 10_000 });
-      await expect(canceledCard.locator('p').first()).toHaveText(host.name);
 
-      const statusText = await canceledCard.locator('p').nth(1).textContent();
-      expect(statusText).toContain('отменено');
+      await expect(canceledName).toHaveText(host.name);
+
+      await expect(status).toContainText('отменено');
     });
 
     await test.step('Хост: бронирование переместилось в "Отменённые"', async () => {
       const hostBooking = new BookingPage(hostPage);
-      await hostBooking.page.goto('/pomidorqa/bookings');
-
       const hostCanceledCard = hostBooking.getBookingCardById(bookingId, 'canceled');
-      await expect(hostCanceledCard).toBeVisible({ timeout: 10_000 });
-      await expect(hostCanceledCard.locator('p').first()).toHaveText(guest.name);
+      const hostCanceledName = hostBooking.getCanceledCardName(bookingId);
+      const status = hostBooking.getCanceledCardStatus(bookingId);
+      await hostBooking.goToBookings();
 
-      const statusText = await hostCanceledCard.locator('p').nth(1).textContent();
-      expect(statusText).toContain('отменено');
+      await expect(hostCanceledCard).toBeVisible({ timeout: 10_000 });
+
+      await expect(hostCanceledName).toHaveText(guest.name);
+
+      await expect(status).toContainText('отменено');
     });
   });
 });

@@ -91,4 +91,20 @@ export class BookingPage {
     const card = this.getBookingCardById(bookingId, 'upcoming');
     await card.getByRole('button', { name: 'Отменить' }).click();
   }
+
+  getFirstUpcomingCard(): Locator {
+    return this.upcomingSection.locator('[data-booking-id]').first();
+  }
+
+  getUpcomingCardName(bookingId: string): Locator {
+    return this.getBookingCardById(bookingId, 'upcoming').locator('p').first();
+  }
+
+  getCanceledCardName(bookingId: string): Locator {
+    return this.getBookingCardById(bookingId, 'canceled').locator('p').first();
+  }
+
+  getCanceledCardStatus(bookingId: string): Locator {
+    return this.getBookingCardById(bookingId, 'canceled').locator('p').nth(1);
+  }
 }

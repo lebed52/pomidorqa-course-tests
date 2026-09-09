@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { makeUser, registerUser } from '../helpers/user';
+import { makeUser, registerUser, addDate } from '../helpers/user';
 import { BookingPage } from '../pages/BookingPage';
 import { ProfilePage } from '../pages/ProfilePage';
 
@@ -34,9 +34,8 @@ test.describe('Бронирование, гонка за слот', () => {
     });
 
     await test.step('Хост: добавляет свободный слот на завтра', async () => {
+      const date = addDate();
       await hostProfile.goToSlots();
-      const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
-      const date = tomorrow.toISOString().slice(0, 10);
       await hostProfile.addSlot(date, '12:00');
       await expect(hostProfile.slotCard.first()).toBeVisible();
     });

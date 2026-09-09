@@ -20,7 +20,7 @@ test.describe('Профиль: действия с полями', () => {
     });
 
     await test.step('После перезагрузки имя пришло с сервера', async () => {
-      await profilePage.reload();
+      await reload(profilePage.page);
       await expect(profilePage.nameInput).toHaveValue(newName);
     });
   });
@@ -33,7 +33,7 @@ test.describe('Профиль: действия с полями', () => {
     });
 
     await test.step('После перезагрузки Telegram пришёл с сервера', async () => {
-      await profilePage.reload();
+      await reload(profilePage.page);
       await expect(profilePage.telegramInput).toHaveValue(telegram);
     });
   });
@@ -46,7 +46,7 @@ test.describe('Профиль: действия с полями', () => {
     });
 
     await test.step('После перезагрузки выбран новый пояс', async () => {
-      await profilePage.reload();
+      await reload(profilePage.page);
       await expect(profilePage.timezoneSelect).toHaveValue(timezone);
     });
   });
@@ -59,7 +59,7 @@ test.describe('Профиль: действия с полями', () => {
     });
 
     await test.step('После перезагрузки текст пришёл с сервера', async () => {
-      await profilePage.reload();
+      await reload(profilePage.page);
       await expect(profilePage.bioInput).toHaveValue(bio);
     });
   });
@@ -82,7 +82,7 @@ test.describe('Профиль: действия с полями', () => {
     });
 
     await test.step('Ни одного навыка не появилось', async () => {
-      await expect(profilePage.page.locator('[data-skill-tag]')).toHaveCount(0);
+      await expect(profilePage.skillChips).toHaveCount(0);
     });
   });
 
@@ -95,9 +95,7 @@ test.describe('Профиль: действия с полями', () => {
     });
 
     await test.step('Удаляем навык', async () => {
-      const removeButton = profilePage.page.locator(
-        `span[data-skill-tag="${tag}"] button[type="submit"]`,
-      );
+      const removeButton = profilePage.removeSkillButton(tag);
       await expect(removeButton).toBeVisible({ timeout: 5_000 });
 
       await profilePage.removeSkill(tag);
@@ -106,7 +104,7 @@ test.describe('Профиль: действия с полями', () => {
     });
 
     await test.step('Навык исчез из блока "Могу помочь"', async () => {
-      await profilePage.reload();
+      await reload(profilePage.page);
       await expect(profilePage.skillTag(tag)).toHaveCount(0, {
         timeout: 10_000,
       });
@@ -126,7 +124,7 @@ test.describe('Профиль: действия с полями', () => {
     });
 
     await test.step('После перезагрузки все три значения пришли с сервера', async () => {
-      await profilePage.reload();
+      await reload(profilePage.page);
       await expect(profilePage.nameInput).toHaveValue(name);
       await expect(profilePage.telegramInput).toHaveValue(telegram);
       await expect(profilePage.bioInput).toHaveValue(bio);

@@ -13,6 +13,9 @@ export class ProfilePage {
   readonly addSkillButton: Locator;
   readonly canHelpSkills: Locator;
   readonly skillTag = (tag: string) => this.page.locator(`[data-skill-tag="${tag}"]`);
+  readonly skillChips: Locator;
+  readonly removeSkillButton = (tag: string) =>
+    this.page.locator(`span[data-skill-tag="${tag}"] button[type="submit"]`);
 
   readonly slotsDate: Locator;
   readonly slotsTime: Locator;
@@ -34,6 +37,7 @@ export class ProfilePage {
     this.skillTypeSelect = page.locator('#pomidorqa-profile-skill-type');
     this.addSkillButton = page.getByRole('button', { name: 'Добавить' });
     this.canHelpSkills = page.getByTestId('can-help-skills');
+    this.skillChips = page.locator('[data-skill-tag]');
 
     // Слоты
     this.slotsDate = page.locator('#pomidorqa-slots-date');
@@ -77,7 +81,7 @@ export class ProfilePage {
   }
 
   async removeSkill(tag: string) {
-    await this.page.locator(`span[data-skill-tag="${tag}"] button[type="submit"]`).click();
+    await this.removeSkillButton(tag).click();
   }
 
   async addSlot(date: string, time: string) {
@@ -92,9 +96,5 @@ export class ProfilePage {
 
   async goto() {
     await this.page.goto('/pomidorqa/profile');
-  }
-
-  async reload() {
-    await this.page.reload();
   }
 }
