@@ -5,6 +5,7 @@ import { type Locator, type Page } from "@playwright/test";
 // календарь → диалог подтверждения → «Мои встречи».
 // Пользователь и регистрация — в helpers/user.ts.
 
+const CATALOG_URL = "/pomidorqa";
 const SLOTS_URL = "/pomidorqa/profile/slots";
 const BOOKINGS_URL = "/pomidorqa/bookings";
 
@@ -18,6 +19,10 @@ export class BookingPage {
   // Каталог: поиск человека по навыку
   readonly catalogFilterInput: Locator;
   readonly catalogFilterSubmit: Locator;
+
+  // Каталог: выдача целиком и её пустое состояние
+  readonly personCards: Locator;
+  readonly catalogEmpty: Locator;
 
   // Карточка человека
   readonly personName: Locator;
@@ -48,6 +53,10 @@ export class BookingPage {
     this.catalogFilterInput = page.locator("#pomidorqa-catalog-skill-filter");
     this.catalogFilterSubmit = page.getByRole("button", { name: "Найти" });
 
+    // У пустой выдачи нет testid — единственный якорь текст плейсхолдера.
+    this.personCards = page.getByTestId("person-card");
+    this.catalogEmpty = page.getByText("Пока никого не нашли");
+
     this.personName = page.getByRole("heading", { level: 1 });
 
     this.calendarDay = page.getByRole("group", { name: "Дни со слотами" }).getByRole("button");
@@ -67,7 +76,7 @@ export class BookingPage {
   // Карточка конкретного человека в каталоге: фильтр по имени —
   // логика поиска спрятана в класс, спека зовёт метод.
   personCardByName(name: string): Locator {
-    return this.page.getByTestId("person-card").filter({ hasText: name });
+    return this.personCards.filter({ hasText: name });
   }
 
   // Карточка встречи по имени второго участника: гость ищет по имени хоста,
@@ -94,6 +103,10 @@ export class BookingPage {
     await this.slotsDateInput.fill(date);
     await this.slotsTimeInput.fill(time);
     await this.slotsAddSubmit.click();
+  }
+
+  async openCatalog() {
+    await this.page.goto(CATALOG_URL);
   }
 
   async searchInCatalog(skillTag: string) {

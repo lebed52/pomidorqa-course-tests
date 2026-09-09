@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { makeUser, registerUser } from "../helpers/user";
+import { registerHostWithSkill, addOpenSlot } from "../helpers/host";
 import { ProfilePage } from "../pages/profile-page";
 import { BookingPage } from "../pages/booking-page";
 
@@ -34,22 +35,16 @@ test("основной путь + гонка за слот: регистраци
   const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
   const slotDate = tomorrow.toISOString().slice(0, 10);
 
-  await test.step("Хост: регистрируется в PomidorQA", async () => {
-    await registerUser(hostPage, host);
-  });
-
-  await test.step('Хост: открывает профиль и добавляет навык «могу помочь»', async () => {
-    await hostProfile.open();
-    await hostProfile.addSkill(skillTag, "can_help");
+  await test.step("Хост: регистрируется и добавляет навык «могу помочь»", async () => {
+    await registerHostWithSkill(hostPage, host, skillTag);
   });
 
   await test.step("Навык появился в блоке «могу помочь»", async () => {
     await expect(hostProfile.canHelpSkills).toContainText(skillTag);
   });
 
-  await test.step("Хост: открывает слоты и добавляет свободный слот на завтра", async () => {
-    await hostBooking.openSlots();
-    await hostBooking.addSlot(slotDate, "12:00");
+  await test.step("Хост: добавляет свободный слот на завтра", async () => {
+    await addOpenSlot(hostPage, slotDate);
   });
 
   await test.step("Слот появился в списке", async () => {

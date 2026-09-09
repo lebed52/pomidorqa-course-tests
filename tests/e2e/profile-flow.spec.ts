@@ -26,8 +26,11 @@ test.describe("Профиль: действия с полями", () => {
       await profilePage.save();
     });
 
-    await test.step("После перезагрузки имя пришло с сервера", async () => {
+    await test.step("Перезагружаем страницу", async () => {
       await page.reload();
+    });
+
+    await test.step("Имя пришло с сервера", async () => {
       await expect(profilePage.nameInput).toHaveValue(newName);
     });
   });
@@ -46,8 +49,11 @@ test.describe("Профиль: действия с полями", () => {
       await profilePage.save();
     });
 
-    await test.step("После перезагрузки выбран новый пояс", async () => {
+    await test.step("Перезагружаем страницу", async () => {
       await page.reload();
+    });
+
+    await test.step("Выбранный пояс пришёл с сервера", async () => {
       await expect(profilePage.timezoneSelect).toHaveValue(timezone);
     });
   });
@@ -64,8 +70,11 @@ test.describe("Профиль: действия с полями", () => {
       await profilePage.save();
     });
 
-    await test.step("После перезагрузки Telegram пришёл с сервера", async () => {
+    await test.step("Перезагружаем страницу", async () => {
       await page.reload();
+    });
+
+    await test.step("Telegram пришёл с сервера", async () => {
       await expect(profilePage.telegramInput).toHaveValue(telegram);
     });
   });
@@ -78,8 +87,11 @@ test.describe("Профиль: действия с полями", () => {
       await profilePage.save();
     });
 
-    await test.step("После перезагрузки текст пришёл с сервера", async () => {
+    await test.step("Перезагружаем страницу", async () => {
       await page.reload();
+    });
+
+    await test.step("Текст «О себе» пришёл с сервера", async () => {
       await expect(profilePage.bioInput).toHaveValue(bio);
     });
   });
@@ -157,8 +169,11 @@ test.describe("Профиль: действия с полями", () => {
       await profilePage.save();
     });
 
-    await test.step("После перезагрузки все три значения пришли с сервера", async () => {
+    await test.step("Перезагружаем страницу", async () => {
       await page.reload();
+    });
+
+    await test.step("Все три значения пришли с сервера", async () => {
       // expect.soft не останавливает тест на первой неудаче: если поедут
       // два поля из трёх, увидим оба сразу, а не по одному за прогон.
       await expect.soft(profilePage.nameInput).toHaveValue(name);
