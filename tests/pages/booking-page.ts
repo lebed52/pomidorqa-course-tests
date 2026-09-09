@@ -1,10 +1,5 @@
 import { type Locator, type Page } from "@playwright/test";
-
-const ROUTES = {
-    profile: "/pomidorqa/profile",
-    slots: "/pomidorqa/profile/slots",
-    bookings: "/pomidorqa/bookings",
-};
+import { ROUTES } from "../helpers/user";
 
 export class BookingPage {
     readonly page: Page;
@@ -72,11 +67,7 @@ export class BookingPage {
         this.pastBookingsCards = this.bookingsPastSection.locator("[data-booking-id]");
     }
 
-    async openProfile(): Promise<void> {
-        await this.page.goto(ROUTES.profile);
-    }
-
-    async openSlots(): Promise<void> {
+    async goToSlots(): Promise<void> {
         await this.page.goto(ROUTES.slots);
     }
 
@@ -88,6 +79,10 @@ export class BookingPage {
         await this.slotsDateInput.fill(date);
         await this.slotsTimeInput.fill(time);
         await this.slotsAddSubmit.click();
+    }
+
+    slotCard(time: string): Locator {
+        return this.slotsCards.filter({ hasText: time });
     }
 
     personCard(name: string): Locator {
@@ -111,13 +106,7 @@ export class BookingPage {
         return this.bookingCalendarTimes.first();
     }
 
-    async waitForCalendarSlot(): Promise<Locator> {
-        const dayChip = this.calendarDayChip();
-        await dayChip.waitFor({ state: "visible", timeout: 10_000 });
-        return dayChip;
-    }
-
-    async chooseFirstSlot(): Promise<void> {
+    async selectFirstSlot(): Promise<void> {
         await this.calendarDayChip().click();
         await this.calendarTimeChip().click();
     }

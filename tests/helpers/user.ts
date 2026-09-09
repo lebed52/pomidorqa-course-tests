@@ -1,8 +1,11 @@
 import { expect, type Page } from "@playwright/test";
 
-const ROUTES = {
+export const ROUTES = {
   register: "/pomidorqa/auth/register",
-};
+  profile: "/pomidorqa/profile",
+  slots: "/pomidorqa/profile/slots",
+  bookings: "/pomidorqa/bookings",
+} as const;
 
 const registerNameInput = (page: Page) => page.getByLabel("Имя");
 const registerEmailInput = (page: Page) => page.getByLabel("Email");

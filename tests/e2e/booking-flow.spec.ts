@@ -42,7 +42,7 @@ test.describe("Бронирование: основной путь и гонка
     });
 
     await test.step("Хост: добавляет свободный слот на завтра", async () => {
-      await hostBookingPage.openSlots();
+      await hostBookingPage.goToSlots();
 
       const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
       const date = tomorrow.toISOString().slice(0, 10);
@@ -75,11 +75,11 @@ test.describe("Бронирование: основной путь и гонка
     });
 
     await test.step("Гость: ждёт появления свободного слота", async () => {
-      await guestBookingPage.waitForCalendarSlot();
+      await expect(guestBookingPage.calendarDayChip()).toBeVisible({ timeout: 10_000 });
     });
 
     await test.step("Гость: выбирает день и время", async () => {
-      await guestBookingPage.chooseFirstSlot();
+      await guestBookingPage.selectFirstSlot();
     });
 
     await test.step("Гость: видит окно подтверждения бронирования", async () => {
@@ -107,11 +107,11 @@ test.describe("Бронирование: основной путь и гонка
     });
 
     await test.step("Гость2: ждёт появления свободного слота", async () => {
-      await guest2BookingPage.waitForCalendarSlot();
+      await expect(guest2BookingPage.calendarDayChip()).toBeVisible({ timeout: 10_000 });
     });
 
     await test.step("Гость2: выбирает день и время", async () => {
-      await guest2BookingPage.chooseFirstSlot();
+      await guest2BookingPage.selectFirstSlot();
     });
 
     await test.step("Гость2: видит окно подтверждения бронирования", async () => {
