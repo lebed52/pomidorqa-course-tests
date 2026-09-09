@@ -30,6 +30,9 @@ test.describe("Авторизация: выход и повторный вход
 
     await test.step("Переходим на страницу входа", async () => {
       await page.getByTestId("PomidorqaHeader-login-link").click();
+    });
+    
+    await test.step("Проверяем, что открылась страница входа", async () => {
       await expect(page).toHaveURL(/\/pomidorqa\/auth\/login/);
     });
 

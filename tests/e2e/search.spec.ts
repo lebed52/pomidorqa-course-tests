@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-import { makeUser, registerUser } from "../tests/helpers/user";
+import { makeUser, registerUser } from "../helpers/user";
 import { ProfilePage } from "../pages/profile-page";
 import { BookingPage } from "../pages/booking-page";
 
