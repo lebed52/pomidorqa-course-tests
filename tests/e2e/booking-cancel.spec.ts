@@ -6,7 +6,7 @@ import { BookingPage } from "../pages/BookingPage";
 
 test.describe('Гость бронирует встречу, отменяет её, карточка переходит в прошедшие. После reload отмену видят и гость, и хост.', () => {
   test ('Полный сценарий бронирования и отмены', async ({ browser }) => {
-  const runId = Date.now();
+  const runId = crypto.randomUUID().slice(0, 8);
   const skillTag = `Playwright-demo-${runId}`;
   const host = makeUser("host", runId);
   const guest = makeUser("guest", runId);
@@ -75,8 +75,12 @@ test.describe('Гость бронирует встречу, отменяет е
     await expect(guestBooking.bookingConfirmDialog).toBeVisible();
   });
 
-  await test.step("Гость: подтверждает бронирование - успех", async () => {
-    await guestBooking.bookingConfirm()
+  await test.step("Гость: подтверждает бронирование", async () => {
+    await guestBooking.bookingConfirmButton.click();
+  });
+
+  await test.step("Гость: проверяет успешное подтверждение бронирования", async () => {
+    await expect(guestBooking.bookingConfirmSuccess).toBeVisible();
   });
 
   await test.step("Гость: переходит к бронированию в разделе «Мои встречи»", async () => {

@@ -10,7 +10,7 @@ import { BookingPage } from "../pages/BookingPage";
 
 test.describe('Основной путь + гонка за слот: регистрация → навык → слот → поиск в каталоге → бронирование → «Мои встречи» у обоих → второй гость видит ошибку', () => {
   test ('основной путь + гонка за слот', async ({ browser }) => {
-  const runId = Date.now();
+  const runId = crypto.randomUUID().slice(0, 8);
   const skillTag = `Playwright-demo-${runId}`;
   const host = makeUser("host", runId);
   const guest = makeUser("guest", runId);
@@ -101,12 +101,16 @@ test.describe('Основной путь + гонка за слот: регис�
     await expect(guest2Booking.bookingConfirmDialog).toBeVisible();
   });
 
-  await test.step("Гость: подтверждает бронирование первым — успех", async () => {
-    await guestBooking.bookingConfirm()
+  await test.step("Гость: подтверждает бронирование первым", async () => {
+    await guestBooking.bookingConfirmButton.click();
   });
 
-  await test.step("Гость2: пытается забронировать тот же слот вторым — видит ошибку", async () => {
-    await guest2Booking.bookingFail();
+  await test.step("Гость: проверяет успешное подтверждение бронирования", async () => {
+    await expect(guestBooking.bookingConfirmSuccess).toBeVisible();
+  });
+
+  await test.step("Гость2: пытается забронировать тот же слот вторым", async () => {
+    await guest2Booking.bookingConfirmButton.click();
   });
 
   await test.step("Гость2: проверяет отображение ошибки подтверждения", async () => {

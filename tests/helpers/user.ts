@@ -23,10 +23,10 @@ export type TestUser = {
 };
 
 // Возвращает объект пользователя для тестов
-export function makeUser(role: string, runId: number): TestUser {
+export function makeUser(role: string, runId: string | number): TestUser {
   return {
     name: `${role} Автотест`,
-    email: `${role}-${runId}@example.com`,
+    email: `${role}-${String(runId)}@example.com`,
     password: "testpass123",
   };
 }
