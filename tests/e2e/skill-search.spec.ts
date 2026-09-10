@@ -35,14 +35,7 @@ test.describe("Поиск собеседника", () => {
     hostProfile = new ProfilePage(hostPage);
     hostBooking = new BookingPage(hostPage);
     guestBooking = new BookingPage(guestPage);
-  });
 
-  test.afterEach(async () => {
-    await hostContext.close();
-    await guestContext.close();
-  });
-
-  test("Позитивный: поиск по полному наименованию навыка ", async () => {
     await test.step("Хост: регистрируется в PomidorQA", async () => {
       await registerUser(hostPage, host);
     });
@@ -68,6 +61,15 @@ test.describe("Поиск собеседника", () => {
       await registerUser(guestPage, guest);
     });
 
+  });
+
+  test.afterEach(async () => {
+    await hostContext.close();
+    await guestContext.close();
+  });
+
+  test("Позитивный: поиск по полному наименованию навыка ", async () => {
+    
     await test.step("Гость: ищет хоста в каталоге по навыку", async () => {
       await guestBooking.searchBySkill(skillTag);
     });
@@ -78,30 +80,6 @@ test.describe("Поиск собеседника", () => {
   });
 
   test("Негативный: поиск по имени хоста неуспешен ", async () => {
-    await test.step("Хост: регистрируется в PomidorQA", async () => {
-      await registerUser(hostPage, host);
-    });
-   
-    await test.step("Хост: добавляет навык «могу помочь» в профиле", async () => {
-      await hostProfile.goto();
-      await hostProfile.addSkill(skillTag, "can_help");
-    });
-
-    await test.step("Хост: проверяет отображение добавленного навыка", async () => {
-      await expect(hostProfile.canHelpSkills).toContainText(skillTag);
-    });
-
-    await test.step("Хост: добавляет свободный слот на завтра", async () => {
-      await hostBooking.addSlot(host.slotTime);
-    });
-
-    await test.step("Хост: проверяет появление карточки созданного слота", async () => {
-      await expect(hostBooking.slotsCard.first()).toBeVisible();
-    });
-
-    await test.step("Гость: регистрируется отдельным аккаунтом", async () => {
-      await registerUser(guestPage, guest);
-    });
 
     await test.step("Гость: ищет карточку в каталоге по имени Хоста", async () => {
       await guestBooking.searchBySkill(host.name);
