@@ -34,9 +34,16 @@ export async function registerUser(page: Page, user: TestUser) {
 
 export async function registerInNewContext(browser: Browser, user: TestUser): Promise<Page> {
   const context = await browser.newContext();
-  const page = await context.newPage();
-  await registerUser(page, user);
-  return page;
+  try {
+    const page = await context.newPage();
+    await registerUser(page, user);
+    return page;
+  } catch (error) {
+    // Если регистрация упала, page наружу не уйдёт и закрыть контекст в тесте
+    // будет некому — закрываем здесь, иначе он висит до конца прогона.
+    await context.close();
+    throw error;
+  }
 }
 
 export function dateInDays(days: number): string {

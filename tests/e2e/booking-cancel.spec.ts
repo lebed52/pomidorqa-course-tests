@@ -55,11 +55,12 @@ test("отмена встречи: гость отменяет бронь, от�
       await expect(guestBooking.confirmSuccess).toBeVisible({ timeout: 15_000 });
     });
 
-    await test.step("Гость видит встречу с хостом в «Ближайших»", async () => {
-      await expect(async () => {
-        await guestBooking.openMyMeetings();
-        await expect(guestBooking.upcomingMeeting(host.name)).toBeVisible();
-      }).toPass({ timeout: 10_000 });
+    await test.step("Гость открывает «Мои встречи»", async () => {
+      await guestBooking.openMyMeetings();
+    });
+
+    await test.step("Встреча с хостом видна в «Ближайших»", async () => {
+      await expect(guestBooking.upcomingMeeting(host.name)).toBeVisible({ timeout: 10_000 });
     });
 
     await test.step("Гость отменяет встречу", async () => {
@@ -85,10 +86,11 @@ test("отмена встречи: гость отменяет бронь, от�
     });
 
     await test.step("Хост открывает «Мои встречи»", async () => {
-      await expect(async () => {
-        await hostBooking.openMyMeetings();
-        await expect(hostBooking.pastMeeting(guest.name)).toBeVisible();
-      }).toPass({ timeout: 10_000 });
+      await hostBooking.openMyMeetings();
+    });
+
+    await test.step("Хост видит отменённую встречу в «Прошедших»", async () => {
+      await expect(hostBooking.pastMeeting(guest.name)).toBeVisible({ timeout: 10_000 });
     });
 
     await test.step("Хост перезагружает страницу", async () => {

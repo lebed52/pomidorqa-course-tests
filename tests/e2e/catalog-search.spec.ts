@@ -36,8 +36,11 @@ test.describe("Каталог: карточка участника", () => {
         await hostSlots.addSlot(dateInDays(1), "12:00");
       });
 
-      await test.step("Гость находит хоста в каталоге по навыку", async () => {
+      await test.step("Гость ищет хоста в каталоге по навыку", async () => {
         await guestCatalog.searchBySkill(skillTag);
+      });
+
+      await test.step("Хост нашёлся в результатах поиска", async () => {
         await expect(guestCatalog.personCard(host.name)).toBeVisible();
       });
 
@@ -93,6 +96,9 @@ test.describe("Каталог: карточка участника", () => {
 
       await test.step("Гость ищет хоста по навыку «могу помочь»", async () => {
         await guestCatalog.searchBySkill(canHelpTag);
+      });
+
+      await test.step("Хост нашёлся в результатах поиска", async () => {
         await expect(guestCatalog.personCard(host.name)).toBeVisible();
       });
 
