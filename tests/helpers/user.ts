@@ -16,6 +16,7 @@ export type TestUser = {
   newBio: string;
   timezone: string;
   newTimezone: string;
+  slotTime: string;
 };
 
 export function makeUser(role: string, runId: number): TestUser {
@@ -31,6 +32,7 @@ export function makeUser(role: string, runId: number): TestUser {
     newBio: "Автоматизатор. Пишу поддерживаемые e2e-тесты.",
     timezone: "Asia/Irkutsk",
     newTimezone: "Europe/Kaliningrad",
+    slotTime: "12:00",
   };
 }
 

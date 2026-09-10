@@ -32,7 +32,6 @@ export class ProfilePage {
     await this.page.goto(ROUTES.profile);
   }
 
-  // Шаг 3. Действия по смыслу кейса (не клики)
   async saveName(name: string) {
     await this.nameInput.fill(name);
     await this.saveButton.click();
