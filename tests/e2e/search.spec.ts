@@ -24,7 +24,6 @@ test("гость находит пользователя в каталоге п�
   const slotDate = getTomorrowDate();
 
   const host = makeUser("host", runId);
-  const guest = makeUser("guest", runId);
 
   const hostContext = await browser.newContext();
   const guestContext = await browser.newContext();
@@ -59,10 +58,6 @@ test("гость находит пользователя в каталоге п�
 
     await test.step("Проверяем, что свободный слот создан", async () => {
       await expect(hostBooking.freeSlot()).toBeVisible();
-    });
-
-    await test.step("Гость регистрируется отдельным аккаунтом", async () => {
-      await registerUser(guestPage, guest);
     });
 
     await test.step("Гость выполняет поиск по уникальному навыку", async () => {

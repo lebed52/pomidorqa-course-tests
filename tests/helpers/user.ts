@@ -8,7 +8,7 @@ export type TestUser = {
 
 export function makeUser(role: string, runId: number): TestUser {
   return {
-    name: `${role} Автотест`,
+    name: `${role}-${runId} Автотест`,
     email: `${role}-${runId}@example.com`,
     password: "testpass123",
   };
