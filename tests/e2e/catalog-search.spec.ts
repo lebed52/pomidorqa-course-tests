@@ -1,5 +1,9 @@
 import { test, expect } from "@playwright/test";
-import { dateInDays, makeUser, registerInNewContext } from "../helpers/user";
+import {
+  dateInDays,
+  makeUser,
+  registerAllInNewContexts,
+} from "../helpers/user";
 import { ProfilePage } from "../pages/profile-page";
 import { SlotsPage } from "../pages/slots-page";
 import { BookingPage } from "../pages/booking-page";
@@ -18,8 +22,9 @@ test.describe("Каталог: карточка участника", () => {
     const host = makeUser("slotshost", runId);
     const guest = makeUser("slotsguest", runId);
 
-    const hostPage = await registerInNewContext(browser, host);
-    const guestPage = await registerInNewContext(browser, guest);
+    const [hostPage, guestPage] =
+      await test.step("Регистрируем хоста и гостя", () =>
+        registerAllInNewContexts(browser, [host, guest]));
 
     try {
       const hostProfile = new ProfilePage(hostPage);
@@ -45,7 +50,9 @@ test.describe("Каталог: карточка участника", () => {
       });
 
       await test.step("В карточке хоста показан один свободный слот", async () => {
-        await expect(guestCatalog.personCardSlots(host.name)).toHaveText("1 своб. слотов");
+        await expect(guestCatalog.personCardSlots(host.name)).toHaveText(
+          "1 своб. слотов",
+        );
       });
 
       await test.step("Хост выкладывает второй слот", async () => {
@@ -58,7 +65,9 @@ test.describe("Каталог: карточка участника", () => {
       });
 
       await test.step("Счётчик в карточке стал показывать два слота", async () => {
-        await expect(guestCatalog.personCardSlots(host.name)).toHaveText("2 своб. слотов");
+        await expect(guestCatalog.personCardSlots(host.name)).toHaveText(
+          "2 своб. слотов",
+        );
       });
     } finally {
       await hostPage.context().close();
@@ -75,8 +84,9 @@ test.describe("Каталог: карточка участника", () => {
     const host = makeUser("skillshost", runId);
     const guest = makeUser("skillsguest", runId);
 
-    const hostPage = await registerInNewContext(browser, host);
-    const guestPage = await registerInNewContext(browser, guest);
+    const [hostPage, guestPage] =
+      await test.step("Регистрируем хоста и гостя", () =>
+        registerAllInNewContexts(browser, [host, guest]));
 
     try {
       const hostProfile = new ProfilePage(hostPage);
@@ -103,11 +113,15 @@ test.describe("Каталог: карточка участника", () => {
       });
 
       await test.step("В карточке ровно один чип — тот, с которым хост готов помочь", async () => {
-        await expect(guestCatalog.personCardSkills(host.name)).toHaveText([canHelpTag]);
+        await expect(guestCatalog.personCardSkills(host.name)).toHaveText([
+          canHelpTag,
+        ]);
       });
 
       await test.step("Навык «хочу разобрать» в карточке не показан", async () => {
-        await expect(guestCatalog.personCard(host.name)).not.toContainText(wantToLearnTag);
+        await expect(guestCatalog.personCard(host.name)).not.toContainText(
+          wantToLearnTag,
+        );
       });
     } finally {
       await hostPage.context().close();

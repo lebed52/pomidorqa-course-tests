@@ -15,7 +15,9 @@ export type TestUser = {
 
 export function makeUser(role: string, runId: number): TestUser {
   return {
-    name: `${role} Автотест`,
+    // runId и в имени: тесты фильтруют встречи по имени участника, и без него
+    // фильтр цепляет карточку от прошлого прогона — почта уникальна, имя нет.
+    name: `${role} Автотест ${runId}`,
     email: `${role}-${runId}@example.com`,
     password: "testpass123",
   };
@@ -32,7 +34,10 @@ export async function registerUser(page: Page, user: TestUser) {
   await expect(page).toHaveURL(/\/pomidorqa\/?$/, { timeout: 15_000 });
 }
 
-export async function registerInNewContext(browser: Browser, user: TestUser): Promise<Page> {
+export async function registerInNewContext(
+  browser: Browser,
+  user: TestUser,
+): Promise<Page> {
   const context = await browser.newContext();
   try {
     const page = await context.newPage();
@@ -46,6 +51,27 @@ export async function registerInNewContext(browser: Browser, user: TestUser): Pr
   }
 }
 
+// Регистрация нескольких участников подряд: если падает второй или третий,
+// контексты уже зарегистрированных закрыть некому — тест до своего finally
+// ещё не дошёл. Убираем их здесь.
+export async function registerAllInNewContexts(
+  browser: Browser,
+  users: TestUser[],
+): Promise<Page[]> {
+  const pages: Page[] = [];
+  try {
+    for (const user of users) {
+      pages.push(await registerInNewContext(browser, user));
+    }
+    return pages;
+  } catch (error) {
+    await Promise.all(pages.map((page) => page.context().close()));
+    throw error;
+  }
+}
+
 export function dateInDays(days: number): string {
-  return new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  return new Date(Date.now() + days * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .slice(0, 10);
 }
