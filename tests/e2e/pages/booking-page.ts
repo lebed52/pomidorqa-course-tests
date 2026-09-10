@@ -26,6 +26,8 @@ export class BookingPage {
   readonly bookingConfirmError: Locator;
 
   readonly bookingsUpcomingSection: Locator;
+  readonly bookingPastSection: Locator;
+  readonly bookingCancelButton: Locator;
   readonly bookingsCardName: Locator;
 
 
@@ -49,7 +51,8 @@ export class BookingPage {
     this.bookingConfirmSuccess = page.getByRole("dialog").getByRole("status");
     this.bookingConfirmError = page.getByRole("dialog").getByRole("alert");
     this.bookingsUpcomingSection = page.getByTestId("upcoming-meetings");
-    
+    this.bookingCancelButton = page.getByRole("button", { name: "Отменить" });
+    this.bookingPastSection = page.locator("section").filter({ hasText: "Прошедшие и отменённые" });
     this.bookingsCardName = page
       .getByTestId("upcoming-meetings")
       .locator("[data-booking-id]")
@@ -64,6 +67,21 @@ export class BookingPage {
   
   async openBooking() {
     await this.page.goto(BOOKING);
+  }
+
+   async addSlot(date: string, time: string) {
+    await this.slotsDateInput.fill(date);
+    await this.slotsTimeInput.fill(time);
+    await this.lotsAddSubmit.click();
+  }
+
+   async searchBySkill(skill: string) {
+    await this.catalogFilterInput.fill(skill);
+    await this.catalogFilterSubmit.click();
+  }
+
+   bookingCancelCardByName(name: string): Locator {
+    return this.bookingPastSection.locator("[data-booking-id]").filter({ hasText: name });
   }
 
 }
