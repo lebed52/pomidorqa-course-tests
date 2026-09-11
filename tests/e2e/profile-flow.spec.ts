@@ -31,16 +31,38 @@ test.beforeEach(async ({ page }) => {
     await registerUser(page, host);
 });
 
-test("имя пользователя отображается в профиле", async ({ page }) => {
+test("имя пользователя изменяется в профиле", async ({ page }) => {
     await page.goto("/pomidorqa/profile");
 
-    await expect(page.getByLabel("Имя")).toHaveValue(host.name);
+    const newName = "Новое имя Автотест";
+
+    await page.getByLabel("Имя").fill(newName);
+
+    await expect(page.getByLabel("Имя")).toHaveValue(newName);
+
+    await page.getByRole("button", { name: "Сохранить" }).click();
+
+    await page.reload();
+
+    await expect(page.getByLabel("Имя")).toHaveValue(newName);
 });
 
-test("часовой пояс пользователя отображается в профиле", async ({ page }) => {
+
+test("часовой пояс пользователя изменяется в профиле", async ({ page }) => {
     await page.goto("/pomidorqa/profile");
 
-    await expect(page.getByLabel("Часовой пояс")).toHaveValue("Europe/Moscow");
+    const newTimezone = "Asia/Yekaterinburg";
+
+    await page
+        .getByLabel("Часовой пояс")
+        .selectOption({ value: newTimezone });
+
+    await page.getByRole("button", { name: "Сохранить" }).click();
+
+    await page.reload();
+
+    await expect(page.getByLabel("Часовой пояс"))
+        .toHaveValue(newTimezone);
 });
 
 test("Telegram пользователя отображается в профиле", async ({ page }) => {
