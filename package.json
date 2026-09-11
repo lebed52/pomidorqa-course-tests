@@ -8,6 +8,7 @@
     "test:unit": "playwright test --project=unit",
     "test:api": "playwright test --project=api",
     "test:e2e": "playwright test --project=e2e",
+    "test:ai-review": "node --test scripts/ai-review.test.mjs scripts/ai-review.integration.test.mjs",
     "lint": "eslint tests",
     "report": "playwright show-report"
   },
