@@ -1,7 +1,9 @@
 import { test, expect } from "@playwright/test";
 import {
+  deleteUserViaApi,
   makeUser,
   registerUser,
+  registerUserViaApi,
   type TestUser,
 } from "../helpers/user";
 import {
@@ -80,6 +82,8 @@ test.describe("Поиск участников PomidorQA", () => {
   test(
     "гость находит участника по уникальному навыку",
     async ({ browser }) => {
+      test.setTimeout(90_000);
+
       const runId = makeRunId("guest-search");
       const skill = `SearchQA-${runId}`;
       const host = makeUser(`host-${runId}`);
@@ -87,11 +91,36 @@ test.describe("Поиск участников PomidorQA", () => {
       const hostApp = await createApp(browser);
       const guestApp = await createApp(browser);
 
+      let hostRegistered = false;
+
       try {
-        await prepareCatalogParticipant(
+        await test.step(
+          "Хост: создаёт тестовый аккаунт через API",
+          async () => {
+            await registerUserViaApi(
+              hostApp.context.request,
+              host,
+            );
+
+            hostRegistered = true;
+          },
+        );
+
+        await test.step(
+          "Хост: добавляет уникальный навык",
+          async () => {
+            await hostApp.profilePage.goto();
+
+            await hostApp.profilePage.addSkill(
+              skill,
+              "can_help",
+            );
+          },
+        );
+
+        await addFutureSlot(
           hostApp,
-          host,
-          skill,
+          host.name,
         );
 
         await test.step(
@@ -101,6 +130,11 @@ test.describe("Поиск участников PomidorQA", () => {
 
             await guestApp.bookingPage.searchCatalog(
               skill,
+            );
+
+            await guestApp.bookingPage.waitForPersonInCatalog(
+              host.name,
+              CATALOG_RESULT_TIMEOUT,
             );
           },
         );
@@ -117,9 +151,7 @@ test.describe("Поиск участников PomidorQA", () => {
               hostCard,
               `Гость должен видеть участника ${host.name} ` +
                 `по уникальному навыку ${skill}`,
-            ).toBeVisible({
-              timeout: CATALOG_RESULT_TIMEOUT,
-            });
+            ).toBeVisible();
 
             await expect(
               hostCard,
@@ -129,10 +161,23 @@ test.describe("Поиск участников PomidorQA", () => {
           },
         );
       } finally {
-        await closeApps([
-          hostApp,
-          guestApp,
-        ]);
+        try {
+          if (hostRegistered) {
+            await test.step(
+              "Cleanup: удаляет тестовый аккаунт через API",
+              async () => {
+                await deleteUserViaApi(
+                  hostApp.context.request,
+                );
+              },
+            );
+          }
+        } finally {
+          await closeApps([
+            hostApp,
+            guestApp,
+          ]);
+        }
       }
     },
   );
