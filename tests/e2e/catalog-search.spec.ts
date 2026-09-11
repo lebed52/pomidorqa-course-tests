@@ -134,6 +134,7 @@ test.describe("Поиск участников PomidorQA", () => {
 
             await guestApp.bookingPage.waitForPersonInCatalog(
               host.name,
+              skill,
               CATALOG_RESULT_TIMEOUT,
             );
           },

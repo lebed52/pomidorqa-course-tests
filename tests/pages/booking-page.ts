@@ -84,6 +84,7 @@ export class BookingPage {
 
   async waitForPersonInCatalog(
     name: string,
+    skillTag: string,
     timeoutMs = 30_000,
   ): Promise<void> {
     const deadline = Date.now() + timeoutMs;
@@ -128,11 +129,19 @@ export class BookingPage {
         if (Date.now() >= deadline) {
           break;
         }
+
+        continue;
       }
+
+      if (Date.now() >= deadline) {
+        break;
+      }
+
+      await this.searchCatalog(skillTag);
     }
 
     throw new Error(
-      `Участник ${name} не появился в каталоге ` +
+      `Участник ${name} не появился в каталоге по навыку "${skillTag}" ` +
         `за ${timeoutMs} мс после ${reloadCount} reload. ` +
         `URL: ${this.page.url()}`,
     );

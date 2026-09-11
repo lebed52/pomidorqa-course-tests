@@ -37,6 +37,19 @@ export function makeUser(role: string): TestUser {
   };
 }
 
+function isRegisteredParticipant(
+  value: unknown,
+): value is RegisteredParticipant {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    typeof (value as Record<string, unknown>).id === "string" &&
+    (value as Record<string, unknown>).id !== "" &&
+    typeof (value as Record<string, unknown>).name === "string" &&
+    typeof (value as Record<string, unknown>).email === "string"
+  );
+}
+
 export async function registerUserViaApi(
   request: APIRequestContext,
   user: TestUser,
@@ -52,7 +65,25 @@ export async function registerUserViaApi(
     );
   }
 
-  return (await response.json()) as RegisteredParticipant;
+  let body: unknown;
+
+  try {
+    body = await response.json();
+  } catch (error) {
+    throw new Error(
+      `Ответ регистрации ${user.email} не является валидным JSON: ` +
+        `${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+
+  if (!isRegisteredParticipant(body)) {
+    throw new Error(
+      `Ответ регистрации ${user.email} не соответствует контракту ` +
+        `RegisteredParticipant (id/name/email): ${JSON.stringify(body)}`,
+    );
+  }
+
+  return body;
 }
 
 export async function deleteUserViaApi(
