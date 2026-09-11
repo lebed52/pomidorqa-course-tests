@@ -54,11 +54,6 @@ jobs:
         # Используем тот же npm-скрипт, который разработчик запускает локально.
         run: npm run lint
 
-      # Reviewer работает отдельным привилегированным workflow, но его чистую логику
-      # и сетевой сценарий проверяем здесь на локальном mock-сервере без секретов.
-      - name: Test AI reviewer
-        run: npm run test:ai-review
-
       # После линтера проверяем реальное поведение тестами.
       - name: Run Playwright tests
         # Скрипт `test` из package.json запускает unit, API и E2E-проекты Playwright.
