@@ -1,5 +1,5 @@
 import { test, expect, type BrowserContext } from "@playwright/test";
-import { makeUser, registerUser, type TestUser } from "../helpers/user";
+import { cleanupUsersViaApi, makeUser, registerUserViaApi, type TestUser } from "../helpers/user";
 import { ProfilePage } from "../pages/profile-page";
 import { BookingPage } from "../pages/booking-page";
 
@@ -8,41 +8,35 @@ test.describe("Каталог: поиск карточек по навыку", (
   let alphaSkill: string;
   let numericHost: TestUser;
   let alphaHost: TestUser;
-
-  let guestContext: BrowserContext;
   let catalog: BookingPage;
+  let contexts: BrowserContext[] = [];
 
-  test.beforeAll(async ({ browser }) => {
+  test.beforeEach(async ({ browser }) => {
     const runId = Date.now();
     numericSkill = String(runId);
     alphaSkill = `Skill${digitsToLetters(runId)}`;
-
     numericHost = makeUser("host-num", runId);
     alphaHost = makeUser("host-alpha", runId);
     const guest = makeUser("guest", runId);
 
-    const hostContexts = [await browser.newContext(), await browser.newContext()];
-    try {
-      await registerHostWithSkill(hostContexts[0], numericHost, numericSkill);
-      await registerHostWithSkill(hostContexts[1], alphaHost, alphaSkill);
-    } finally {
-      for (const context of hostContexts) {
-        await context.close();
-      }
-    }
+    const numericHostContext = await browser.newContext();
+    contexts.push(numericHostContext);
+    const alphaHostContext = await browser.newContext();
+    contexts.push(alphaHostContext);
+    const guestContext = await browser.newContext();
+    contexts.push(guestContext);
 
-    guestContext = await browser.newContext();
-    const guestPage = await guestContext.newPage();
-    await registerUser(guestPage, guest);
-    catalog = new BookingPage(guestPage);
-  });
+    await arrangeHostWithSkill(numericHostContext, numericHost, numericSkill);
+    await arrangeHostWithSkill(alphaHostContext, alphaHost, alphaSkill);
 
-  test.beforeEach(async () => {
+    await registerUserViaApi(guestContext.request, guest);
+    catalog = new BookingPage(await guestContext.newPage());
     await catalog.openCatalog();
   });
 
-  test.afterAll(async () => {
-    await guestContext?.close();
+  test.afterEach(async () => {
+    await cleanupUsersViaApi(contexts);
+    contexts = [];
   });
 
   test("пустой поиск: показаны карточки обоих хостов", async () => {
@@ -106,23 +100,23 @@ test.describe("Каталог: поиск карточек по навыку", (
       await expect(catalog.catalogCardByName(alphaHost.name)).not.toBeVisible();
     });
   });
-
-  async function registerHostWithSkill(context: BrowserContext, host: TestUser, skill: string) {
-    const page = await context.newPage();
-    await registerUser(page, host);
-
-    const profile = new ProfilePage(page);
-    await profile.open();
-    await profile.addSkill(skill, "can_help");
-    await expect(profile.canHelpSkills).toContainText(skill);
-
-    const booking = new BookingPage(page);
-    await booking.openSlots();
-    const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    await booking.addSlot(tomorrow.toISOString().slice(0, 10), "12:00");
-    await expect(booking.slotCards.first()).toBeVisible();
-  }
 });
+
+async function arrangeHostWithSkill(context: BrowserContext, host: TestUser, skill: string) {
+  await registerUserViaApi(context.request, host);
+
+  const page = await context.newPage();
+  const profile = new ProfilePage(page);
+  await profile.open();
+  await profile.addSkill(skill, "can_help");
+  await expect(profile.canHelpSkills).toContainText(skill);
+
+  const booking = new BookingPage(page);
+  await booking.openSlots();
+  const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  await booking.addSlot(tomorrow.toISOString().slice(0, 10), "12:00");
+  await expect(booking.slotCards.first()).toBeVisible();
+}
 
 function digitsToLetters(value: number): string {
   return String(value)

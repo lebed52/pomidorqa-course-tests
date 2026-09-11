@@ -1,9 +1,15 @@
-import { expect, type Page } from "@playwright/test";
+import { expect, type APIRequestContext, type BrowserContext, type Page } from "@playwright/test";
 
 export type TestUser = {
   name: string;
   email: string;
   password: string;
+};
+
+export type RegisteredParticipant = {
+  id: string;
+  name: string;
+  email: string;
 };
 
 const REGISTER_ROUTE = "/pomidorqa/auth/register";
@@ -28,4 +34,49 @@ export async function registerUser(page: Page, user: TestUser) {
   await registerPasswordInput(page).fill(user.password);
   await registerSubmitButton(page).click();
   await expect(page).toHaveURL(/\/pomidorqa\/?$/);
+}
+
+export async function registerUserViaApi(
+  request: APIRequestContext,
+  user: TestUser
+): Promise<RegisteredParticipant> {
+  const response = await request.post("/api/pomidorqa/test/accounts", {
+    data: user,
+  });
+
+  if (response.status() !== 201) {
+    throw new Error(
+      `Регистрация ${user.email} не удалась: ${response.status()} ${await response.text()}`
+    );
+  }
+
+  return response.json();
+}
+
+export async function deleteUserViaApi(request: APIRequestContext): Promise<void> {
+  const response = await request.delete("/api/pomidorqa/test/accounts");
+
+  if (response.status() !== 200) {
+    throw new Error(
+      `Удаление аккаунта не удалось: ${response.status()} ${await response.text()}`
+    );
+  }
+}
+
+export async function cleanupUsersViaApi(contexts: BrowserContext[]): Promise<void> {
+  const errors: string[] = [];
+
+  for (const context of contexts) {
+    try {
+      await deleteUserViaApi(context.request);
+    } catch (error) {
+      errors.push(error instanceof Error ? error.message : String(error));
+    } finally {
+      await context.close();
+    }
+  }
+
+  if (errors.length > 0) {
+    throw new Error(errors.join("; "));
+  }
 }
