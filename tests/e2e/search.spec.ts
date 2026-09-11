@@ -43,7 +43,7 @@ test.describe("Каталог: поиск собеседника", () => {
                 await hostBookingPage.addSlot(date, "12:00");
             });
 
-            await test.step("Проверяем, что слот создан", async () => {
+            await test.step("Слот создан", async () => {
                 await expect(hostBookingPage.slotCard("12:00")).toBeVisible({
                     timeout: 10_000,
                 });
