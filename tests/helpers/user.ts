@@ -1,29 +1,32 @@
-import { expect, type Page } from '@playwright/test';
+import { randomUUID } from 'node:crypto';
+import { expect, type BrowserContext, type Page } from '@playwright/test';
 
 export type TestUser = {
   name: string;
   email: string;
-
   password: string;
 };
 
 export const ROUTES = {
   register: '/pomidorqa/auth/register',
   login: '/pomidorqa/auth/login',
+  catalog: '/pomidorqa',
+  profile: '/pomidorqa/profile',
+  slots: '/pomidorqa/profile/slots',
+  bookings: '/pomidorqa/bookings',
+  testAccounts: '/api/pomidorqa/test/accounts',
 };
 
-export function makeUser(role: string, runId: number): TestUser {
-  const salt = Math.random().toString(36).slice(2, 6);
+export function makeUser(role: string): TestUser {
   return {
     name: `${role} Автотест`,
-    email: `${role}-${runId}-${salt}@example.com`,
+    email: `${makeUnique(role)}@example.com`,
     password: 'testpass123',
   };
 }
 
 export function makeUnique(prefix: string) {
-  const salt = Math.random().toString(36).slice(2, 6);
-  return `${prefix}-${Date.now()}-${salt}`;
+  return `${prefix}-${Date.now()}-${randomUUID().slice(0, 8)}`;
 }
 export async function registerUser(page: Page, user: TestUser) {
   await expect(async () => {
@@ -49,4 +52,24 @@ export async function loginUser(page: Page, email: string, password: string) {
   await page.getByLabel('Email').fill(email);
   await page.getByLabel('Пароль').fill(password);
   await page.getByRole('button', { name: 'Войти' }).click();
+}
+
+export async function registerViaApi(
+  context: BrowserContext,
+  user: TestUser,
+): Promise<{ id: string }> {
+  const response = await context.request.post(ROUTES.testAccounts, {
+    data: { name: user.name, email: user.email, password: user.password },
+  });
+  if (response.status() !== 201) {
+    throw new Error(`API-регистрация не удалась: HTTP ${response.status()}`);
+  }
+  return (await response.json()) as { id: string };
+}
+
+export async function deleteAccountViaApi(context: BrowserContext) {
+  const response = await context.request.delete(ROUTES.testAccounts);
+  if (response.status() !== 200) {
+    throw new Error(`API-удаление аккаунта не удалось: HTTP ${response.status()}`);
+  }
 }

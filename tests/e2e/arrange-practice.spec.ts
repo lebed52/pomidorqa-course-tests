@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { makeUser, makeUnique, registerUser, type TestUser } from '../helpers/user';
+import { makeUser, makeUnique, registerViaApi, type TestUser } from '../helpers/user';
 import { ProfilePage } from '../pages/profile';
 
 const telegramUsername = makeUnique('@student');
@@ -11,9 +11,8 @@ test.describe('Ввод данных после регистрации', () => {
   let profilePage: ProfilePage;
 
   test.beforeEach(async ({ page }) => {
-    const runId = Date.now();
-    user = makeUser('studentDG', runId);
-    await registerUser(page, user);
+    user = makeUser('studentDG');
+    await registerViaApi(page.context(), user);
     profilePage = new ProfilePage(page);
     await profilePage.open();
     await expect(profilePage.inputName).toHaveValue(user.name);

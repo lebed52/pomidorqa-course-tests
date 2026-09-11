@@ -1,4 +1,5 @@
 import { expect, type Locator, type Page } from '@playwright/test';
+import { ROUTES } from '../helpers/user';
 
 export class ProfilePage {
   readonly page: Page;
@@ -26,7 +27,7 @@ export class ProfilePage {
   }
 
   async open() {
-    await this.page.goto('/pomidorqa/profile');
+    await this.page.goto(ROUTES.profile);
   }
 
   async setName(name: string) {

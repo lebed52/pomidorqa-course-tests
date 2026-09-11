@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { makeUser, makeUnique, registerUser, type TestUser } from '../helpers/user';
+import { makeUser, makeUnique, registerViaApi, type TestUser } from '../helpers/user';
 import { ProfilePage } from '../pages/profile';
 
 test.describe('Заполнение профиля после регистрации', () => {
@@ -7,9 +7,8 @@ test.describe('Заполнение профиля после регистрац
   let profilePage: ProfilePage;
 
   test.beforeEach(async ({ page }) => {
-    const runId = Date.now();
-    user = makeUser('student-hw8', runId);
-    await registerUser(page, user);
+    user = makeUser('student-hw8');
+    await registerViaApi(page.context(), user);
     profilePage = new ProfilePage(page);
     await profilePage.open();
     await expect(profilePage.inputName).toHaveValue(user.name);

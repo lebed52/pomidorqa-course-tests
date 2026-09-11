@@ -1,5 +1,5 @@
 import { test, expect, type Locator } from '@playwright/test';
-import { makeUser, registerUser, loginUser, type TestUser } from '../helpers/user';
+import { makeUser, registerViaApi, loginUser, type TestUser } from '../helpers/user';
 
 test.describe('Вход с неверными данными', () => {
   let user: TestUser;
@@ -8,8 +8,8 @@ test.describe('Вход с неверными данными', () => {
 
   test.beforeEach(async ({ page }) => {
     runId = Date.now();
-    user = makeUser('login-check', runId);
-    await registerUser(page, user);
+    user = makeUser('login-check');
+    await registerViaApi(page.context(), user);
     errorMessage = page.getByText('Неверный');
   });
 

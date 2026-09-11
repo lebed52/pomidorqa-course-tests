@@ -1,4 +1,5 @@
 import { type Locator, type Page } from '@playwright/test';
+import { ROUTES } from '../helpers/user';
 
 export class SlotsPage {
   readonly page: Page;
@@ -16,7 +17,7 @@ export class SlotsPage {
   }
 
   async open() {
-    await this.page.goto('/pomidorqa/profile/slots');
+    await this.page.goto(ROUTES.slots);
   }
 
   async addSlot(date: string, time: string) {

@@ -1,5 +1,5 @@
 import { expect, type Locator, type Page } from '@playwright/test';
-import { type TestUser } from '../helpers/user';
+import { type TestUser, ROUTES } from '../helpers/user';
 
 export class CatalogPage {
   readonly page: Page;
@@ -29,6 +29,6 @@ export class CatalogPage {
 
   /** Открывает каталог. */
   async goto() {
-    await this.page.goto('/pomidorqa');
+    await this.page.goto(ROUTES.catalog);
   }
 }

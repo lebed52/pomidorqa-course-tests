@@ -1,4 +1,5 @@
 import { expect, type Locator, type Page } from '@playwright/test';
+import { ROUTES } from '../helpers/user';
 
 export class BookingPage {
   readonly page: Page;
@@ -54,7 +55,7 @@ export class BookingPage {
     }).toPass({ timeout: 15_000 });
   }
   async openBookings() {
-    await this.page.goto('/pomidorqa/bookings');
+    await this.page.goto(ROUTES.bookings);
   }
 
   upcomingBookingWith(name: string): Locator {

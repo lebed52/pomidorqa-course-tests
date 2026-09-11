@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { makeUnique, makeUser, registerUser } from '../helpers/user';
+import { makeUnique, makeUser, registerUser, registerViaApi } from '../helpers/user';
 import { ProfilePage } from '../pages/profile';
 import { CatalogPage } from '../pages/catalog';
 import { BookingPage } from '../pages/booking';
@@ -8,11 +8,10 @@ import { SlotsPage } from '../pages/slots';
 test('основной путь + гонка за слот: регистрация → навык → слот → поиск в каталоге → бронирование → «Мои встречи» у обоих → второй гость видит ошибку', async ({
   browser,
 }) => {
-  const runId = Date.now();
   const skillTag = makeUnique('Playwright-demo');
-  const host = makeUser('host', runId);
-  const guest = makeUser('guest', runId);
-  const guest2 = makeUser('guest2', runId);
+  const host = makeUser('host');
+  const guest = makeUser('guest');
+  const guest2 = makeUser('guest2');
   let guestResult: 'success' | 'taken';
   let guest2Result: 'success' | 'taken';
 
@@ -32,7 +31,7 @@ test('основной путь + гонка за слот: регистраци
   const hostBookings = new BookingPage(hostPage);
 
   await test.step('Хост: регистрируется в PomidorQA', async () => {
-    await registerUser(hostPage, host);
+    await registerViaApi(hostContext, host);
   });
 
   await test.step('Хост: добавляет навык «могу помочь» в профиле', async () => {
@@ -56,10 +55,11 @@ test('основной путь + гонка за слот: регистраци
   });
 
   await test.step('Гость: регистрируется отдельным аккаунтом', async () => {
-    await registerUser(guestPage, guest);
+    await registerViaApi(guestContext, guest);
   });
 
-  await test.step('Гость: ищет хоста в каталоге по навыку (сценарий 9)', async () => {
+  await test.step('Гость: открывает каталог и ищет хоста по навыку (сценарий 9)', async () => {
+    await guestCatalog.goto();
     await guestCatalog.catalogFilterInput.fill(skillTag);
     await guestCatalog.btnSearch.click();
   });
@@ -82,10 +82,11 @@ test('основной путь + гонка за слот: регистраци
   });
 
   await test.step('Гость2: регистрируется отдельным аккаунтом', async () => {
-    await registerUser(guest2Page, guest2);
+    await registerViaApi(guest2Context, guest2);
   });
 
-  await test.step('Гость2: ищет хоста в каталоге по навыку', async () => {
+  await test.step('Гость2: открывает каталог и ищет хоста по навыку', async () => {
+    await guest2Catalog.goto();
     await guest2Catalog.catalogFilterInput.fill(skillTag);
     await guest2Catalog.btnSearch.click();
   });
