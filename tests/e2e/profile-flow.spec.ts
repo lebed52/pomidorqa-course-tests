@@ -57,7 +57,13 @@ test("часовой пояс пользователя изменяется в �
         .getByLabel("Часовой пояс")
         .selectOption({ value: newTimezone });
 
+    await expect(page.getByLabel("Часовой пояс"))
+        .toHaveValue(newTimezone);
+
     await page.getByRole("button", { name: "Сохранить" }).click();
+
+    await expect(page.getByLabel("Часовой пояс"))
+        .toHaveValue(newTimezone);
 
     await page.reload();
 
