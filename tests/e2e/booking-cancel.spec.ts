@@ -35,7 +35,7 @@ test.describe("Флоу отмены бронирования", () => {
   });
 
   await test.step("Хост: добавляет свободный слот на завтра", async () => {
-    await hostBooking.addSlot("12:00");
+    await hostBooking.addSlot(host.slotTime);
   });
 
   await test.step("Хост: проверяет появление карточки созданного слота", async () => {
