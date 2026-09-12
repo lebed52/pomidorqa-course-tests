@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "hooks": {
+    "beforeShellExecution": [
+      {
+        "command": ".cursor/hooks/pre-push-check.mjs",
+        "matcher": "git.*push",
+        "timeout": 120,
+        "failClosed": true
+      }
+    ]
+  }
+}
