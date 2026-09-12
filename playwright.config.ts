@@ -13,12 +13,10 @@ export default defineConfig({
     {
       name: "unit",
       testDir: "./tests/unit",
-      // без browser-контекста — тест общается только с чистой функцией
     },
     {
       name: "api",
       testDir: "./tests/api",
-      // без browser-контекста — тест общается только по HTTP с локальным мок-сервером
     },
     {
       name: "e2e",
