@@ -13,18 +13,20 @@ export type TestUser = {
   password: string;
 };
 
+function randomSuffix(): string {
+  return Math.random().toString(36).slice(2, 6);
+}
+
 export function makeUser(role: string, runId: number): TestUser {
-  const someRandom = Math.random().toString(36).slice(2, 6);
   return {
     name: `${role}-${runId} Автотест`,
-    email: `${role}-${runId}-${someRandom}@example.com`,
+    email: `${role}-${runId}-${randomSuffix()}@example.com`,
     password: "testpass123",
   };
 }
 
 export function makeRandom(prefix: string) {
-  const someRandom = Math.random().toString(36).slice(2, 6);
-  return `${prefix}-${Date.now()}-${someRandom}`;
+  return `${prefix}-${Date.now()}-${randomSuffix()}`;
 }
 
 export async function registerUser(page: Page, user: TestUser) {

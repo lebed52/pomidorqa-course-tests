@@ -22,7 +22,6 @@ export class SlotsPage {
     await this.page.goto(ROUTES.slots);
   }
 
-
   async addSlot(time: string, customDate?: string) {
     let targetDate = customDate;
 

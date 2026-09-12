@@ -47,17 +47,13 @@ export class BookingPage {
     this.errorAlert = page.getByRole("dialog").getByRole("alert");
 
     this.upcomingSection = page.getByTestId("upcoming-meetings");
-    this.firstCardName = this.upcomingSection
-      .locator("[data-booking-id]")
-      .first()
-      .locator("p")
-      .first();
 
     this.upcomingBookings = this.upcomingSection.locator("[data-booking-id]");
     this.pastMeetingsSection = page
       .locator("section")
       .filter({ hasText: "Прошедшие и отменённые" });
     this.pastBookings = this.pastMeetingsSection.locator("[data-booking-id]");
+    this.firstCardName = this.upcomingBookings.first().locator("p").first();
   }
 
   getPersonCard(name: string): Locator {
@@ -78,14 +74,16 @@ export class BookingPage {
     await this.openPersonCard(hostName);
   }
 
-  async ensureCalendarVisible(): Promise<Locator> {
-    const dayChip = this.calendarDays.first();
-    const isVisible = await dayChip.isVisible().catch(() => false);
-
+  async reloadIfHidden(locator: Locator): Promise<Locator> {
+    const isVisible = await locator.isVisible().catch(() => false);
     if (!isVisible) {
       await this.page.reload();
     }
-    return dayChip;
+    return locator;
+  }
+
+  async ensureCalendarVisible(): Promise<Locator> {
+    return this.reloadIfHidden(this.calendarDays.first());
   }
 
   async waitForBookingStatus(): Promise<boolean> {
@@ -96,12 +94,11 @@ export class BookingPage {
 
   async loadUpcomingMeetingsAndEnsureData(expectedName: string) {
     await this.goto();
-
-    const textContext = await this.firstCardName
-      .textContent()
-      .catch(() => null);
-    const hasText = textContext ? textContext.includes(expectedName) : false;
-
+    const firstCardName = this.firstCardName;
+    const hasText =
+      (await firstCardName.textContent().catch(() => null))?.includes(
+        expectedName,
+      ) ?? false;
     if (!hasText) {
       await this.page.reload();
     }
