@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { createApp, closeApps, type AppContext } from "../helpers/booking";
-import { makeUser, registerUser, type TestUser } from "../helpers/user";
+import { makeUser, registerUserViaApi, deleteUserViaApi, type TestUser } from "../helpers/user";
 
 async function prepareParticipant(
   app: AppContext,
@@ -9,7 +9,7 @@ async function prepareParticipant(
 ): Promise<TestUser> {
   const user = makeUser("host");
 
-  await registerUser(app.page, user);
+  await registerUserViaApi(app.context.request, user);
 
   await app.profilePage.goto();
   await app.profilePage.addSkill(skill, "can_help");
@@ -44,6 +44,9 @@ test.describe("PomidorQA: поиск участников", () => {
         await expect(card).toBeVisible();
       });
     } finally {
+      await deleteUserViaApi(hostApp.context.request).catch((error) => {
+        console.warn("Не удалось удалить тестового участника:", error);
+      });
       await closeApps([hostApp, guestApp]);
     }
   });
@@ -83,6 +86,12 @@ test.describe("PomidorQA: поиск участников", () => {
         await expect(secondCard).toHaveCount(0);
       });
     } finally {
+      await deleteUserViaApi(firstHostApp.context.request).catch((error) => {
+        console.warn("Не удалось удалить тестового участника:", error);
+      });
+      await deleteUserViaApi(secondHostApp.context.request).catch((error) => {
+        console.warn("Не удалось удалить тестового участника:", error);
+      });
       await closeApps([firstHostApp, secondHostApp, guestApp]);
     }
   });
@@ -124,6 +133,9 @@ test.describe("PomidorQA: поиск участников", () => {
         await expect(card).toBeVisible();
       });
     } finally {
+      await deleteUserViaApi(hostApp.context.request).catch((error) => {
+        console.warn("Не удалось удалить тестового участника:", error);
+      });
       await closeApps([hostApp, guestApp]);
     }
   });
