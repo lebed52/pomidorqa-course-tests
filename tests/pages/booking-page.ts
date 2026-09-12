@@ -96,22 +96,24 @@ export class BookingPage {
 
   async selectDayAndTime(slotDate: string) {
     const dayButton = this.bookingDay(slotDate);
-
-    await dayButton.waitFor({
-      state: "visible",
-      timeout: 10000,
-    });
-
-    await dayButton.click();
-
     const timeButton = this.anyTime();
-
-    await timeButton.waitFor({
-      state: "visible",
-      timeout: 10000,
-    });
-
-    await timeButton.click();
+    const deadline = Date.now() + 15_000;
+  
+    for (;;) {
+      try {
+        await dayButton.click({ timeout: 5_000 });
+        await timeButton.click({ timeout: 5_000 });
+        await this.bookingDialog().waitFor({
+          state: "visible",
+          timeout: 3_000,
+        });
+        return;
+      } catch (error) {
+        if (Date.now() > deadline) {
+          throw error;
+        }
+      }
+    }
   }
 
   async confirmBooking() {
