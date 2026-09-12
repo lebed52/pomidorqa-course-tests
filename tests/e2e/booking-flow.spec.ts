@@ -1,5 +1,6 @@
 import { test, expect, type Page, Browser } from "@playwright/test";
 import { makeUser, registerUser, ROUTES } from "../helpers/user";
+import { contextOptions } from "../helpers/browser-context";
 import { BookingPage } from "../pages/booking-page";
 import { ProfilePage } from "../pages/profile-page";
 
@@ -14,11 +15,6 @@ test.describe("Бронирование встречи>", () => {
   const host = makeUser("host", runId);
   const guest = makeUser("guest", runId);
   const guest2 = makeUser("guest2", runId);
-
-  // фиксируем таймзону, чтобы тест не флакал. Вообще это надо чинить на уровне приложения; так что предположим, отнесли это разработчику
-  const contextOptions = {
-    timezoneId: 'UTC',
-  };
 
   // Три независимых аккаунта = три независимых браузерных контекста
   const hostContext = await browser.newContext(contextOptions);
@@ -192,11 +188,6 @@ test.describe("Бронирование: выбор слота", () => {
     const selectedTime = "12:00";
     const remainingTimes = ["10:00", "14:00"];
     const contexts = [];
-
-     // фиксируем таймзону, чтобы тест не флакал. Вообще это надо чинить на уровне приложения; так что предположим, отнесли это разработчику
-    const contextOptions = {
-      timezoneId: 'UTC',
-    };
 
     try {
       const hostContext = await browser.newContext(contextOptions);
