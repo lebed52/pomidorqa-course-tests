@@ -44,3 +44,25 @@ export function makeSearchData() {
     host: makeUser("host", runId),
   };
 }
+
+export function makeLoginErrorData() {
+  const runId = Date.now();
+
+  return {
+    user: makeUser("login-check", runId),
+    wrongPassword: "wrong-password",
+    unknownEmail: `unknown-${runId}@example.com`,
+    unknownPassword: "any-password",
+  };
+}
+
+export function makeBookingFlowData() {
+  const runId = Date.now();
+
+  return {
+    skillTag: `Playwright-demo-${runId}`,
+    host: makeUser("host", runId),
+    guest: makeUser("guest", runId),
+    guest2: makeUser("guest2", runId),
+  };
+}
