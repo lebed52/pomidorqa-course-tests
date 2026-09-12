@@ -22,3 +22,25 @@ export async function registerUser(page: Page, user: TestUser) {
   await page.getByRole("button", { name: "Зарегистрироваться" }).click();
   await expect(page).toHaveURL(/\/pomidorqa\/?$/);
 }
+
+export function getTomorrowDate(): string {
+  const tomorrow = new Date();
+
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const year = tomorrow.getFullYear();
+  const month = String(tomorrow.getMonth() + 1).padStart(2, "0");
+  const day = String(tomorrow.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+export function makeSearchData() {
+  const runId = Date.now();
+
+  return {
+    skill: `HW13-search-${runId}`,
+    slotDate: getTomorrowDate(),
+    host: makeUser("host", runId),
+  };
+}

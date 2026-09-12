@@ -1,29 +1,13 @@
 import { test, expect } from "@playwright/test";
 
-import { makeUser, registerUser } from "../helpers/user";
+import {  makeSearchData, registerUser, } from "../helpers/user";
 import { ProfilePage } from "../pages/profile-page";
 import { BookingPage } from "../pages/booking-page";
-
-function getTomorrowDate(): string {
-  const tomorrow = new Date();
-
-  tomorrow.setDate(tomorrow.getDate() + 1);
-
-  const year = tomorrow.getFullYear();
-  const month = String(tomorrow.getMonth() + 1).padStart(2, "0");
-  const day = String(tomorrow.getDate()).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
-}
 
 test("гость находит пользователя в каталоге по уникальному навыку", async ({
   browser,
 }) => {
-  const runId = Date.now();
-  const skill = `HW13-search-${runId}`;
-  const slotDate = getTomorrowDate();
-
-  const host = makeUser("host", runId);
+  const { skill, slotDate, host } = makeSearchData();
 
   const hostContext = await browser.newContext();
   const guestContext = await browser.newContext();
@@ -35,7 +19,6 @@ test("гость находит пользователя в каталоге п�
   const hostBooking = new BookingPage(hostPage);
   const guestBooking = new BookingPage(guestPage);
 
-  try {
     await test.step("Хост регистрируется", async () => {
       await registerUser(hostPage, host);
     });
@@ -71,8 +54,7 @@ test("гость находит пользователя в каталоге п�
       await expect(hostCard).toBeVisible();
       await expect(hostCard).toContainText(skill);
     });
-  } finally {
+
     await hostContext.close();
     await guestContext.close();
-  }
-});
+  });
