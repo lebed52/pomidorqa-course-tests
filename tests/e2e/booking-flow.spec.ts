@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { makeUser, registerUser } from "../helpers/user";
+import { makeUser, registerUserViaApi, deleteCurrentTestUser } from "../helpers/user";
 import { ProfilePage } from "../pages/ProfilePage";
 import { BookingPage } from "../pages/BookingPage";
 
@@ -10,7 +10,7 @@ import { BookingPage } from "../pages/BookingPage";
 
 test.describe('Основной путь + гонка за слот: регистрация → навык → слот → поиск в каталоге → бронирование → «Мои встречи» у обоих → второй гость видит ошибку', () => {
   test ('основной путь + гонка за слот', async ({ browser }) => {
-  const runId = crypto.randomUUID().slice(0, 8);
+  const runId = crypto.randomUUID().slice(0, 10);
   const skillTag = `Playwright-demo-${runId}`;
   const host = makeUser("host", runId);
   const guest = makeUser("guest", runId);
@@ -31,8 +31,8 @@ test.describe('Основной путь + гонка за слот: регис�
   const guest2Booking = new BookingPage(guest2Page);
 
 
-  await test.step("Хост: регистрируется в PomidorQA", async () => {
-    await registerUser(hostPage, host);
+  await test.step("Хост: регистрируется в PomidorQA через API", async () => {
+    await registerUserViaApi(hostPage, host);
   });
  
   await test.step('Хост: добавляет навык «могу помочь» в профиле', async () => {
@@ -53,8 +53,8 @@ test.describe('Основной путь + гонка за слот: регис�
     await expect(hostBooking.slotsCard.first()).toBeVisible();
   });
 
-  await test.step("Гость: регистрируется отдельным аккаунтом", async () => {
-    await registerUser(guestPage, guest);
+  await test.step("Гость: регистрируется отдельным аккаунтом через API", async () => {
+    await registerUserViaApi(guestPage, guest);
   });
 
   await test.step("Гость: ищет хоста в каталоге по навыку (сценарий 9)", async () => {
@@ -84,7 +84,7 @@ test.describe('Основной путь + гонка за слот: регис�
   // Важно для разбора ДЗ 4: модалку guest2 открываем ДО confirm у guest.
   // Пока слот в UI ещё свободен — оба «человек открыл и отошёл».
   await test.step("Гость2: регистрируется и тоже открывает карточку хоста на тот же слот", async () => {
-    await registerUser(guest2Page, guest2);
+    await registerUserViaApi(guest2Page, guest2);
     await guest2Booking.searchBySkill(skillTag)
     await guest2Booking.openCard(host.name);
   });
@@ -139,6 +139,9 @@ test.describe('Основной путь + гонка за слот: регис�
     }).toPass({ timeout: 10_000 });
   });
 
+  await deleteCurrentTestUser(hostPage);
+  await deleteCurrentTestUser(guestPage);
+  await deleteCurrentTestUser(guest2Page);
   await hostContext.close();
   await guestContext.close();
   await guest2Context.close();

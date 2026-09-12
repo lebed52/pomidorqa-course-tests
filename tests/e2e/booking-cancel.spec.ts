@@ -1,12 +1,12 @@
 import { test, expect } from "@playwright/test";
-import { makeUser, registerUser } from "../helpers/user";
+import { makeUser, registerUserViaApi, deleteCurrentTestUser } from "../helpers/user";
 import { ProfilePage } from "../pages/ProfilePage";
 import { BookingPage } from "../pages/BookingPage";
 
 
 test.describe('Гость бронирует встречу, отменяет её, карточка переходит в прошедшие. После reload отмену видят и гость, и хост.', () => {
   test ('Полный сценарий бронирования и отмены', async ({ browser }) => {
-  const runId = crypto.randomUUID().slice(0, 8);
+  const runId = crypto.randomUUID().slice(0, 10);
   const skillTag = `Playwright-demo-${runId}`;
   const host = makeUser("host", runId);
   const guest = makeUser("guest", runId);
@@ -24,8 +24,8 @@ test.describe('Гость бронирует встречу, отменяет е
 
   try{
 
-  await test.step("Хост: регистрируется в PomidorQA", async () => {
-    await registerUser(hostPage, host);
+  await test.step("Хост: регистрируется в PomidorQA через API", async () => {
+    await registerUserViaApi(hostPage, host);
   });
  
   await test.step('Хост: добавляет навык «могу помочь» в профиле', async () => {
@@ -46,8 +46,8 @@ test.describe('Гость бронирует встречу, отменяет е
     await expect(hostBooking.slotsCard.first()).toBeVisible();
   });
 
-  await test.step("Гость: регистрируется отдельным аккаунтом", async () => {
-    await registerUser(guestPage, guest);
+  await test.step("Гость: регистрируется отдельным аккаунтом через API", async () => {
+    await registerUserViaApi(guestPage, guest);
   });
 
   await test.step("Гость: ищет хоста в каталоге по навыку", async () => {
@@ -125,8 +125,10 @@ test.describe('Гость бронирует встречу, отменяет е
       },
     );
   } finally {
-  await hostContext.close();
-  await guestContext.close();
+    await deleteCurrentTestUser(hostPage);
+    await deleteCurrentTestUser(guestPage);
+    await hostContext.close();
+    await guestContext.close();
   }
 });
 });

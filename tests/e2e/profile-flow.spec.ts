@@ -1,20 +1,24 @@
 import { test, expect } from "@playwright/test";
 import { ProfilePage } from "../pages/ProfilePage";
 import { timezones } from "../helpers/user";
-import { makeUser, registerUser } from "../helpers/user";
+import { makeUser, registerUserViaApi, deleteCurrentTestUser } from "../helpers/user";
 
 test.describe("Профиль: действия с полями", () => {
   let profilePage: ProfilePage;
   
   test.beforeEach(async ({ page }) => {
-    const user = makeUser("hw8", crypto.randomUUID().slice(0, 8));
-    await registerUser(page, user);
+    const user = makeUser("hw8", crypto.randomUUID().slice(0, 10));
+    await registerUserViaApi(page, user);
     profilePage = new ProfilePage(page);
     await profilePage.goto();
   });
 
+  test.afterEach(async ({ page }) => {
+    await deleteCurrentTestUser(page);
+  });
+
   test("имя: вводим новое и сохраняем", async ({ page }) => {
-    const newName = `Тимур Тестович ${crypto.randomUUID().slice(0, 8)}`;
+    const newName = `Тимур Тестович ${crypto.randomUUID().slice(0, 10)}`;
 
     await test.step("Заполняем поле и сохраняем", async () => {
       await profilePage.saveName(newName);
@@ -43,7 +47,7 @@ test.describe("Профиль: действия с полями", () => {
   });
 
   test("telegram: заполняем пустое поле", async ({ page }) => {
-    const telegram = `@qa_timur_cat${crypto.randomUUID().slice(0, 8)}`;
+    const telegram = `@qa_timur_cat${crypto.randomUUID().slice(0, 10)}`;
 
     await test.step("Проверяем, что поле Telegram было пустым перед вводом", async () => {
       await expect(profilePage.telegramInput).toHaveValue("");
@@ -60,7 +64,7 @@ test.describe("Профиль: действия с полями", () => {
   });
 
   test("о себе: заполняем многострочное поле", async ({ page }) => {
-    const bio = `QA-инженер, прогон ${crypto.randomUUID().slice(0, 8)}. Пытаюсь разобраться в Playwright.`;
+    const bio = `QA-инженер, прогон ${crypto.randomUUID().slice(0, 10)}. Пытаюсь разобраться в Playwright.`;
 
     await test.step("Заполняем «О себе» и сохраняем", async () => {
       await profilePage.saveBio(bio);
@@ -73,7 +77,7 @@ test.describe("Профиль: действия с полями", () => {
   });
 
   test("навык: заполняем, выбираем тип и добавляем", async () => {
-    const skillTag = `Playwright-demo-${crypto.randomUUID().slice(0, 8)}`;
+    const skillTag = `Playwright-demo-${crypto.randomUUID().slice(0, 10)}`;
 
     await test.step("Добавляем навык «могу помочь»", async () => {
       await profilePage.addSkill(skillTag, "can_help");
@@ -100,7 +104,7 @@ test.describe("Профиль: действия с полями", () => {
   });
 
   test("негатив: навык «хочу разобрать» не попадает в блок «могу помочь»", async () => {
-    const runId = crypto.randomUUID().slice(0, 8);
+    const runId = crypto.randomUUID().slice(0, 10);
     const canHelpTag = `CanHelp-${runId}`;
     const wantToLearnTag = `WantToLearn-${runId}`;
 
@@ -128,7 +132,7 @@ test.describe("Профиль: действия с полями", () => {
   });
 
   test("форма профиля: три поля сохраняются за один раз", async ({ page }) => {
-    const runId = crypto.randomUUID().slice(0, 8);
+    const runId = crypto.randomUUID().slice(0, 10);
     const name = `Тимур Тестовый ${runId}`;
     const telegram = `@qa_timur_${runId}`;
     const bio = `QA-инженер, прогон ${runId}. Проверяю форму профиля целиком.`;

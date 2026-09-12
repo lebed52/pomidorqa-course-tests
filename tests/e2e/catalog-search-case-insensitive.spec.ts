@@ -1,11 +1,11 @@
 import { test, expect } from "@playwright/test";
-import { makeUser, registerUser } from "../helpers/user";
+import { makeUser, registerUserViaApi, deleteCurrentTestUser } from "../helpers/user";
 import { ProfilePage } from "../pages/ProfilePage";
 import { BookingPage } from "../pages/BookingPage";
 
 test.describe("Каталог: поиск по навыку без учета регистра и формы записи", () => {
   test("поиск находит человека по навыку в разном регистре и частичном совпадении", async ({ browser }) => {
-    const runId = crypto.randomUUID().slice(0, 8);
+    const runId = crypto.randomUUID().slice(0, 10);
     const baseSkill = "Playwright";
     const skillId = crypto.randomUUID();
     const skillTag = `${baseSkill}-${skillId}`;
@@ -22,8 +22,8 @@ test.describe("Каталог: поиск по навыку без учета р
     const guestBooking = new BookingPage(guestPage);
 
     try {
-      await test.step("Хост: регистрируется в PomidorQA", async () => {
-        await registerUser(hostPage, host);
+      await test.step("Хост: регистрируется в PomidorQA через API", async () => {
+        await registerUserViaApi(hostPage, host);
       });
 
       await test.step("Хост: добавляет навык в профиль", async () => {
@@ -44,8 +44,8 @@ test.describe("Каталог: поиск по навыку без учета р
         await expect(hostBooking.slotsCard.first()).toBeVisible();
       });
 
-      await test.step("Гость: регистрируется отдельным аккаунтом", async () => {
-        await registerUser(guestPage, guest);
+      await test.step("Гость: регистрируется отдельным аккаунтом через API", async () => {
+        await registerUserViaApi(guestPage, guest);
       });
 
       await test.step("Гость: ищет хоста по части навыка в нижнем регистре", async () => {
@@ -77,6 +77,8 @@ test.describe("Каталог: поиск по навыку без учета р
         await expect(resultCard).toContainText(skillTag, { ignoreCase: true });
       });
     } finally {
+      await deleteCurrentTestUser(hostPage);
+      await deleteCurrentTestUser(guestPage);
       await hostContext.close();
       await guestContext.close();
     }
