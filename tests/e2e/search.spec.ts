@@ -1,27 +1,26 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type BrowserContext } from "@playwright/test";
+import { deleteUserViaApi } from "../helpers/user";
+import { prepareSearchFlow } from "../helpers/search-flow";
 
-import {  makeSearchData, registerUser, } from "../helpers/user";
-import { ProfilePage } from "../pages/profile-page";
-import { BookingPage } from "../pages/booking-page";
+test.describe("Поиск пользователя в каталоге", () => {
+  let contexts: BrowserContext[] = [];
 
-test("гость находит пользователя в каталоге по уникальному навыку", async ({
-  browser,
-}) => {
-  const { skill, slotDate, host } = makeSearchData();
+  test.afterEach(async () => {
+    await deleteUserViaApi(contexts[0].request);
+  
+    await contexts[0].close();
+    await contexts[1].close();
+  
+    contexts = [];
+  });
 
-  const hostContext = await browser.newContext();
-  const guestContext = await browser.newContext();
+  test("Гость находит пользователя в каталоге по уникальному навыку", async ({
+    browser,
+  }) => {
+    const { skill, slotDate, host, hostContext, guestContext, hostPage, guestPage, hostProfile, hostBooking, guestBooking,
+    } = await prepareSearchFlow(browser);
 
-  const hostPage = await hostContext.newPage();
-  const guestPage = await guestContext.newPage();
-
-  const hostProfile = new ProfilePage(hostPage);
-  const hostBooking = new BookingPage(hostPage);
-  const guestBooking = new BookingPage(guestPage);
-
-    await test.step("Хост регистрируется", async () => {
-      await registerUser(hostPage, host);
-    });
+    contexts = [hostContext, guestContext];
 
     await test.step("Хост добавляет уникальный навык", async () => {
       await hostPage.goto("/pomidorqa/profile");
@@ -54,7 +53,5 @@ test("гость находит пользователя в каталоге п�
       await expect(hostCard).toBeVisible();
       await expect(hostCard).toContainText(skill);
     });
-
-    await hostContext.close();
-    await guestContext.close();
   });
+});

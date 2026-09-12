@@ -1,4 +1,4 @@
-import { Page, expect } from "@playwright/test";
+import { APIRequestContext, Page, expect } from "@playwright/test";
 
 export type TestUser = {
   name: string;
@@ -21,6 +21,35 @@ export async function registerUser(page: Page, user: TestUser) {
   await page.getByLabel("Пароль").fill(user.password);
   await page.getByRole("button", { name: "Зарегистрироваться" }).click();
   await expect(page).toHaveURL(/\/pomidorqa\/?$/);
+}
+
+export async function registerUserViaApi(
+  request: APIRequestContext,
+  user: TestUser,
+) {
+  const response = await request.post("/api/pomidorqa/test/accounts", {
+    data: user,
+  });
+
+  if (response.status() !== 201) {
+    throw new Error(
+      `Регистрация ${user.email} не удалась: ${response.status()} ${await response.text()}`,
+    );
+  }
+
+  return response.json();
+}
+
+export async function deleteUserViaApi(
+  request: APIRequestContext,
+): Promise<void> {
+  const response = await request.delete("/api/pomidorqa/test/accounts");
+
+  if (response.status() !== 200) {
+    throw new Error(
+      `Удаление аккаунта не удалось: ${response.status()} ${await response.text()}`,
+    );
+  }
 }
 
 export function getTomorrowDate(): string {
@@ -57,12 +86,36 @@ export function makeLoginErrorData() {
 }
 
 export function makeBookingFlowData() {
-  const runId = Date.now();
+  const runId = Date.now() + Math.floor(Math.random() * 1_000_000);
 
   return {
     skillTag: `Playwright-demo-${runId}`,
     host: makeUser("host", runId),
     guest: makeUser("guest", runId),
     guest2: makeUser("guest2", runId),
+  };
+}
+
+export function makeProfileData() {
+  const runId = Date.now();
+
+  return {
+    name: `Вика Тестовна${runId}`,
+    telegram: `@aqa_vika${runId}`,
+    bio: `AQA-инженер, прогон ${runId}. Проверяю форму профиля целиком`,
+    testName: `Вика Тестовна ${runId}`,
+    testTelegram: `@aqa_vika${runId}`,
+    testBio: `AQA-инженер, прогон ${runId}. Пытаюсь разобраться в TS`,
+    skillTag: `TS-demo-${runId}`,
+    timezone: "Asia/Yekaterinburg",
+  };
+}
+
+export function makeSkillData() {
+  const runId = Date.now();
+
+  return {
+    canHelpTag: `CanHelp-${runId}`,
+    wantToLearnTag: `WantToLearn-${runId}`,
   };
 }

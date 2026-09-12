@@ -1,11 +1,11 @@
 import { test, expect } from "@playwright/test";
-import { makeLoginErrorData, registerUser } from "../helpers/user";
+import { deleteUserViaApi, makeLoginErrorData, registerUserViaApi } from "../helpers/user";
 import { LoginPage } from "../pages/login-page";
+import { expectSameLoginError } from "../helpers/login";
 
-function expectSameLoginError(firstError: string, secondError: string) {
-  expect(firstError).toBe(secondError);
-  expect(firstError).toContain("Неверный");
-}
+test.afterEach(async ({ page }) => {
+  await deleteUserViaApi(page.context().request);
+});
 
 test("Вход с неверными данными — одинаковая ошибка в обоих случаях, без уточнения причины", async ({ page }) => {
   const { user, wrongPassword, unknownEmail, unknownPassword } = makeLoginErrorData();
@@ -14,9 +14,7 @@ test("Вход с неверными данными — одинаковая о�
   let wrongPasswordError = "";
   let unknownEmailError = "";
 
-  await test.step("Создаём пользователя для проверки входа", async () => {
-    await registerUser(page, user);
-  });
+  await registerUserViaApi(page.context().request, user);
 
   await test.step("Выполняем вход с неверным паролем", async () => {
     await page.goto("/pomidorqa/auth/login");

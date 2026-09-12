@@ -1,6 +1,17 @@
-import { test, expect } from "@playwright/test";
-import { registerUser } from "../helpers/user";
+import { test, expect, type BrowserContext } from "@playwright/test";
+import { deleteUserViaApi } from "../helpers/user";
 import { prepareBookingFlow } from "../helpers/booking-flow";
+
+let contexts: BrowserContext[] = [];
+
+test.afterEach(async () => {
+  for (const context of contexts) {
+    await deleteUserViaApi(context.request);
+    await context.close();
+  }
+
+  contexts = [];
+});
 
 test("Основной путь + гонка за слот: регистрация → навык → слот → поиск в каталоге → бронирование → «Мои встречи» у обоих → второй гость видит ошибку", async ({ browser }) => {
   test.setTimeout(60_000);
@@ -25,9 +36,7 @@ test("Основной путь + гонка за слот: регистраци
     slotDate,
   } = await prepareBookingFlow(browser);
 
-  await test.step("Хост: регистрируется в PomidorQA", async () => {
-    await registerUser(hostPage, host);
-  });
+  contexts = [hostContext, guestContext, guest2Context];
 
   await test.step("Хост: добавляет навык «могу помочь»", async () => {
     await hostPage.goto("/pomidorqa/profile");
@@ -47,10 +56,6 @@ test("Основной путь + гонка за слот: регистраци
 
   await test.step("Хост: проверяет, что слот появился", async () => {
     await expect(hostBooking.freeSlot()).toBeVisible();
-  });
-
-  await test.step("Гость: регистрируется отдельным аккаунтом", async () => {
-    await registerUser(guestPage, guest);
   });
 
   await test.step("Гость: ищет хоста в каталоге по навыку", async () => {
@@ -75,10 +80,6 @@ test("Основной путь + гонка за слот: регистраци
 
   await test.step("Гость: проверяет, что открылось окно подтверждения", async () => {
     await expect(guestBooking.bookingDialog()).toBeVisible();
-  });
-
-  await test.step("Гость2: регистрируется отдельным аккаунтом", async () => {
-    await registerUser(guest2Page, guest2);
   });
 
   await test.step("Гость2: ищет хоста в каталоге по навыку", async () => {
@@ -140,8 +141,4 @@ test("Основной путь + гонка за слот: регистраци
       hostBooking.upcomingBookingCard(guest.name)
     ).toBeVisible();
   });
-
-  await hostContext.close();
-  await guestContext.close();
-  await guest2Context.close();
 });
