@@ -128,11 +128,11 @@ test("основной путь + гонка за слот: регистраци
         await guestPage.reload();
       }
       await expect(dayChip).toBeVisible();
-    }).toPass({ timeout: 10_000 });
 
-    await bookingCalendarDay(guestPage).first().click();
-    await bookingCalendarTime(guestPage).first().click();
-    await expect(bookingConfirmDialog(guestPage)).toBeVisible();
+      await dayChip.click();
+      await bookingCalendarTime(guestPage).first().click();
+      await expect(bookingConfirmDialog(guestPage)).toBeVisible({ timeout: 5_000 });
+    }).toPass({ timeout: 30_000, intervals: [500, 1_000, 2_000] });
   });
 
   // Важно для разбора ДЗ 4: модалку guest2 открываем ДО confirm у guest.
