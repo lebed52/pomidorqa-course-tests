@@ -21,6 +21,9 @@ test.describe("Отмена брони", () => {
     const guestProfile = new ProfilePage(guestPage);
     const hostBooking = new BookingPage(hostPage);
     const guestBooking = new BookingPage(guestPage);
+    const slotTime = "12:00";
+    let slotDate = "";
+    let slotDisplayTime = "";
 
     try {
       await test.step("Хост: регистрируется в PomidorQA", async () => {
@@ -35,12 +38,17 @@ test.describe("Отмена брони", () => {
         await hostProfile.saveProfile();
         await hostProfile.goto();
         await hostProfile.addSkill(skillTag);
+      });
+
+      await test.step("Хост видит добавленный навык", async () => {
         await expect(hostProfile.canHelpSkills).toContainText(skillTag);
       });
 
       await test.step("Хост: добавляет свободный слот", async () => {
         await hostBooking.gotoSlots();
-        await hostBooking.addTomorrowSlot();
+        const slot = await hostBooking.addTomorrowSlot(slotTime);
+        slotDate = slot.date;
+        slotDisplayTime = slot.displayTime;
         await expect(hostBooking.slotCard.first()).toBeVisible();
       });
 
@@ -56,13 +64,33 @@ test.describe("Отмена брони", () => {
         await guestProfile.saveProfile();
       });
 
-      await test.step("Гость: бронирует слот хоста", async () => {
+      await test.step("Гость: открывает карточку хоста", async () => {
         await guestBooking.search(skillTag);
         await guestBooking.openPerson(host.name);
+      });
+
+      await test.step("Открыта карточка хоста", async () => {
         await expect(guestBooking.personName).toHaveText(host.name);
-        await guestBooking.openFirstSlot();
+      });
+
+      await test.step("Слот хоста виден", async () => {
+        await expect(guestBooking.slotDay(slotDate)).toBeVisible();
+        await expect(guestBooking.slotTime(slotDisplayTime)).toBeVisible();
+      });
+
+      await test.step("Гость: открывает окно брони", async () => {
+        await guestBooking.openSlot(slotDate, slotDisplayTime);
+      });
+
+      await test.step("Окно брони открыто", async () => {
         await expect(guestBooking.bookingConfirmDialog).toBeVisible();
+      });
+
+      await test.step("Гость: подтверждает бронь", async () => {
         await guestBooking.confirm();
+      });
+
+      await test.step("Бронирование прошло успешно", async () => {
         await expect(guestBooking.bookingConfirmSuccess).toBeVisible({
           timeout: 15_000,
         });

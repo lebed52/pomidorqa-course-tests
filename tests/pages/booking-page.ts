@@ -10,8 +10,6 @@ export class BookingPage {
   catalogSearchButton: Locator;
   personCard: Locator;
   personName: Locator;
-  bookingCalendarDay: Locator;
-  bookingCalendarTime: Locator;
   bookingConfirmDialog: Locator;
   bookingConfirmButton: Locator;
   bookingConfirmSuccess: Locator;
@@ -33,12 +31,6 @@ export class BookingPage {
     this.catalogSearchButton = page.getByRole("button", { name: "Найти" });
     this.personCard = page.getByTestId("person-card");
     this.personName = page.getByRole("heading", { level: 1 });
-    this.bookingCalendarDay = page
-      .getByRole("group", { name: "Дни со слотами" })
-      .getByRole("button");
-    this.bookingCalendarTime = page
-      .getByRole("group", { name: "Время слотов" })
-      .getByRole("button");
     this.bookingConfirmDialog = page.getByRole("dialog");
     this.bookingConfirmButton = page
       .getByRole("dialog")
@@ -75,6 +67,7 @@ export class BookingPage {
     await this.slotsDateInput.fill(date);
     await this.slotsTimeInput.fill(time);
     await this.addSlotButton.click();
+    return { date, time, displayTime: utcTimeToLocal(date, time) };
   }
 
   async search(skillTag: string) {
@@ -87,24 +80,19 @@ export class BookingPage {
     await this.cardByName(name).click();
   }
 
-  async openFirstSlot() {
-    const day = this.bookingCalendarDay.first();
+  slotDay(date: string) {
+    return this.page.locator(`[data-date="${date}"]`);
+  }
 
-    for (let attempt = 0; attempt < 5; attempt++) {
-      if (await day.isVisible().catch(() => false)) {
-        break;
-      }
-      await this.page.reload();
-    }
+  slotTime(time: string) {
+    return this.page
+      .getByRole("group", { name: "Время слотов" })
+      .getByRole("button", { name: time, exact: true });
+  }
 
-    await day.click();
-
-    for (let attempt = 0; attempt < 5; attempt++) {
-      if (await this.bookingConfirmDialog.isVisible().catch(() => false)) {
-        return;
-      }
-      await this.bookingCalendarTime.first().click();
-    }
+  async openSlot(date: string, time: string) {
+    await this.slotDay(date).click();
+    await this.slotTime(time).click();
   }
 
   async confirm() {
@@ -119,6 +107,14 @@ export class BookingPage {
     await this.gotoBookings();
     await this.bookingCancelButton.click();
   }
+}
+
+function utcTimeToLocal(date: string, time: string) {
+  return new Date(`${date}T${time}:00.000Z`).toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
 }
 
 
