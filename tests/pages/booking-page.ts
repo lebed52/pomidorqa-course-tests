@@ -67,7 +67,7 @@ export class BookingPage {
     await this.slotsDateInput.fill(date);
     await this.slotsTimeInput.fill(time);
     await this.addSlotButton.click();
-    return { date, time, displayTime: utcTimeToLocal(date, time) };
+    return { date, time };
   }
 
   async search(skillTag: string) {
@@ -84,15 +84,19 @@ export class BookingPage {
     return this.page.locator(`[data-date="${date}"]`);
   }
 
-  slotTime(time: string) {
-    return this.page
-      .getByRole("group", { name: "Время слотов" })
-      .getByRole("button", { name: time, exact: true });
+  slotTime(time?: string) {
+    const group = this.page.getByRole("group", { name: "Время слотов" });
+    return time
+      ? group.getByRole("button", { name: time, exact: true })
+      : group.getByRole("button");
   }
 
-  async openSlot(date: string, time: string) {
-    await this.slotDay(date).click();
-    await this.slotTime(time).click();
+  async openSlot(date: string) {
+    const day = this.slotDay(date);
+    if ((await day.getAttribute("aria-pressed")) !== "true") {
+      await day.click();
+    }
+    await this.slotTime().click();
   }
 
   async confirm() {
@@ -107,14 +111,6 @@ export class BookingPage {
     await this.gotoBookings();
     await this.bookingCancelButton.click();
   }
-}
-
-function utcTimeToLocal(date: string, time: string) {
-  return new Date(`${date}T${time}:00.000Z`).toLocaleTimeString("en-GB", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
 }
 
 

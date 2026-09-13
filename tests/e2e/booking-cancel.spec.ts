@@ -21,9 +21,7 @@ test.describe("Отмена брони", () => {
     const guestProfile = new ProfilePage(guestPage);
     const hostBooking = new BookingPage(hostPage);
     const guestBooking = new BookingPage(guestPage);
-    const slotTime = "12:00";
     let slotDate = "";
-    let slotDisplayTime = "";
 
     try {
       await test.step("Хост: регистрируется в PomidorQA", async () => {
@@ -46,9 +44,8 @@ test.describe("Отмена брони", () => {
 
       await test.step("Хост: добавляет свободный слот", async () => {
         await hostBooking.gotoSlots();
-        const slot = await hostBooking.addTomorrowSlot(slotTime);
+        const slot = await hostBooking.addTomorrowSlot();
         slotDate = slot.date;
-        slotDisplayTime = slot.displayTime;
         await expect(hostBooking.slotCard.first()).toBeVisible();
       });
 
@@ -75,11 +72,11 @@ test.describe("Отмена брони", () => {
 
       await test.step("Слот хоста виден", async () => {
         await expect(guestBooking.slotDay(slotDate)).toBeVisible();
-        await expect(guestBooking.slotTime(slotDisplayTime)).toBeVisible();
+        await expect(guestBooking.slotTime()).toBeVisible();
       });
 
       await test.step("Гость: открывает окно брони", async () => {
-        await guestBooking.openSlot(slotDate, slotDisplayTime);
+        await guestBooking.openSlot(slotDate);
       });
 
       await test.step("Окно брони открыто", async () => {
