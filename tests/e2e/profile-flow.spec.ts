@@ -1,25 +1,7 @@
+import { randomUUID } from "node:crypto";
 import { test, expect, type Page } from "@playwright/test";
 
-// Урок 8, Act: действия с полями профиля.
-// Сцена (Arrange) одна на все тесты — зарегистрированный пользователь на своей странице профиля.
-// Проверяем именно действие: ввод, выбор, нажатие.
-// makeUser / registerUser / beforeEach скопированы из data-after-reg.spec.ts:
-// тот файл по условию ДЗ трогать нельзя, общий хелпер появится на Уроке 10.
-
-const ROUTES = {
-  register: "/pomidorqa/auth/register",
-  profile: "/pomidorqa/profile",
-};
-
-// ─────────────────────────────────────────────────────────────
-// Локаторы
-// ─────────────────────────────────────────────────────────────
-
-// Регистрация
-const registerNameInput = (page: Page) => page.getByLabel("Имя");
-const registerEmailInput = (page: Page) => page.getByLabel("Email");
-const registerPasswordInput = (page: Page) => page.getByLabel("Пароль");
-const registerSubmitButton = (page: Page) => page.getByRole("button", { name: "Зарегистрироваться" });
+import { makeUser, registerUserViaApi, deleteUserViaApi, ROUTES } from "../helpers/user";
 
 // Профиль: верхняя форма, все поля сохраняются одной кнопкой
 const profileNameInput = (page: Page) => page.getByLabel("Имя");
@@ -40,33 +22,6 @@ const skillChip = (page: Page, tag: string) => page.locator(`[data-skill-tag="${
 // Фабрики и общие действия
 // ─────────────────────────────────────────────────────────────
 
-type TestUser = {
-  name: string;
-  email: string;
-  password: string;
-};
-
-function makeUser(role: string, runId: number): TestUser {
-  return {
-    name: `${role} Автотест`,
-    email: `${role}-${runId}@example.com`,
-    password: "testpass123",
-  };
-}
-
-async function registerUser(page: Page, user: TestUser) {
-  await page.goto(ROUTES.register);
-  await registerNameInput(page).fill(user.name);
-  await registerEmailInput(page).fill(user.email);
-  await registerPasswordInput(page).fill(user.password);
-  await registerSubmitButton(page).click();
-  await expect(page).toHaveURL(/\/pomidorqa\/?$/);
-}
-
-// Сохранение профиля уходит POST-ом на адрес самой страницы, а признака успеха
-// в интерфейсе нет: кнопка не меняется, сообщения не появляется. Поэтому ждём
-// ответ сервера. Промис создаём до клика — иначе ответ придёт раньше, чем мы
-// начнём его слушать, и ожидание повиснет.
 async function saveProfile(page: Page) {
   const saved = page.waitForResponse(
     (response) => response.url().endsWith(ROUTES.profile) && response.request().method() === "POST"
@@ -80,9 +35,13 @@ async function saveProfile(page: Page) {
 test.describe("Профиль: действия с полями", () => {
   // Свой мир под каждый тест: новый пользователь, чистый профиль.
   test.beforeEach(async ({ page }) => {
-    const user = makeUser("hw8", Date.now());
-    await registerUser(page, user);
+    const user = makeUser("hw14", randomUUID());
+    await registerUserViaApi(page.context().request, user);
     await page.goto(ROUTES.profile);
+  });
+
+  test.afterEach(async ({ context }) => {
+    await deleteUserViaApi(context.request);
   });
 
   test("имя: вводим новое и сохраняем", async ({ page }) => {
@@ -177,7 +136,7 @@ test.describe("Профиль: действия с полями", () => {
   });
 
   test("негатив: навык «хочу разобрать» не попадает в блок «могу помочь»", async ({ page }) => {
-    const runId = Date.now();
+    const runId = `${Date.now()}-${randomUUID()}`;
     const canHelpTag = `CanHelp-${runId}`;
     const wantToLearnTag = `WantToLearn-${runId}`;
 
@@ -204,7 +163,7 @@ test.describe("Профиль: действия с полями", () => {
   });
 
   test("форма профиля: три поля сохраняются за один раз", async ({ page }) => {
-    const runId = Date.now();
+    const runId = `${Date.now()}-${randomUUID()}`;
     const name = `Тимур Тестовый ${runId}`;
     const telegram = `@qa_timur_${runId}`;
     const bio = `QA-инженер, прогон ${runId}. Проверяю форму профиля целиком.`;
