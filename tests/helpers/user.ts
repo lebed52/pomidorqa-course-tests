@@ -23,12 +23,17 @@ export type ApiUser = {
   page: Page;
 };
 
+// Хвост случайный, а не только runId: два воркера, стартовавшие в одну
+// миллисекунду, дают одинаковое значение. Для почты это 409 от стенда, для
+// навыка — чужой хост в выдаче каталога, что хуже: тест упадёт по ложной
+// причине или пройдёт по неправильной.
+export function uniqueTag(prefix: string, runId: number): string {
+  return `${prefix}-${runId}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
 export function makeUser(role: string, runId: number): TestUser {
-  // Хвост случайный, а не только runId: два воркера, стартовавшие в одну
-  // миллисекунду, дают одинаковую почту, а стенд отвечает на дубль 409 —
-  // тест падает ещё до первого шага. Имя тоже уникальное: сценарии
-  // фильтруют встречи по имени участника.
-  const unique = `${role}-${runId}-${Math.random().toString(36).slice(2, 8)}`;
+  // Имя тоже уникальное: сценарии фильтруют встречи по имени участника.
+  const unique = uniqueTag(role, runId);
   return {
     name: `${role} Автотест ${unique}`,
     email: `${unique}@example.com`,
@@ -41,19 +46,34 @@ export function makeUser(role: string, runId: number): TestUser {
 // POST возвращает куку сессии, а context.request живёт в том же хранилище
 // кук, что и страницы контекста, — поэтому браузер оказывается авторизован
 // без отдельного входа.
+export async function createUserInContext(
+  context: BrowserContext,
+  user: TestUser,
+): Promise<TestUser> {
+  const response = await context.request.post(ROUTES.accounts, { data: user });
+  if (response.status() !== 201) {
+    throw new Error(
+      `Создание ${user.email} не удалось: ${response.status()} ${await response.text()}`,
+    );
+  }
+  return user;
+}
+
+export async function deleteUserFromContext(context: BrowserContext): Promise<void> {
+  const response = await context.request.delete(ROUTES.accounts);
+  if (response.status() !== 200) {
+    throw new Error(`Удаление аккаунта не удалось: ${response.status()} ${await response.text()}`);
+  }
+}
+
 export async function createUserInNewContext(
   browser: Browser,
   user: TestUser,
-  startUrl: string = ROUTES.home
+  startUrl: string = ROUTES.home,
 ): Promise<ApiUser> {
   const context = await browser.newContext();
   try {
-    const response = await context.request.post(ROUTES.accounts, { data: user });
-    if (response.status() !== 201) {
-      throw new Error(
-        `Создание ${user.email} не удалось: ${response.status()} ${await response.text()}`
-      );
-    }
+    await createUserInContext(context, user);
     const page = await context.newPage();
     // Форма регистрации оставляла пользователя на главной, API не открывает
     // ничего — без явного перехода страница висит на about:blank.
@@ -61,19 +81,17 @@ export async function createUserInNewContext(
     return { user, context, page };
   } catch (error) {
     // Контекст наружу не уйдёт, и закрыть его в afterEach будет некому:
-    // в список созданных он попасть не успел.
+    // в список созданных он попасть не успел. Сначала пробуем снести аккаунт:
+    // если POST успел пройти, кука сессии — единственный ключ к удалению,
+    // и вместе с контекстом она пропадёт навсегда.
+    await context.request.delete(ROUTES.accounts).catch(() => {});
     await context.close();
     throw error;
   }
 }
 
 export async function deleteUser(apiUser: ApiUser): Promise<void> {
-  const response = await apiUser.context.request.delete(ROUTES.accounts);
-  if (response.status() !== 200) {
-    throw new Error(
-      `Удаление ${apiUser.user.email} не удалось: ${response.status()} ${await response.text()}`
-    );
-  }
+  await deleteUserFromContext(apiUser.context);
 }
 
 // Список созданных за тест пользователей: afterEach не знает, сколько их
@@ -81,17 +99,8 @@ export async function deleteUser(apiUser: ApiUser): Promise<void> {
 export class UserPool {
   private created: ApiUser[] = [];
 
-  async add(
-    browser: Browser,
-    role: string,
-    runId: number,
-    startUrl?: string
-  ): Promise<ApiUser> {
-    const apiUser = await createUserInNewContext(
-      browser,
-      makeUser(role, runId),
-      startUrl
-    );
+  async add(browser: Browser, role: string, runId: number, startUrl?: string): Promise<ApiUser> {
+    const apiUser = await createUserInNewContext(browser, makeUser(role, runId), startUrl);
     this.created.push(apiUser);
     return apiUser;
   }
@@ -107,19 +116,15 @@ export class UserPool {
         } finally {
           await apiUser.context.close();
         }
-      })
+      }),
     );
     const failed = results.filter((result) => result.status === "rejected");
     if (failed.length > 0) {
-      throw new Error(
-        `Не убрали за собой: ${failed.map((result) => result.reason).join("; ")}`
-      );
+      throw new Error(`Не убрали за собой: ${failed.map((result) => result.reason).join("; ")}`);
     }
   }
 }
 
 export function dateInDays(days: number): string {
-  return new Date(Date.now() + days * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .slice(0, 10);
+  return new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 }

@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { dateInDays, ROUTES, UserPool } from "../helpers/user";
+import { dateInDays, ROUTES, UserPool, uniqueTag } from "../helpers/user";
 import { ProfilePage } from "../pages/profile-page";
 import { SlotsPage } from "../pages/slots-page";
 import { BookingPage } from "../pages/booking-page";
@@ -16,14 +16,15 @@ test.describe("Каталог: карточка участника", () => {
     await users.cleanup();
   });
 
-  test("счётчик свободных слотов в карточке растёт вслед за слотами хоста", async ({
-    browser,
-  }) => {
+  test("счётчик свободных слотов в карточке растёт вслед за слотами хоста", async ({ browser }) => {
     const runId = Date.now();
-    const skillTag = `Playwright-slots-${runId}`;
+    const skillTag = uniqueTag("Playwright-slots", runId);
 
-    const host = await users.add(browser, "slotshost", runId, ROUTES.profile);
-    const guest = await users.add(browser, "slotsguest", runId, ROUTES.home);
+    const [host, guest] =
+      await test.step("Заводим через API хоста на его профиле и гостя в каталоге", async () => [
+        await users.add(browser, "slotshost", runId, ROUTES.profile),
+        await users.add(browser, "slotsguest", runId, ROUTES.home),
+      ]);
 
     const hostProfile = new ProfilePage(host.page);
     const hostSlots = new SlotsPage(host.page);
@@ -47,9 +48,7 @@ test.describe("Каталог: карточка участника", () => {
     });
 
     await test.step("В карточке хоста показан один свободный слот", async () => {
-      await expect(guestCatalog.personCardSlots(host.user.name)).toHaveText(
-        "1 своб. слотов",
-      );
+      await expect(guestCatalog.personCardSlots(host.user.name)).toHaveText("1 своб. слотов");
     });
 
     await test.step("Хост выкладывает второй слот", async () => {
@@ -62,9 +61,7 @@ test.describe("Каталог: карточка участника", () => {
     });
 
     await test.step("Счётчик в карточке стал показывать два слота", async () => {
-      await expect(guestCatalog.personCardSlots(host.user.name)).toHaveText(
-        "2 своб. слотов",
-      );
+      await expect(guestCatalog.personCardSlots(host.user.name)).toHaveText("2 своб. слотов");
     });
   });
 
@@ -72,11 +69,14 @@ test.describe("Каталог: карточка участника", () => {
     browser,
   }) => {
     const runId = Date.now();
-    const canHelpTag = `Playwright-canhelp-${runId}`;
-    const wantToLearnTag = `Playwright-wantlearn-${runId}`;
+    const canHelpTag = uniqueTag("Playwright-canhelp", runId);
+    const wantToLearnTag = uniqueTag("Playwright-wantlearn", runId);
 
-    const host = await users.add(browser, "skillshost", runId, ROUTES.profile);
-    const guest = await users.add(browser, "skillsguest", runId, ROUTES.home);
+    const [host, guest] =
+      await test.step("Заводим через API хоста на его профиле и гостя в каталоге", async () => [
+        await users.add(browser, "skillshost", runId, ROUTES.profile),
+        await users.add(browser, "skillsguest", runId, ROUTES.home),
+      ]);
 
     const hostProfile = new ProfilePage(host.page);
     const hostSlots = new SlotsPage(host.page);
@@ -101,15 +101,11 @@ test.describe("Каталог: карточка участника", () => {
     });
 
     await test.step("В карточке ровно один чип — тот, с которым хост готов помочь", async () => {
-      await expect(guestCatalog.personCardSkills(host.user.name)).toHaveText([
-        canHelpTag,
-      ]);
+      await expect(guestCatalog.personCardSkills(host.user.name)).toHaveText([canHelpTag]);
     });
 
     await test.step("Навык «хочу разобрать» в карточке не показан", async () => {
-      await expect(guestCatalog.personCard(host.user.name)).not.toContainText(
-        wantToLearnTag,
-      );
+      await expect(guestCatalog.personCard(host.user.name)).not.toContainText(wantToLearnTag);
     });
   });
 });

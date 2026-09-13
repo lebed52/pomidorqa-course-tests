@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { dateInDays, ROUTES, UserPool } from "../helpers/user";
+import { dateInDays, ROUTES, UserPool, uniqueTag } from "../helpers/user";
 import { ProfilePage } from "../pages/profile-page";
 import { SlotsPage } from "../pages/slots-page";
 import { BookingPage } from "../pages/booking-page";
@@ -19,10 +19,13 @@ test.describe("Бронирование: отмена встречи", () => {
     test.setTimeout(60_000);
 
     const runId = Date.now();
-    const skillTag = `Playwright-cancel-${runId}`;
+    const skillTag = uniqueTag("Playwright-cancel", runId);
 
-    const host = await users.add(browser, "cancelhost", runId, ROUTES.profile);
-    const guest = await users.add(browser, "cancelguest", runId, ROUTES.home);
+    const [host, guest] =
+      await test.step("Заводим через API хоста на его профиле и гостя в каталоге", async () => [
+        await users.add(browser, "cancelhost", runId, ROUTES.profile),
+        await users.add(browser, "cancelguest", runId, ROUTES.home),
+      ]);
 
     const hostProfile = new ProfilePage(host.page);
     const hostSlots = new SlotsPage(host.page);
