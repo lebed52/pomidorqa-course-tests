@@ -28,15 +28,11 @@ test("Основной путь + гонка за слот: регистраци
     guestPage,
     guest2Page,
     hostProfile,
-    guestCatalog,
-    guest2Catalog,
     hostBooking,
     guestBooking,
     guest2Booking,
     slotDate,
-  } = await prepareBookingFlow(browser);
-
-  contexts = [hostContext, guestContext, guest2Context];
+  } = await prepareBookingFlow(browser, contexts);
 
   await test.step("Хост: добавляет навык «могу помочь»", async () => {
     await hostPage.goto("/pomidorqa/profile");
@@ -59,19 +55,19 @@ test("Основной путь + гонка за слот: регистраци
   });
 
   await test.step("Гость: ищет хоста в каталоге по навыку", async () => {
-    await guestCatalog.searchBySkill(skillTag);
+    await guestBooking.searchBySkill(skillTag);
   });
 
   await test.step("Гость: проверяет, что хост найден", async () => {
-    await expect(guestCatalog.personCard(host.name)).toBeVisible();
+    await expect(guestBooking.catalogCard(host.name)).toBeVisible();
   });
 
   await test.step("Гость: открывает карточку хоста", async () => {
-    await guestCatalog.openPerson(host.name);
+    await guestBooking.openHostCard(host.name);
   });
 
   await test.step("Гость: проверяет карточку хоста", async () => {
-    await expect(guestCatalog.personName()).toHaveText(host.name);
+    await expect(guestBooking.personName()).toHaveText(host.name);
   });
 
   await test.step("Гость: выбирает день и время", async () => {
@@ -83,19 +79,19 @@ test("Основной путь + гонка за слот: регистраци
   });
 
   await test.step("Гость2: ищет хоста в каталоге по навыку", async () => {
-    await guest2Catalog.searchBySkill(skillTag);
+    await guest2Booking.searchBySkill(skillTag);
   });
 
   await test.step("Гость2: проверяет, что хост найден", async () => {
-    await expect(guest2Catalog.personCard(host.name)).toBeVisible();
+    await expect(guest2Booking.catalogCard(host.name)).toBeVisible();
   });
 
   await test.step("Гость2: открывает карточку хоста", async () => {
-    await guest2Catalog.openPerson(host.name);
+    await guest2Booking.openHostCard(host.name);
   });
 
   await test.step("Гость2: проверяет карточку хоста", async () => {
-    await expect(guest2Catalog.personName()).toHaveText(host.name);
+    await expect(guest2Booking.personName()).toHaveText(host.name);
   });
 
   await test.step("Гость2: выбирает тот же день и время", async () => {

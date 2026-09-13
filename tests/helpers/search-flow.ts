@@ -1,18 +1,21 @@
-import { type Browser } from "@playwright/test";
+import { type Browser, type BrowserContext } from "@playwright/test";
 
-import {
-  makeSearchData,
-  registerUserViaApi,
-} from "./user";
+import { makeSearchData, registerUserViaApi } from "./user";
 
 import { BookingPage } from "../pages/booking-page";
 import { ProfilePage } from "../pages/profile-page";
 
-export async function prepareSearchFlow(browser: Browser) {
+export async function prepareSearchFlow(
+  browser: Browser,
+  contexts: BrowserContext[],
+) {
   const { skill, slotDate, host } = makeSearchData();
 
   const hostContext = await browser.newContext();
+  contexts.push(hostContext);
+
   const guestContext = await browser.newContext();
+  contexts.push(guestContext);
 
   await registerUserViaApi(hostContext.request, host);
 

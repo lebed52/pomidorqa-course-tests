@@ -18,9 +18,7 @@ test.describe("Поиск пользователя в каталоге", () => {
     browser,
   }) => {
     const { skill, slotDate, host, hostContext, guestContext, hostPage, guestPage, hostProfile, hostBooking, guestBooking,
-    } = await prepareSearchFlow(browser);
-
-    contexts = [hostContext, guestContext];
+    } = await prepareSearchFlow(browser, contexts);
 
     await test.step("Хост добавляет уникальный навык", async () => {
       await hostPage.goto("/pomidorqa/profile");
