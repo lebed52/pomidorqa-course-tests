@@ -41,12 +41,11 @@ export function makeUser(role: string, runId: number): TestUser {
   };
 }
 
-// Регистрация через API, а не через форму: саму форму проверяет отдельный
-// тест, всем остальным зарегистрированный пользователь нужен как предусловие.
-// POST возвращает куку сессии, а context.request живёт в том же хранилище
-// кук, что и страницы контекста, — поэтому браузер оказывается авторизован
+// Кодекс 11: если тест не проверяет форму регистрации, участник заводится
+// через API. POST возвращает куку сессии, а context.request живёт в том же
+// хранилище кук, что и страницы контекста, — браузер оказывается авторизован
 // без отдельного входа.
-export async function createUserInContext(
+export async function registerUserViaApi(
   context: BrowserContext,
   user: TestUser,
 ): Promise<TestUser> {
@@ -59,50 +58,42 @@ export async function createUserInContext(
   return user;
 }
 
-export async function deleteUserFromContext(context: BrowserContext): Promise<void> {
+// Кодекс 12: удаление каскадное — вместе с аккаунтом уезжают навыки, слоты
+// и брони. DELETE не принимает id, он сносит владельца пришедшей куки,
+// поэтому звать его можно только из контекста, где участник создавался.
+export async function deleteCurrentTestUser(context: BrowserContext): Promise<void> {
   const response = await context.request.delete(ROUTES.accounts);
   if (response.status() !== 200) {
     throw new Error(`Удаление аккаунта не удалось: ${response.status()} ${await response.text()}`);
   }
 }
 
-export async function createUserInNewContext(
-  browser: Browser,
-  user: TestUser,
-  startUrl: string = ROUTES.home,
-): Promise<ApiUser> {
-  const context = await browser.newContext();
-  try {
-    await createUserInContext(context, user);
-    const page = await context.newPage();
-    // Форма регистрации оставляла пользователя на главной, API не открывает
-    // ничего — без явного перехода страница висит на about:blank.
-    await page.goto(startUrl);
-    return { user, context, page };
-  } catch (error) {
-    // Контекст наружу не уйдёт, и закрыть его в afterEach будет некому:
-    // в список созданных он попасть не успел. Сначала пробуем снести аккаунт:
-    // если POST успел пройти, кука сессии — единственный ключ к удалению,
-    // и вместе с контекстом она пропадёт навсегда.
-    await context.request.delete(ROUTES.accounts).catch(() => {});
-    await context.close();
-    throw error;
-  }
-}
+type PooledUser = {
+  context: BrowserContext;
+  accountCreated: boolean;
+};
 
-export async function deleteUser(apiUser: ApiUser): Promise<void> {
-  await deleteUserFromContext(apiUser.context);
-}
-
-// Список созданных за тест пользователей: afterEach не знает, сколько их
-// завёл сценарий, поэтому тест складывает их сюда, а хук разбирает.
+// Список контекстов, созданных за тест: afterEach не знает, сколько их завёл
+// сценарий, поэтому тест складывает их сюда, а хук разбирает.
 export class UserPool {
-  private created: ApiUser[] = [];
+  private created: PooledUser[] = [];
 
   async add(browser: Browser, role: string, runId: number, startUrl?: string): Promise<ApiUser> {
-    const apiUser = await createUserInNewContext(browser, makeUser(role, runId), startUrl);
-    this.created.push(apiUser);
-    return apiUser;
+    const context = await browser.newContext();
+    // Кодекс 12: контекст попадает в список до первого действия, которое
+    // может упасть. Иначе упавшая регистрация оставит и контекст открытым,
+    // и аккаунт на стенде — снести его будет уже нечем, кука пропадёт.
+    const pooled: PooledUser = { context, accountCreated: false };
+    this.created.push(pooled);
+
+    const user = await registerUserViaApi(context, makeUser(role, runId));
+    pooled.accountCreated = true;
+
+    const page = await context.newPage();
+    // Форма регистрации оставляла участника на главной, API не открывает
+    // ничего — без явного перехода страница висит на about:blank.
+    await page.goto(startUrl ?? ROUTES.home);
+    return { user, context, page };
   }
 
   // splice, а не обход живого списка: он должен опустеть даже если удаление
@@ -110,11 +101,15 @@ export class UserPool {
   async cleanup(): Promise<void> {
     const batch = this.created.splice(0);
     const results = await Promise.allSettled(
-      batch.map(async (apiUser) => {
+      batch.map(async (pooled) => {
         try {
-          await deleteUser(apiUser);
+          // Если регистрация не дошла до 201, удалять нечего, а DELETE
+          // ответит 401 и подменит настоящую причину падения теста.
+          if (pooled.accountCreated) {
+            await deleteCurrentTestUser(pooled.context);
+          }
         } finally {
-          await apiUser.context.close();
+          await pooled.context.close();
         }
       }),
     );

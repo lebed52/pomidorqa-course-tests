@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { createUserInContext, deleteUserFromContext, makeUser } from "../helpers/user";
+import { registerUserViaApi, deleteCurrentTestUser, makeUser } from "../helpers/user";
 import { ProfilePage } from "../pages/profile-page";
 
 test.describe("Профиль: действия с полями", () => {
@@ -11,7 +11,7 @@ test.describe("Профиль: действия с полями", () => {
   let accountCreated = false;
 
   test.beforeEach(async ({ page }) => {
-    await createUserInContext(page.context(), makeUser("hw14", Date.now()));
+    await registerUserViaApi(page.context(), makeUser("hw14", Date.now()));
     accountCreated = true;
     profile = new ProfilePage(page);
     await profile.open();
@@ -26,7 +26,7 @@ test.describe("Профиль: действия с полями", () => {
       return;
     }
     accountCreated = false;
-    await deleteUserFromContext(page.context());
+    await deleteCurrentTestUser(page.context());
   });
 
   test("имя сохраняется и приходит с сервера после перезагрузки", async () => {
