@@ -1,15 +1,30 @@
 import { test, expect } from "@playwright/test";
-import { makeUser, registerUser } from "../helpers/user";
+import { makeUser, ROUTES } from "../helpers/user";
 import { ProfilePage } from "../pages/profile-page";
 
 test.describe("Профиль: действия с полями", () => {
   let profile: ProfilePage;
 
+  // Пользователь заводится через API: форму регистрации проверяет отдельный
+  // тест, здесь нужен только сам факт «участник есть и он вошёл». Кука из
+  // ответа ложится в контекст страницы, поэтому профиль открывается сразу.
   test.beforeEach(async ({ page }) => {
-    const user = makeUser("hw10", Date.now());
-    await registerUser(page, user);
+    const user = makeUser("hw14", Date.now());
+    const created = await page.context().request.post(ROUTES.accounts, { data: user });
+    if (created.status() !== 201) {
+      throw new Error(`Создание ${user.email} не удалось: ${created.status()}`);
+    }
     profile = new ProfilePage(page);
     await profile.open();
+  });
+
+  // Контекст здесь свой у каждого теста и закрывает его Playwright — нам
+  // остаётся убрать сам аккаунт, иначе он копится на общем стенде.
+  test.afterEach(async ({ page }) => {
+    const deleted = await page.context().request.delete(ROUTES.accounts);
+    if (deleted.status() !== 200) {
+      throw new Error(`Удаление аккаунта не удалось: ${deleted.status()}`);
+    }
   });
 
   test("имя сохраняется и приходит с сервера после перезагрузки", async () => {
