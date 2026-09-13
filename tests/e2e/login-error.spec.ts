@@ -1,49 +1,42 @@
 import { test, expect } from "@playwright/test";
+import { deleteUserViaApi, makeLoginErrorData, registerUserViaApi } from "../helpers/user";
+import { LoginPage } from "../pages/login-page";
+import { expectSameLoginError } from "../helpers/login";
 
-// E2E-уровень пирамиды, негативный сценарий: сценарий 10 из списка ДЗ Урока 2.
-// requirements.md, п.4: при неверном email ИЛИ пароле участник должен увидеть одну и ту же
-// понятную ошибку, без уточнения, что именно неверно, — из соображений безопасности.
+test.afterEach(async ({ page }) => {
+  await deleteUserViaApi(page.context().request);
+});
 
-test("вход с неверными данными — одинаковая ошибка в обоих случаях, без уточнения причины", async ({
-  page,
-}) => {
-  const runId = Date.now();
-  const email = `login-check-${runId}@example.com`;
-  const password = "correct-password-123";
-
-  await test.step("Заводим реальный аккаунт для проверки", async () => {
-    await page.goto("/pomidorqa/auth/register");
-    await page.getByLabel("Имя").fill("Login Error Check");
-    await page.getByLabel("Email").fill(email);
-    await page.getByLabel("Пароль").fill(password);
-    await page.getByRole("button", { name: "Зарегистрироваться" }).click();
-    await expect(page).toHaveURL(/\/pomidorqa\/?$/);
-  });
+test("Вход с неверными данными — одинаковая ошибка в обоих случаях, без уточнения причины", async ({ page }) => {
+  const { user, wrongPassword, unknownEmail, unknownPassword } = makeLoginErrorData();
+  const loginPage = new LoginPage(page);
 
   let wrongPasswordError = "";
-  await test.step("Пробуем войти с верным email, но неверным паролем", async () => {
-    await page.goto("/pomidorqa/auth/login");
-    await page.getByLabel("Email").fill(email);
-    await page.getByLabel("Пароль").fill("wrong-password");
-    await page.getByRole("button", { name: "Войти" }).click();
-    const error = page.getByText(/Неверный/);
-    await expect(error).toBeVisible();
-    wrongPasswordError = (await error.textContent())?.trim() ?? "";
-  });
-
   let unknownEmailError = "";
-  await test.step("Пробуем войти с несуществующим email", async () => {
+
+  await registerUserViaApi(page.context().request, user);
+
+  await test.step("Выполняем вход с неверным паролем", async () => {
     await page.goto("/pomidorqa/auth/login");
-    await page.getByLabel("Email").fill(`no-such-user-${runId}@example.com`);
-    await page.getByLabel("Пароль").fill("any-password-123");
-    await page.getByRole("button", { name: "Войти" }).click();
-    const error = page.getByText(/Неверный/);
-    await expect(error).toBeVisible();
-    unknownEmailError = (await error.textContent())?.trim() ?? "";
+    await loginPage.login(user.email, wrongPassword);
   });
 
-  await test.step("Проверяем: текст ошибки одинаковый в обоих случаях — не раскрывает, что именно неверно", async () => {
-    expect(wrongPasswordError).toBe(unknownEmailError);
-    expect(wrongPasswordError).toContain("Неверный");
+  await test.step("Проверяем ошибку при неверном пароле", async () => {
+    await expect(loginPage.errorMessage()).toBeVisible();
+    wrongPasswordError = await loginPage.getErrorText();
+  });
+
+  await test.step("Выполняем вход с несуществующим email", async () => {
+    await page.goto("/pomidorqa/auth/login");
+    await loginPage.login(unknownEmail, unknownPassword);
+  });
+
+  await test.step("Проверяем ошибку при несуществующем email", async () => {
+    await expect(loginPage.errorMessage()).toBeVisible();
+    unknownEmailError = await loginPage.getErrorText();
+  });
+
+  await test.step("Проверяем, что система показывает одинаковую ошибку", async () => {
+    expectSameLoginError(wrongPasswordError, unknownEmailError);
   });
 });
