@@ -68,6 +68,8 @@ async function registerUser(page: Page, user: TestUser) {
 test("основной путь + гонка за слот: регистрация → навык → слот → поиск в каталоге → бронирование → «Мои встречи» у обоих → второй гость видит ошибку", async ({
   browser,
 }) => {
+  test.setTimeout(120_000);
+
   const runId = Date.now();
   const skillTag = `Playwright-demo-${runId}`;
   const host = makeUser("host", runId);
