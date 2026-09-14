@@ -85,7 +85,7 @@ test.describe("API: бронирование слота PomidorQA", () => {
   });
 });
 
-test.describe("API: регистрация участника PomidorQA ", () => {
+test.describe("API: регистрация участника PomidorQA", () => {
   let api: APIRequestContext;
   let close: () => Promise<void>;
 
