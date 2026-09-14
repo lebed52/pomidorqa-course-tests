@@ -80,6 +80,10 @@ export class BookingPage {
     await this.cardByName(name).click();
   }
 
+  slotById(slotId: string) {
+    return this.page.locator(`[data-slot-id="${slotId}"]`);
+  }
+
   slotDay(date: string) {
     return this.page.locator(`[data-date="${date}"]`);
   }
@@ -91,12 +95,12 @@ export class BookingPage {
       : group.getByRole("button");
   }
 
-  async openSlot(date: string) {
-    const day = this.slotDay(date);
-    if ((await day.getAttribute("aria-pressed")) !== "true") {
-      await day.click();
+  async openSlot(date: string, slotId: string) {
+    const slot = this.slotById(slotId);
+    if (!(await slot.isVisible())) {
+      await this.slotDay(date).click();
     }
-    await this.slotTime().click();
+    await slot.click();
   }
 
   async confirm() {

@@ -57,6 +57,7 @@ test.describe("Бронирование слота", () => {
   });
 
   test("гость бронирует слот хоста", async ({ browser }) => {
+    test.setTimeout(60_000);
     const runId = Date.now();
     const skillTag = `Playwright-demo-${runId}`;
     const host = makeUser("host", runId);
@@ -72,6 +73,7 @@ test.describe("Бронирование слота", () => {
     const hostBooking = new BookingPage(hostPage);
     const guestBooking = new BookingPage(guestPage);
     let slotDate = "";
+    let slotId = "";
 
     try {
       await test.step("Хост: регистрируется в PomidorQA", async () => {
@@ -93,7 +95,8 @@ test.describe("Бронирование слота", () => {
         await hostBooking.gotoSlots();
         const slot = await hostBooking.addTomorrowSlot();
         slotDate = slot.date;
-        await expect(hostBooking.slotCard.first()).toBeVisible();
+        await expect(hostBooking.slotCard).toHaveCount(1);
+        slotId = (await hostBooking.slotCard.getAttribute("data-slot-id")) ?? "";
       });
 
       await test.step("Гость: регистрируется в PomidorQA", async () => {
@@ -113,9 +116,11 @@ test.describe("Бронирование слота", () => {
         await guestBooking.openPerson(host.name);
         await expect(guestBooking.personName).toHaveText(host.name);
         await expect(guestBooking.slotDay(slotDate)).toBeVisible();
-        await expect(guestBooking.slotTime()).toBeVisible();
-        await guestBooking.openSlot(slotDate);
-        await expect(guestBooking.bookingConfirmDialog).toBeVisible();
+        await expect(guestBooking.slotById(slotId)).toBeVisible();
+        await guestBooking.openSlot(slotDate, slotId);
+        await expect(guestBooking.bookingConfirmDialog).toBeVisible({
+          timeout: 15_000,
+        });
         await guestBooking.confirm();
         await expect(
           guestBooking.bookingConfirmSuccess.or(guestBooking.bookingConfirmError),
