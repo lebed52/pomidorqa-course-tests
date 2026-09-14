@@ -123,7 +123,9 @@ test.describe("Бронирование слота", () => {
         });
         await guestBooking.confirm();
         await expect(
-          guestBooking.bookingConfirmSuccess.or(guestBooking.bookingConfirmError),
+          guestBooking.bookingConfirmSuccess.or(
+            guestBooking.bookingConfirmError,
+          ),
         ).toBeVisible({ timeout: 15_000 });
         await expect(guestBooking.bookingConfirmError).toBeHidden();
       });

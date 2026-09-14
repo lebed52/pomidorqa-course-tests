@@ -81,7 +81,9 @@ export class BookingPage {
   }
 
   slotById(slotId: string) {
-    return this.page.locator(`[data-slot-id="${slotId}"]`);
+    return this.page
+      .getByRole("group", { name: "Время слотов" })
+      .locator(`[data-slot-id="${slotId}"]`);
   }
 
   slotDay(date: string) {
@@ -96,9 +98,19 @@ export class BookingPage {
   }
 
   async openSlot(date: string, slotId: string) {
+    const day = this.slotDay(date);
     const slot = this.slotById(slotId);
-    if (!(await slot.isVisible())) {
-      await this.slotDay(date).click();
+    await slot.waitFor({ state: "visible" });
+    await this.page.waitForFunction((id) => {
+      const button = document.querySelector(
+        `[aria-label="Время слотов"] [data-slot-id="${id}"]`,
+      );
+      return Boolean(
+        button && Object.keys(button).some((key) => key.startsWith("__react")),
+      );
+    }, slotId);
+    if ((await day.getAttribute("aria-pressed")) !== "true") {
+      await day.click();
     }
     await slot.click();
   }
