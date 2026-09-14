@@ -9,17 +9,16 @@ test.describe('Профиль: действия с полями', () => {
   test.beforeEach(async ({ browser }) => {
     const user = makeUser('test', Date.now());
     context = await browser.newContext();
-    const hostContext = await browser.newContext();
-    const hostPage = await hostContext.newPage();
-    profilePage = new ProfilePage(hostPage);
+    const page = await context.newPage();
+    profilePage = new ProfilePage(page);
 
-    await registerUser(hostContext.request, user);
+    await registerUser(context.request, user);
     await profilePage.goto();
   });
 
   test.afterEach(async () => {
     await cleanupUsersViaApi([context]);
-    await context.close();
+    await context.close(); //
   });
 
   test('имя: вводим новое и сохраняем', async () => {
