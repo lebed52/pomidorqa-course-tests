@@ -1,8 +1,6 @@
 import { test, expect, request, type APIRequestContext } from '@playwright/test';
 import { startServer, type BookingStore } from '../../src/pyramid/mock-booking-api';
 
-// API-уровень пирамиды: проверяем бизнес-логику бронирования через HTTP-запросы,
-
 test.describe('API: бронирование слота PomidorQA', () => {
   let store: BookingStore;
   let api: APIRequestContext;

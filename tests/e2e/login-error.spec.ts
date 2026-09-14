@@ -1,5 +1,11 @@
 import { test, expect, type Locator } from '@playwright/test';
-import { makeUser, registerViaApi, loginUser, type TestUser } from '../helpers/user';
+import {
+  makeUser,
+  registerViaApi,
+  loginUser,
+  deleteAccountViaApi,
+  type TestUser,
+} from '../helpers/user';
 
 test.describe('Вход с неверными данными', () => {
   let user: TestUser;
@@ -12,7 +18,9 @@ test.describe('Вход с неверными данными', () => {
     await registerViaApi(page.context(), user);
     errorMessage = page.getByText('Неверный');
   });
-
+  test.afterEach(async ({ page }) => {
+    await deleteAccountViaApi(page.context()).catch(() => undefined);
+  });
   test('вход с неверными данными — одинаковая ошибка в обоих случаях, без уточнения причины', async ({
     page,
   }) => {

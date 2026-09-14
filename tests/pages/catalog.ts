@@ -27,7 +27,6 @@ export class CatalogPage {
     await this.btnSearch.click();
   }
 
-  /** Открывает каталог. */
   async goto() {
     await this.page.goto(ROUTES.catalog);
   }

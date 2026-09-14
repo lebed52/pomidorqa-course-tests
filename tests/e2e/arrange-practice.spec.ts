@@ -1,5 +1,11 @@
 import { test, expect } from '@playwright/test';
-import { makeUser, makeUnique, registerViaApi, type TestUser } from '../helpers/user';
+import {
+  makeUser,
+  makeUnique,
+  registerViaApi,
+  deleteAccountViaApi,
+  type TestUser,
+} from '../helpers/user';
 import { ProfilePage } from '../pages/profile';
 
 const telegramUsername = makeUnique('@student');
@@ -17,7 +23,9 @@ test.describe('Ввод данных после регистрации', () => {
     await profilePage.open();
     await expect(profilePage.inputName).toHaveValue(user.name);
   });
-
+  test.afterEach(async ({ page }) => {
+    await deleteAccountViaApi(page.context()).catch(() => undefined);
+  });
   test('Заполнение поля "Telegram" на странице профиля', async ({ page }) => {
     await test.step('Заполняем Telegram и сохраняем', async () => {
       await profilePage.inputTelegram.fill(telegramUsername);

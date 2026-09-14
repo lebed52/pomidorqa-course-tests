@@ -35,7 +35,6 @@ test.describe('Мои встречи: отмена брони', () => {
     guest = makeUser('guest');
     skillTag = makeUnique('Cancel');
 
-    // API-регистрация: контексты уже залогинены, форму не дёргаем
     await registerViaApi(hostContext, host);
     await registerViaApi(guestContext, guest);
 
@@ -45,7 +44,6 @@ test.describe('Мои встречи: отмена брони', () => {
     guestCatalog = new CatalogPage(guestPage);
     guestBooking = new BookingPage(guestPage);
 
-    // Хост делает себя находимым: навык + свободный слот на завтра
     await hostProfile.open();
     await hostProfile.addSkill(skillTag);
     await expect(hostProfile.canHelpSkills).toContainText(skillTag);
@@ -55,14 +53,10 @@ test.describe('Мои встречи: отмена брони', () => {
     await hostSlots.addSlot(tomorrow.toISOString().slice(0, 10), '12:00');
     await expect(hostSlots.freeSlots).toBeVisible();
 
-    // API-регистрация не открывает страницы — гостя явно привозим в каталог
     await guestCatalog.goto();
   });
 
   test.afterEach(async () => {
-    // каскадный DELETE сносит аккаунты и их данные; контексты закрываем
-    // после удаления — сессия из куки должна быть живой на момент запроса.
-    // Уборка best-effort: если регистрация упала, удалять нечего.
     await deleteAccountViaApi(guestContext).catch(() => undefined);
     await deleteAccountViaApi(hostContext).catch(() => undefined);
     await guestContext.close();

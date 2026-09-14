@@ -1,5 +1,11 @@
 import { test, expect } from '@playwright/test';
-import { makeUser, makeUnique, registerViaApi, type TestUser } from '../helpers/user';
+import {
+  makeUser,
+  makeUnique,
+  registerViaApi,
+  deleteAccountViaApi,
+  type TestUser,
+} from '../helpers/user';
 import { ProfilePage } from '../pages/profile';
 
 test.describe('Заполнение профиля после регистрации', () => {
@@ -13,7 +19,9 @@ test.describe('Заполнение профиля после регистрац
     await profilePage.open();
     await expect(profilePage.inputName).toHaveValue(user.name);
   });
-
+  test.afterEach(async ({ page }) => {
+    await deleteAccountViaApi(page.context()).catch(() => undefined);
+  });
   test('Смена имени в профиле', async ({ page }) => {
     const newName = makeUnique('Hw10');
 

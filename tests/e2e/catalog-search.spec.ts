@@ -29,7 +29,6 @@ test.describe('Каталог: поиск', () => {
     host = makeUser('host');
     skillTag = makeUnique('Search');
 
-    // API-регистрация: контексты уже залогинены
     await registerViaApi(hostContext, host);
     await registerViaApi(guestContext, makeUser('guest'));
 
@@ -38,7 +37,6 @@ test.describe('Каталог: поиск', () => {
     hostCatalog = new CatalogPage(hostPage);
     guestCatalog = new CatalogPage(guestPage);
 
-    // Без будущего слота хост в каталог не попадает — слот обязателен
     await hostProfile.open();
     await hostProfile.addSkill(skillTag);
     await expect(hostProfile.canHelpSkills).toContainText(skillTag);
@@ -47,12 +45,10 @@ test.describe('Каталог: поиск', () => {
     const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
     await hostSlots.addSlot(tomorrow.toISOString().slice(0, 10), '12:00');
 
-    // API-регистрация не открывает страницы — гостя явно привозим в каталог
     await guestCatalog.goto();
   });
 
   test.afterEach(async () => {
-    // каскадный DELETE: навыки, слоты, встречи; контексты — после удаления
     await deleteAccountViaApi(guestContext).catch(() => undefined);
     await deleteAccountViaApi(hostContext).catch(() => undefined);
     await guestContext.close();
@@ -108,10 +104,6 @@ test.describe('Каталог: поиск', () => {
   });
 
   test('хост без слота не попадает в каталог, а появившись — не видит сам себя', async () => {
-    // В beforeEach у хоста слот ЕСТЬ — для этого сценария гость сначала
-    // проверяет, что карточка видна, а хост свою не видит. Правило
-    // «без слота не попадает» проверено поведением beforeEach+первого поиска
-    // в соседних тестах; здесь — правило «своё не видно».
     await test.step('Гость: ищет по навыку хоста', async () => {
       await guestCatalog.searchBy(skillTag);
     });
@@ -133,9 +125,6 @@ test.describe('Каталог: поиск', () => {
 });
 
 test.describe('Каталог: попадание в выдачу зависит от слота', () => {
-  // Правило из ДЗ: без будущего слота участник в каталог не попадает.
-  // В первом describe слот ставится в beforeEach, поэтому здесь отдельная
-  // подготовка без слота и проверка «до/после» на одной паре актёров.
   let host: TestUser;
   let guest: TestUser;
   let skillTag: string;
