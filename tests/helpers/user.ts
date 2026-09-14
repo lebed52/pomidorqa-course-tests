@@ -1,9 +1,20 @@
-import { Page, expect } from '@playwright/test';
+import { APIRequestContext, Page, expect } from '@playwright/test';
 
 export type TestUser = {
   name: string;
   email: string;
   password: string;
+};
+
+export const ROUTES = {
+  register: '/pomidorqa/auth/register',
+  testAccounts: '/api/pomidorqa/test/accounts',
+};
+
+export type RegisteredParticipant = {
+  id: string;
+  name: string;
+  email: string;
 };
 
 export function makeUser(role: string, runId: number): TestUser {
@@ -14,13 +25,36 @@ export function makeUser(role: string, runId: number): TestUser {
   };
 }
 
-export async function registerUser(page: Page, user: TestUser) {
-  await page.goto('/pomidorqa/auth/register');
-  await page.getByLabel('Имя').fill(user.name);
-  await page.getByLabel('Email').fill(user.email);
-  await page.getByLabel('Пароль').fill(user.password);
-  await page.getByRole('button', { name: 'Зарегистрироваться' }).click();
-  await expect(page).toHaveURL(/\/pomidorqa\/?$/);
+export async function registerUser(
+  request: APIRequestContext,
+  user: TestUser,
+): Promise<RegisteredParticipant> {
+  const response = await request.post(ROUTES.testAccounts, { data: user, timeout: 30_000 });
+
+  if (response.status() !== 201) {
+    throw new Error(
+      `Регистрация ${user.email} не уадлось: ${response.status()} ${await response.text()}`,
+    );
+  }
+  return response.json();
+}
+
+export async function deleteUserViaApi(request: APIRequestContext): Promise<void> {
+  const response = await request.delete(ROUTES.testAccounts);
+
+  if (response.status() !== 200) {
+    throw new Error(`Удаление аккаунта не удалось: ${response.status()} ${await response.text()}`);
+  }
+}
+
+export async function cleanupUsersViaApi(
+  contexts: Array<{ request: APIRequestContext }>,
+): Promise<void> {
+  for (const context of contexts) {
+    try {
+      await deleteUserViaApi(context.request);
+    } catch {}
+  }
 }
 
 export async function reload(page: Page) {

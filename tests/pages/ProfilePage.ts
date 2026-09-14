@@ -26,10 +26,10 @@ export class ProfilePage {
     this.page = page;
 
     // Поля профиля
-    this.nameInput = page.getByLabel('Имя');
-    this.telegramInput = page.getByLabel('Telegram');
+    this.nameInput = page.getByRole('textbox', { name: 'Имя' });
+    this.telegramInput = page.getByRole('textbox', { name: 'Telegram' });
     this.timezoneSelect = page.getByLabel('Часовой пояс');
-    this.bioInput = page.getByLabel('О себе');
+    this.bioInput = page.getByRole('textbox', { name: 'О себе' });
     this.saveButton = page.getByRole('button', { name: 'Сохранить' });
 
     // Навыки
@@ -47,12 +47,12 @@ export class ProfilePage {
   }
 
   async changeName(name: string) {
-    await this.nameInput.fill(name);
+    await this.fillName(name);
     await this.saveProfile();
   }
 
   async changeTelegram(telegram: string) {
-    await this.telegramInput.fill(telegram);
+    await this.fillTelegram(telegram);
     await this.saveProfile();
   }
 
@@ -62,7 +62,7 @@ export class ProfilePage {
   }
 
   async changeBio(bio: string) {
-    await this.bioInput.fill(bio);
+    await this.fillBio(bio);
     await this.saveProfile();
   }
 
@@ -96,5 +96,17 @@ export class ProfilePage {
 
   async goto() {
     await this.page.goto('/pomidorqa/profile');
+  }
+
+  async fillName(name: string) {
+    await this.nameInput.fill(name);
+  }
+
+  async fillTelegram(telegram: string) {
+    await this.telegramInput.fill(telegram);
+  }
+
+  async fillBio(bio: string) {
+    await this.bioInput.fill(bio);
   }
 }

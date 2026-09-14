@@ -28,8 +28,8 @@ test.describe('Каталог: поиск по навыку', () => {
     hostBooking = new BookingPage(hostPage);
     guestBooking = new BookingPage(guestPage);
 
-    await registerUser(hostPage, host);
-    await registerUser(guestPage, guest);
+    await registerUser(hostContext.request, host);
+    await registerUser(guestContext.request, guest);
   });
 
   test.afterEach(async () => {
