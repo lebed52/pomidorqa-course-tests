@@ -33,7 +33,7 @@ export async function registerUser(
 
   if (response.status() !== 201) {
     throw new Error(
-      `Регистрация ${user.email} не уадлось: ${response.status()} ${await response.text()}`,
+      `Регистрация ${user.email} не удалось: ${response.status()} ${await response.text()}`,
     );
   }
   return response.json();
