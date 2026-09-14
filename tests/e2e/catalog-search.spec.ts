@@ -1,55 +1,52 @@
-import { test, expect, type BrowserContext } from "@playwright/test";
-import { makeUser, registerUser, type TestUser } from "../helpers/user";
-import { registerHostWithSkill, addOpenSlot } from "../helpers/host";
+import { test, expect } from "@playwright/test";
+import { UserRegistry, uniqueTag, type TestUser } from "../helpers/user";
+import { addOpenSlot } from "../helpers/host";
 import { ProfilePage } from "../pages/profile-page";
 import { BookingPage } from "../pages/booking-page";
 
-// Урок 13: поиск в каталоге PomidorQA.
-// beforeEach поднимает пару на каждый тест: хоста (навык «могу помочь» +
-// будущий слот — без слота участник в каталог не попадает) и гостя
-// (своя карточка в каталоге не видна, поэтому все проверки «извне» — от него).
-// Оба контекста закрывает afterEach — он выполняется и при падении теста,
-// как finally. Тег навыка уникален за счёт runId, поэтому в выдаче
-// по нему только этот хост.
+// Урок 13: поиск в каталоге PomidorQA. Урок 14: участники заводятся через API —
+// регистрация осталась за пределами браузера, потому что эти тесты проверяют
+// каталог, а не форму регистрации. beforeEach поднимает пару на каждый тест:
+// хоста (навык «могу помочь» + будущий слот — без слота участник в каталог
+// не попадает) и гостя (своя карточка в каталоге не видна, поэтому все
+// проверки «извне» — от него). afterEach гарантированно удаляет оба аккаунта
+// и закрывает контексты — он выполняется и при падении теста, как finally.
+// Тег навыка уникален, поэтому в выдаче по нему только этот хост.
 
 test.describe("Каталог: поиск по навыку", () => {
+  const users = new UserRegistry();
+
   let host: TestUser;
   let skillTag: string;
-  let hostContext: BrowserContext;
-  let guestContext: BrowserContext;
   let hostBooking: BookingPage;
   let guestBooking: BookingPage;
 
   test.beforeEach(async ({ browser }) => {
-    const runId = Date.now();
-    host = makeUser("host", runId);
-    skillTag = `Playwright-search-${runId}`;
+    skillTag = uniqueTag("Playwright-search");
+
+    const hostSession = await users.add(browser, "host");
+    const guestSession = await users.add(browser, "guest");
+    host = hostSession.user;
+
+    hostBooking = new BookingPage(hostSession.page);
+    guestBooking = new BookingPage(guestSession.page);
 
     const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
     const slotDate = tomorrow.toISOString().slice(0, 10);
 
-    hostContext = await browser.newContext();
-    guestContext = await browser.newContext();
-    const hostPage = await hostContext.newPage();
-    const guestPage = await guestContext.newPage();
-    hostBooking = new BookingPage(hostPage);
-    guestBooking = new BookingPage(guestPage);
-
     // Подготовку проверяем здесь же — каждую часть на своей странице:
     // если навык или слот молча не сохранились, падение укажет
     // на подготовку, а не на поиск гостя.
-    const hostProfile = new ProfilePage(hostPage);
-    await registerHostWithSkill(hostPage, host, skillTag);
+    const hostProfile = new ProfilePage(hostSession.page);
+    await hostProfile.open();
+    await hostProfile.addSkill(skillTag, "can_help");
     await expect(hostProfile.canHelpSkills).toContainText(skillTag);
-    await addOpenSlot(hostPage, slotDate);
+    await addOpenSlot(hostSession.page, slotDate);
     await expect(hostBooking.slotsCard.first()).toBeVisible();
-
-    await registerUser(guestPage, makeUser("guest", runId));
   });
 
   test.afterEach(async () => {
-    await hostContext.close();
-    await guestContext.close();
+    await users.cleanup();
   });
 
   test("по навыку находится участник со свободным слотом", async () => {
@@ -84,7 +81,7 @@ test.describe("Каталог: поиск по навыку", () => {
   test("по навыку без совпадений выдача пустая", async () => {
     // Хост с живым навыком и слотом существует — тест проверяет именно
     // «по чужому навыку не находит», а не «в каталоге вообще пусто».
-    const missingTag = `NoSuchSkill-${Date.now()}`;
+    const missingTag = uniqueTag("NoSuchSkill");
 
     await test.step("Гость: открывает каталог", async () => {
       await guestBooking.openCatalog();
