@@ -1,5 +1,5 @@
-import { test, expect, type Browser, type BrowserContext } from "@playwright/test";
-import { makeUser } from "../helpers/user";
+import {test, expect, type Browser, type BrowserContext } from "@playwright/test";
+import {deleteCurrentTestUser, makeUser} from "../helpers/user";
 import { createGuestCatalog, prepareHostForCatalog } from "../helpers/catalog";
 
 test.describe("Каталог: поиск участников по навыкам", () => {
@@ -16,8 +16,12 @@ test.describe("Каталог: поиск участников по навыка
   });
 
   test.afterEach(async () => {
-    await Promise.all(contextsToClose.map((context) => context.close()));
-  });
+    try {
+      await deleteCurrentTestUser(contextsToClose[0].request)
+    } finally {
+      await Promise.all(contextsToClose.map((context) => context.close()));
+    }
+  })
 
   test("Поиск по существующему навыку возвращает карточку участника", async ({ browser }) => {
     const runId = Date.now();

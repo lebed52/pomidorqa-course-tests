@@ -71,10 +71,6 @@ export class BookingPage {
         await this.page.goto(ROUTES.slots);
     };
 
-    async gotoBooking() {
-        await this.page.goto(ROUTES.bookings);
-    };
-
     async addSlot(
         date: string = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
         time: string = "12:00"
@@ -83,44 +79,4 @@ export class BookingPage {
         await this.slotsTimeInput.fill(time);
         await this.slotsAddSubmit.click();
     };
-
-    async fillFilter(tag: string) {
-        await this.catalogFilterInput.fill(tag);
-        await this.catalogFilterSubmit.click();
-    };
-
-    async openCard(hostName: string) {
-        await this.catalogCard.filter({ hasText: hostName }).click()
-    };
-
-    async getChip() {
-        const dayChip = this.bookingCalendarDay.first();
-        if (!(await dayChip.isVisible().catch(() => false))) {
-            await this.page.reload();
-        }
-    };
-
-    async selectFirstDay() {
-        await this.bookingCalendarDay.first().click();
-    };
-
-    async selectFirstTime() {
-        const timeChip = this.bookingCalendarTime.first();
-        await timeChip.click();
-
-        if (!(await this.bookingConfirmDialog.isVisible().catch(() => false))) {
-            await timeChip.click().catch(() => {});
-        }
-    }
-
-    async confirmBooking() {
-        await this.bookingConfirmButton.click();
-
-    };
-
-    async cancelBooking() {
-        await this.gotoBooking();
-        await this.bookingCancelButton.click();
-        await this.bookingCancelButton.waitFor({ state: "hidden", timeout: 5000 }).catch(() => {});
-    }
 }

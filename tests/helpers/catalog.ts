@@ -1,8 +1,8 @@
 import { expect, test, type Browser, type BrowserContext } from "@playwright/test";
-import { registerUser, type TestUser } from "./user";
 import { ProfilePage } from "../pages/profile-page";
 import { BookingPage } from "../pages/booking-page";
 import { CatalogPage } from "../pages/catalog-page";
+import { registerUserViaApi, type TestUser } from "./user";
 
 type RegisterContext = (browser: Browser) => Promise<BrowserContext>;
 
@@ -22,7 +22,7 @@ export async function prepareHostForCatalog(
   const hostBooking = new BookingPage(hostPage);
 
   await test.step("Хост: регистрируется в сервисе", async () => {
-    await registerUser(hostPage, host);
+    await registerUserViaApi(hostPage.request, host);
   });
 
   await test.step("Хост: добавляет навык «могу помочь» в профиле", async () => {
