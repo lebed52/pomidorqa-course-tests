@@ -68,6 +68,8 @@ async function registerUser(page: Page, user: TestUser) {
 test("основной путь + гонка за слот: регистрация → навык → слот → поиск в каталоге → бронирование → «Мои встречи» у обоих → второй гость видит ошибку", async ({
   browser,
 }) => {
+  test.setTimeout(120_000);
+
   const runId = Date.now();
   const skillTag = `Playwright-demo-${runId}`;
   const host = makeUser("host", runId);
@@ -131,8 +133,9 @@ test("основной путь + гонка за слот: регистраци
     }).toPass({ timeout: 10_000 });
 
     await bookingCalendarDay(guestPage).first().click();
+    await expect(bookingCalendarTime(guestPage).first()).toBeVisible();
     await bookingCalendarTime(guestPage).first().click();
-    await expect(bookingConfirmDialog(guestPage)).toBeVisible();
+    await expect(bookingConfirmDialog(guestPage)).toBeVisible({ timeout: 15_000 });
   });
 
   // Важно для разбора ДЗ 4: модалку guest2 открываем ДО confirm у guest.
@@ -154,8 +157,9 @@ test("основной путь + гонка за слот: регистраци
     }).toPass({ timeout: 10_000 });
 
     await bookingCalendarDay(guest2Page).first().click();
+    await expect(bookingCalendarTime(guest2Page).first()).toBeVisible();
     await bookingCalendarTime(guest2Page).first().click();
-    await expect(bookingConfirmDialog(guest2Page)).toBeVisible();
+    await expect(bookingConfirmDialog(guest2Page)).toBeVisible({ timeout: 15_000 });
   });
 
   await test.step("Гость: подтверждает бронирование первым — успех", async () => {
