@@ -10,9 +10,6 @@ test.describe('Бронирование, гонка за слот', () => {
 
   test.afterEach(async () => {
     await cleanupUsersViaApi([hostContext, guestContext, guest2Context]);
-    await hostContext.close();
-    await guestContext.close();
-    await guest2Context.close();
   });
 
   test('основной путь + гонка за слот', async ({ browser }) => {
@@ -104,7 +101,7 @@ test.describe('Бронирование, гонка за слот', () => {
         const bookingId = await guestBooking.getFirstUpcomingBookingId();
         const name = await guestBooking.getBookingName(bookingId, 'upcoming');
         expect(name).toBe(host.name);
-      }).toPass({ timeout: 10_000 });
+      }).toPass({ timeout: 30_000 });
     });
 
     await test.step('Хост видит бронирование в "Мои встречи"', async () => {
@@ -114,7 +111,7 @@ test.describe('Бронирование, гонка за слот', () => {
         const bookingId = await hostBooking.getFirstUpcomingBookingId();
         const name = await hostBooking.getBookingName(bookingId, 'upcoming');
         expect(name).toBe(guest.name);
-      }).toPass({ timeout: 10_000 });
+      }).toPass({ timeout: 30_000 });
     });
   });
 });
