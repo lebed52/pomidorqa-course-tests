@@ -3,11 +3,10 @@ name: Playwright CI
 
 # События, которые запускают проверки.
 on:
-  # Проверяем каждое изменение до слияния через Pull Request.
-  pull_request:
-    # `main` здесь — целевая ветка PR, а не имя рабочей ветки.
+  push:
     branches: [main]
-  # Оставляем кнопку ручного запуска во вкладке Actions.
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 # Все работы, которые выполнит workflow.
