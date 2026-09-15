@@ -1,4 +1,4 @@
-import { APIRequestContext, Page, expect } from '@playwright/test';
+import { APIRequestContext, BrowserContext, Page, expect } from '@playwright/test';
 
 export type TestUser = {
   name: string;
@@ -47,13 +47,18 @@ export async function deleteUserViaApi(request: APIRequestContext): Promise<void
   }
 }
 
-export async function cleanupUsersViaApi(
-  contexts: Array<{ request: APIRequestContext }>,
-): Promise<void> {
-  for (const context of contexts) {
-    try {
-      await deleteUserViaApi(context.request);
-    } catch {}
+export async function cleanupUsersViaApi(contexts: BrowserContext[]): Promise<void> {
+  try {
+    for (const context of contexts) {
+      try {
+        await deleteUserViaApi(context.request);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.warn(`Cleanup не удался: ${message}`);
+      }
+    }
+  } finally {
+    await Promise.all(contexts.map((context) => context.close()));
   }
 }
 
