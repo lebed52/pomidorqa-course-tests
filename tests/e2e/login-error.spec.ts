@@ -1,23 +1,32 @@
-import { test, expect } from "@playwright/test";
+import { randomUUID } from "node:crypto";
+import { test, expect, type BrowserContext } from "@playwright/test";
+
+import { makeUser, registerUserViaApi, cleanupUsersViaApi } from "../helpers/user";
+
+let contexts: BrowserContext[] = [];
+
+test.afterEach(async () => {
+  const createdContexts = contexts;
+  contexts = [];
+  await cleanupUsersViaApi(createdContexts);
+});
 
 // E2E-уровень пирамиды, негативный сценарий: сценарий 10 из списка ДЗ Урока 2.
 // requirements.md, п.4: при неверном email ИЛИ пароле участник должен увидеть одну и ту же
 // понятную ошибку, без уточнения, что именно неверно, — из соображений безопасности.
 
 test("вход с неверными данными — одинаковая ошибка в обоих случаях, без уточнения причины", async ({
-  page,
+  page, browser, baseURL,
 }) => {
-  const runId = Date.now();
-  const email = `login-check-${runId}@example.com`;
-  const password = "correct-password-123";
+  const runId = `${Date.now()}-${randomUUID()}`;
+  const user = makeUser("login-check", runId);
+  const { email } = user;
 
   await test.step("Заводим реальный аккаунт для проверки", async () => {
-    await page.goto("/pomidorqa/auth/register");
-    await page.getByLabel("Имя").fill("Login Error Check");
-    await page.getByLabel("Email").fill(email);
-    await page.getByLabel("Пароль").fill(password);
-    await page.getByRole("button", { name: "Зарегистрироваться" }).click();
-    await expect(page).toHaveURL(/\/pomidorqa\/?$/);
+    // Аккаунт создаётся в отдельной сессии: страница входа остаётся неавторизованной.
+    const accountContext = await browser.newContext({ baseURL });
+    contexts.push(accountContext);
+    await registerUserViaApi(accountContext.request, user);
   });
 
   let wrongPasswordError = "";
