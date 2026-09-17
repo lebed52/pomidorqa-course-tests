@@ -10,38 +10,110 @@ on:
   # Оставляем кнопку ручного запуска во вкладке Actions.
   workflow_dispatch:
 
-# Все работы, которые выполнит workflow.
+# Проверки разложены по уровням пирамиды тестов и идут цепочкой fail-fast:
+# статический анализ → unit → api → e2e. Каждая следующая работа стартует
+# через `needs` только после зелёной предыдущей, поэтому заведомо красный
+# PR не жжёт минуты на самом дорогом уровне — браузерном e2e на живом стенде.
 jobs:
-  # Технический идентификатор единственной работы.
-  test:
-    # Читаемое имя работы в интерфейсе GitHub.
-    name: Lint and Playwright tests
-    # Останавливаем зависший прогон через 30 минут.
-    timeout-minutes: 30
-    # Запускаем проверки на чистой Linux-машине GitHub.
+  # Технический идентификатор работы (виден в URL); name — читаемое имя в UI.
+  lint:
+    name: Статический анализ (ESLint + tsc)
     runs-on: ubuntu-latest
+    # Быстрые проверки не должны висеть полчаса, если что-то пошло не так.
+    timeout-minutes: 10
 
-    # Шаги выполняются сверху вниз в одной и той же машине.
     steps:
-      # Сначала загружаем в runner код из текущего PR.
       - name: Checkout repository
-        # Официальный action GitHub для клонирования репозитория.
         uses: actions/checkout@v6
 
-      # Готовим версию Node.js, на которой работает проект.
       - name: Setup Node.js
-        # Официальный action устанавливает Node.js и настраивает npm.
         uses: actions/setup-node@v6
-        # Параметры для action `setup-node`.
         with:
-          # Node.js 24 поддерживается текущими версиями ESLint и Playwright.
           node-version: 24
-          # Кэшируем скачанные npm-пакеты, но не готовый `node_modules`.
           cache: npm
 
-      # Устанавливаем JavaScript-зависимости проекта.
       - name: Install npm dependencies
-        # `npm ci` ставит точные версии из lock-файла и проверяет его согласованность с package.json.
+        run: npm ci
+
+      # Статический анализ без запуска тестов: ESLint ищет проблемы стиля
+      # и типовые ошибки в коде тестов, tsc --noEmit — ошибки типов.
+      - name: Lint tests
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+  # Unit-уровень: чистые функции из src/pyramid, браузер не нужен —
+  # поэтому Chromium в этой работе не ставим.
+  unit:
+    name: Unit-тесты
+    needs: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm run test:unit
+        env:
+          CI: true
+
+  # API-уровень: мок-сервер поднимается прямо в тестовом процессе (beforeAll),
+  # внешний браузер не нужен.
+  api:
+    name: API-тесты
+    needs: unit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Run API tests
+        run: npm run test:api
+        env:
+          CI: true
+
+  # E2E-уровень: реальный Chromium на живом стенде aiqa.su — единственная
+  # работа, где нужны браузерные бинарники и HTML-отчёт для разбора падений.
+  e2e:
+    name: E2E-тесты
+    needs: api
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install npm dependencies
         run: npm ci
 
       # Playwright-пакет и браузерный бинарник устанавливаются отдельно.
@@ -49,16 +121,8 @@ jobs:
         # Для учебного CI достаточно Chromium; `--with-deps` добавляет нужные библиотеки Linux.
         run: npx playwright install --with-deps chromium
 
-      # Сначала запускаем быструю статическую проверку кода.
-      - name: Lint tests
-        # Используем тот же npm-скрипт, который разработчик запускает локально.
-        run: npm run lint
-
-      # После линтера проверяем реальное поведение тестами.
-      - name: Run Playwright tests
-        # Скрипт `test` из package.json запускает unit, API и E2E-проекты Playwright.
-        run: npm test
-        # Переменные окружения только для этого шага.
+      - name: Run E2E tests
+        run: npm run test:e2e
         env:
           # Включает CI-режим в playwright.config.ts: retry, один worker и reporter без открытия окна.
           CI: true
@@ -67,9 +131,7 @@ jobs:
       - name: Upload Playwright report
         # Загружаем отчёт и после успеха, и после падения; пропускаем только отменённый run.
         if: ${{ !cancelled() }}
-        # Официальный action GitHub превращает каталог в artifact текущего run.
         uses: actions/upload-artifact@v7
-        # Параметры сохраняемого artifact.
         with:
           # Уникальный run_id не даёт отчётам разных запусков конфликтовать по имени.
           name: playwright-report-${{ github.run_id }}
