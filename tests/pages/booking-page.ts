@@ -171,9 +171,29 @@ export class BookingPage {
       }
     }
 
-    await dayChip.click();
-    await this.calendarTime.first().waitFor({ state: "visible", timeout: 8_000 });
-    await this.calendarTime.first().click();
+    // Переход в карточку участника — клиентская навигация Next.js: разметка календаря уже
+    // отрисована, а обработчики React могут быть ещё не навешаны, и клик уходит впустую.
+    // Auto-waiting здесь не спасает: элемент видим, кликабелен и стабилен, просто ничего
+    // не происходит. Поэтому клик по дню и времени повторяем до дедлайна, пока не откроется
+    // окно подтверждения. На быстрой машине хватает первой попытки, на CI-runner — не всегда.
+    const dialogDeadline = Date.now() + timeout;
+
+    for (;;) {
+      await dayChip.click();
+      await this.calendarTime.first().waitFor({ state: "visible", timeout: 8_000 });
+      await this.calendarTime.first().click();
+
+      try {
+        await this.confirmDialog.waitFor({ state: "visible", timeout: 3_000 });
+        return;
+      } catch {
+        if (Date.now() >= dialogDeadline) {
+          throw new Error(
+            `Окно подтверждения не открылось за ${timeout} мс на ${this.page.url()}`
+          );
+        }
+      }
+    }
   }
 
   async confirmBooking() {
