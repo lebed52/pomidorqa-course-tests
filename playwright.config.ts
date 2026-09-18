@@ -7,8 +7,14 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   // Один CI-worker снижает конкуренцию за пользователей, слоты и бронирования на общем стенде.
   workers: process.env.CI ? 1 : undefined,
-  // В CI пишем лог и HTML-artifact, но не пытаемся открыть браузерное окно на headless-runner.
-  reporter: [["list"], ["html", { open: process.env.CI ? "never" : "on-failure" }]],
+  // list — для человека в консоли, html — для разбора упавшего шага,
+  // json — источник метрик для scripts/test-metrics.mjs, junit — для внешних систем отчётности.
+  reporter: [
+    ["list"],
+    ["html", { open: process.env.CI ? "never" : "on-failure" }],
+    ["json", { outputFile: "playwright-report/results.json" }],
+    ["junit", { outputFile: "playwright-report/results.xml" }],
+  ],
   projects: [
     {
       name: "unit",

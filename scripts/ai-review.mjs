@@ -1,3 +1,7 @@
+// AI-ревьюер домашних PR.
+// Поток: гейты -> берём diff текущего урока -> собираем контекст (кодекс+задание)
+// -> проход 1 (генерация замечаний) -> проход 2 (верификация) -> код-фильтры
+// -> публикация одного review от github-actions[bot]. Без approve/merge.
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 
@@ -16,9 +20,9 @@ import {
 
 const DEFAULT_MODEL = "anthropic/claude-sonnet-5";
 const DEFAULT_POLZA_BASE_URL = "https://polza.ai/api/v1";
-const MAX_DIFF_CHARS = 50_000;
-const MAX_FILE_PAGES = 10;
-const MAX_INLINE_COMMENTS = 5;
+const MAX_DIFF_CHARS = 50_000; // предохранитель по расходам/шуму: слишком большой diff не ревьюим
+const MAX_FILE_PAGES = 10; // максимум 10 страниц по 100 файлов из GitHub API
+const MAX_INLINE_COMMENTS = 5; // не заваливаем студента: максимум 5 замечаний
 
 function requiredEnv(name) {
   const value = process.env[name];
@@ -35,10 +39,13 @@ function truncate(value, maxLength) {
   return text.length <= maxLength ? text : `${text.slice(0, maxLength)}\n[обрезано]`;
 }
 
+// Собирает контекст урока по имени ветки: какие правила действуют, что было задано,
+// и отфильтрованные под урок тексты CODEX.md и REVIEW.md. Это уходит в промпт модели.
 function getHomeworkContext(branch) {
   const parsed = parseHomeworkBranch(branch);
   if (!parsed) throw new Error(`Не удалось определить номер урока из ветки ${branch}.`);
 
+  // Карта уроков: для каждого — активные правила кодекса и краткое описание задания.
   const lessons = new Map([
     [
       5,
@@ -144,6 +151,8 @@ function getHomeworkContext(branch) {
   };
 }
 
+// Конфигурация из окружения. expectedHeadSha — тот commit, что проверил CI:
+// ревьюим строго его, чтобы не отозваться на уже переписанный код.
 const repository = requiredEnv("GITHUB_REPOSITORY");
 const pullNumber = requiredEnv("AI_REVIEW_PR_NUMBER");
 const expectedHeadSha = requiredEnv("AI_REVIEW_HEAD_SHA");
@@ -161,6 +170,7 @@ const polzaBaseUrl = (process.env.POLZA_AI_BASE_URL || DEFAULT_POLZA_BASE_URL).r
 );
 const model = process.env.POLZA_AI_MODEL || DEFAULT_MODEL;
 
+// Обёртка над GitHub API: заголовки, токен, таймаут; кидает ошибку на не-2xx.
 async function githubRequest(path, options = {}) {
   const response = await fetch(`${githubApiUrl}${path}`, {
     ...options,
@@ -181,6 +191,7 @@ async function githubRequest(path, options = {}) {
   return response.status === 204 ? undefined : response.json();
 }
 
+// То же, но 404 возвращает null (например, когда предыдущей hw-ветки не существует).
 async function githubRequestOrNull(path) {
   const response = await fetch(`${githubApiUrl}${path}`, {
     headers: {
@@ -197,6 +208,7 @@ async function githubRequestOrNull(path) {
   return response.json();
 }
 
+// Все файлы PR постранично (фолбэк, когда не удалось вычислить границу урока).
 async function getPullFiles() {
   const files = [];
 
@@ -211,6 +223,8 @@ async function getPullFiles() {
   throw new Error(`В PR больше ${MAX_FILE_PAGES * 100} файлов — AI-ревью пропущено.`);
 }
 
+// Ищем ветку прошлого урока того же студента (hw<N-1>-<student>), чтобы взять её
+// как базу сравнения и не ревьюить повторно код предыдущих домашек.
 async function findPreviousHomeworkSha(branch) {
   const parsed = parseHomeworkBranch(branch);
   if (!parsed || parsed.lesson <= 1) return null;
@@ -226,6 +240,8 @@ async function findPreviousHomeworkSha(branch) {
   return previous?.object?.sha || null;
 }
 
+// Запасная граница: первый коммит текущего урока в PR (по "hw N" в сообщении);
+// берём его родителя как базу diff.
 async function findHomeworkCommitBase(lesson) {
   const commits = await githubRequest(
     `/repos/${repository}/pulls/${pullNumber}/commits?per_page=100`,
@@ -237,6 +253,8 @@ async function findHomeworkCommitBase(lesson) {
   return firstHomeworkCommit?.parents?.[0]?.sha || null;
 }
 
+// Выбирает набор изменённых файлов для ревью. Приоритет базы сравнения:
+// 1) прошлая hw-ветка студента, 2) база первого коммита урока, 3) весь PR.
 async function getReviewFiles(pull) {
   const parsed = parseHomeworkBranch(pull.head.ref);
   const previousHomeworkSha = await findPreviousHomeworkSha(pull.head.ref);
@@ -259,6 +277,9 @@ async function getReviewFiles(pull) {
   return getPullFiles();
 }
 
+// Готовит diff для модели: оставляет только релевантные файлы, аннотирует патчи
+// номерами строк, склеивает в один текст и проверяет лимит размера.
+// Возвращает текст diff и карту "файл -> реально добавленные строки".
 function prepareDiff(files) {
   const relevant = files.filter(
     (file) => file.status !== "removed" && isReviewedPath(file.filename),
@@ -292,6 +313,9 @@ function prepareDiff(files) {
   };
 }
 
+// Формирует сообщения для первого прохода. system — правила ревью и защита от
+// prompt injection; user — метаданные PR (недоверенные), контекст урока, кодекс,
+// чеклист и аннотированный diff.
 function buildMessages({ pull, diff, homeworkContext }) {
   return [
     {
@@ -353,6 +377,9 @@ ${diff}
   ];
 }
 
+// Проход 1: генерация замечаний. Ответ жёстко ограничен JSON Schema (strict):
+// path и line — только enum из реального diff, rule — только существующие номера
+// правил. Так модель физически не может выдумать координаты или несуществующее правило.
 async function requestReview(input) {
   const allowedPaths = [...input.addedLinesByPath.entries()]
     .filter(([, lines]) => lines.size > 0)
@@ -438,6 +465,7 @@ async function requestReview(input) {
   return { review, usage: completion.usage };
 }
 
+// Для второго прохода оставляем в diff только те файлы, к которым есть замечания.
 function relevantDiffForComments(diff, comments) {
   const paths = new Set(comments.map((comment) => comment.path));
   return diff
@@ -449,6 +477,9 @@ function relevantDiffForComments(diff, comments) {
     .join("\n\n");
 }
 
+// Проход 2: независимая верификация. Второй «адвокат автора» по каждому кандидату
+// решает valid=true/false и обязан вернуть ответ ровно на каждый (minItems=maxItems).
+// В финал проходят только замечания с valid=true; отклонённые логируем.
 async function verifyComments({ diff, comments, homeworkContext }) {
   if (!comments.length) return { comments: [], usage: null };
 
@@ -563,6 +594,7 @@ ${relevantDiffForComments(diff, comments)}
   };
 }
 
+// Складывает расход токенов/стоимость по двум проходам для отчёта в теле review.
 function sumUsage(first, second) {
   if (!first && !second) return null;
   return {
@@ -576,6 +608,8 @@ function sumUsage(first, second) {
 async function main() {
   const pull = await githubRequest(`/repos/${repository}/pulls/${pullNumber}`);
 
+  // Серия ранних выходов (гейтов): отсеиваем всё, что ревьюить не нужно,
+  // ДО обращения к платной модели.
   if (pull.state !== "open" || pull.draft) {
     console.log("PR закрыт или находится в draft — AI-ревью пропущено.");
     return;
@@ -588,11 +622,13 @@ async function main() {
     console.log(`Ветка ${pull.head.ref} не похожа на hw<N>-* — AI-ревью пропущено.`);
     return;
   }
+  // CI проверял один commit, а в PR уже другой — старое ревью неактуально.
   if (pull.head.sha !== expectedHeadSha) {
     console.log("После CI в PR появился новый commit — устаревшее ревью пропущено.");
     return;
   }
 
+  // Идемпотентность: не ревьюим один и тот же commit дважды.
   const previousReviews = await githubRequest(
     `/repos/${repository}/pulls/${pullNumber}/reviews?per_page=100`,
   );
@@ -601,6 +637,7 @@ async function main() {
     return;
   }
 
+  // Готовим diff текущего урока; если релевантных изменений нет — выходим.
   const prepared = prepareDiff(await getReviewFiles(pull));
   if (!prepared.diff.trim()) {
     console.log("В PR нет изменений автотестов или их конфигурации — AI-ревью пропущено.");
@@ -611,12 +648,14 @@ async function main() {
   console.log(
     `Отправляем Claude ${prepared.diff.length} символов diff для ДЗ ${homeworkContext.lesson}.`,
   );
+  // Проход 1 — кандидаты в замечания.
   const generated = await requestReview({
     pull,
     diff: prepared.diff,
     addedLinesByPath: prepared.addedLinesByPath,
     homeworkContext,
   });
+  // Отбрасываем кандидатов с некорректными координатами (путь/строка вне diff).
   const coordinateValid = generated.review.comments.filter(
     (comment) =>
       toGitHubComments([comment], prepared.addedLinesByPath).length === 1,
@@ -632,17 +671,20 @@ async function main() {
       .join("; ");
     console.log(`Отброшено невалидных комментариев: ${rejected}.`);
   }
+  // Проход 2 — верификация оставшихся кандидатов.
   const verified = await verifyComments({
     diff: prepared.diff,
     comments: coordinateValid,
     homeworkContext,
   });
+  // Финальный код-фильтр + приведение к формату inline-комментариев GitHub.
   const comments = toGitHubComments(
     verified.comments,
     prepared.addedLinesByPath,
   );
   const usage = sumUsage(generated.usage, verified.usage);
 
+  // Ещё раз проверяем sha: пока мы думали, мог прилететь новый commit — тогда не публикуем.
   const freshPull = await githubRequest(`/repos/${repository}/pulls/${pullNumber}`);
   if (freshPull.head.sha !== expectedHeadSha) {
     console.log("Во время анализа появился новый commit — результат не опубликован.");
@@ -663,6 +705,8 @@ ${buildReviewConclusion(verified.comments)}
 ---
 Модель: \`${model}\`. ${usageText}${costText}`;
 
+  // Безопасный режим по умолчанию: без явного ALLOW_PUBLISH (или с --dry-run)
+  // ничего не публикуем, только печатаем, что бы отправили.
   if (
     process.argv.includes("--dry-run") ||
     process.env.AI_REVIEW_ALLOW_PUBLISH !== "true"
@@ -671,6 +715,7 @@ ${buildReviewConclusion(verified.comments)}
     return;
   }
 
+  // Публикуем один review (event: COMMENT — без approve/request-changes) от имени бота.
   const published = await githubRequest(
     `/repos/${repository}/pulls/${pullNumber}/reviews`,
     {
@@ -686,6 +731,7 @@ ${buildReviewConclusion(verified.comments)}
   console.log(`AI-review опубликован: ${published.html_url}`);
 }
 
+// Любая ошибка валит шаг (exit code 1), чтобы сбой был виден в Actions.
 main().catch((error) => {
   console.error(`AI-ревью не выполнено: ${error.message}`);
   process.exitCode = 1;

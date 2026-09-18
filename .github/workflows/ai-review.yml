@@ -1,14 +1,18 @@
 name: AI Review
 
+# Запускается НЕ по pull_request, а после того как отработал воркфлоу "Playwright CI".
+# Так мы получаем доступ к секретам и write-токену, не запуская код из PR на этом шаге.
 on:
   workflow_run:
     workflows: [Playwright CI]
     types: [completed]
 
+# Права намеренно минимальны: читаем репозиторий и пишем в pull request (публикуем review).
 permissions:
   contents: read
   pull-requests: write
 
+# Один PR — одно ревью за раз. Новый пуш отменяет предыдущий незавершённый прогон.
 concurrency:
   group: ai-review-${{ github.event.workflow_run.pull_requests[0].number }}
   cancel-in-progress: true
@@ -16,6 +20,8 @@ concurrency:
 jobs:
   review:
     name: Review homework with Claude
+    # Ревьюим только когда: CI был запущен из pull_request, завершился успешно
+    # и к нему реально привязан PR. Иначе тратить модель и токен незачем.
     if: >-
       github.event.workflow_run.event == 'pull_request' &&
       github.event.workflow_run.conclusion == 'success' &&
@@ -26,10 +32,13 @@ jobs:
     steps:
       # Это привилегированный workflow: здесь доступны ключ Polza и write-token.
       # Никогда не checkout-им PR, не ставим его зависимости и не скачиваем его artifacts.
+      # Берём код ревьюера ТОЛЬКО из доверенной ветки (main / default branch),
+      # а не из ветки студента — исполняется наш код, а не код из PR.
       - name: Checkout trusted reviewer from main
         uses: actions/checkout@v6
         with:
           ref: ${{ github.event.repository.default_branch }}
+          # Не сохраняем токен в .git, чтобы его нельзя было утащить.
           persist-credentials: false
 
       - name: Setup Node.js
@@ -37,6 +46,12 @@ jobs:
         with:
           node-version: 24
 
+      # Запускаем сам ревьюер. Все входные данные приходят через переменные окружения:
+      #  - ALLOW_PUBLISH=true разрешает публикацию review (локально по умолчанию выключено);
+      #  - HEAD_SHA/PR_NUMBER берём из события CI, чтобы ревьюить именно проверенный коммит;
+      #  - GITHUB_TOKEN — временный токен Actions для публикации от github-actions[bot];
+      #  - POLZA_AI_API_KEY — единственный постоянный секрет (доступ к модели);
+      #  - POLZA_AI_MODEL — какая модель отвечает за ревью.
       - name: Review Pull Request diff
         run: node scripts/ai-review.mjs
         env:
