@@ -1,7 +1,10 @@
 import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
-  timeout: 30_000,
+  // Локально 30 секунд хватает с запасом. В CI каждый шаг дороже: runner дальше от стенда,
+  // а тесты с бронированием готовят в beforeEach двух участников, навык, слот и саму бронь
+  // через UI — этот Arrange не укладывается в 30 секунд и падает не на проверке, а по таймауту.
+  timeout: process.env.CI ? 90_000 : 30_000,
   fullyParallel: false,
   // В CI повторяем падение один раз, чтобы заметить флак; локально ошибка видна сразу.
   retries: process.env.CI ? 1 : 0,
