@@ -4,3 +4,6 @@ test-results/
 .env
 .env.local
 *.log
+.idea/
+docs/
+.gituser
