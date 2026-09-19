@@ -12,10 +12,40 @@ on:
 
 # Все работы, которые выполнит workflow.
 jobs:
-  # Технический идентификатор единственной работы.
+  # Первый шлюз quality gate: статические проверки без браузера.
+  # Отдельная работа, потому что она не требует Chromium и падает за секунды —
+  # нет смысла поднимать браузер, если код не компилируется или нарушает правила.
+  static:
+    name: Typecheck and lint
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      # TypeScript ловит несуществующий метод Page Object раньше любого прогона.
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint tests
+        run: npm run lint
+
+  # Второй шлюз: реальное поведение продукта. Запускается только после зелёной статики.
   test:
     # Читаемое имя работы в интерфейсе GitHub.
-    name: Lint and Playwright tests
+    name: Playwright tests
+    # Без зелёной статики тесты не стартуют — так дешёвая проверка всегда идёт первой.
+    needs: static
     # Останавливаем зависший прогон через 30 минут.
     timeout-minutes: 30
     # Запускаем проверки на чистой Linux-машине GitHub.
@@ -49,12 +79,7 @@ jobs:
         # Для учебного CI достаточно Chromium; `--with-deps` добавляет нужные библиотеки Linux.
         run: npx playwright install --with-deps chromium
 
-      # Сначала запускаем быструю статическую проверку кода.
-      - name: Lint tests
-        # Используем тот же npm-скрипт, который разработчик запускает локально.
-        run: npm run lint
-
-      # После линтера проверяем реальное поведение тестами.
+      # Проверяем реальное поведение тестами: сначала unit и API, потом E2E в браузере.
       - name: Run Playwright tests
         # Скрипт `test` из package.json запускает unit, API и E2E-проекты Playwright.
         run: npm test
@@ -63,7 +88,21 @@ jobs:
           # Включает CI-режим в playwright.config.ts: retry, один worker и reporter без открытия окна.
           CI: true
 
-      # Сохраняем HTML-отчёт после завершения тестов.
+      # Сводка метрик по JSON-отчёту: уровни пирамиды, время, повторы, known defects.
+      # Считаем и на упавшем прогоне — там метрики нужнее всего.
+      - name: Test metrics summary
+        if: ${{ !cancelled() }}
+        # Пишем и в лог шага, и в Summary самого run — чтобы цифры были видны без скачивания artifact.
+        # Блок кода в Summary сохраняет выравнивание таблиц, pipefail не теряет код возврата скрипта.
+        run: |
+          set -o pipefail
+          {
+            echo '```'
+            node scripts/test-metrics.mjs playwright-report/results.json
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
+      # Сохраняем HTML-отчёт, JSON для метрик и JUnit после завершения тестов.
       - name: Upload Playwright report
         # Загружаем отчёт и после успеха, и после падения; пропускаем только отменённый run.
         if: ${{ !cancelled() }}
