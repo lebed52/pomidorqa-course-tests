@@ -26,9 +26,9 @@ export default defineConfig({
       use: {
         ...devices["Desktop Chrome"],
         baseURL: process.env.POMIDORQA_BASE_URL ?? "https://aiqa.su",
-        trace: "retain-on-failure",
-        screenshot: "only-on-failure",
-        video: "retain-on-failure",
+        trace: "on",
+        screenshot: "on",
+        video: "on",
       },
     },
   ],

@@ -13,6 +13,12 @@ export default [
     ...playwrightRecommended,
     // Проверяем только исходники тестов, не отчёты и не сгенерированные файлы.
     files: ["tests/**/*.ts"],
+    // Плагин TypeScript нужен для правил вроде неиспользуемых переменных.
+    // Спред сохраняет плагин Playwright из рекомендованной конфигурации.
+    plugins: {
+      ...playwrightRecommended.plugins,
+      "@typescript-eslint": tseslint.plugin,
+    },
     // Настройки языка, на котором написаны проверяемые файлы.
     languageOptions: {
       // Просим ESLint разбирать файлы как TypeScript.
@@ -22,6 +28,10 @@ export default [
     rules: {
       // Сохраняем весь рекомендованный набор правил как основу.
       ...playwrightRecommended.rules,
+      // Базовое правило не понимает TypeScript и дублирует сообщения.
+      "no-unused-vars": "off",
+      // Подсвечивает объявленные, но нигде не прочитанные переменные, аргументы и импорты.
+      "@typescript-eslint/no-unused-vars": "error",
       // Фиксированная пауза замедляет тест и маскирует неправильное ожидание состояния.
       "playwright/no-wait-for-timeout": "error",
       // `force` обходит проверки Playwright и часто скрывает проблему UI или локатора.
