@@ -1,5 +1,12 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const e2eUse = {
+  baseURL: process.env.POMIDORQA_BASE_URL ?? "https://aiqa.su",
+  trace: "on" as const,
+  screenshot: "on" as const,
+  video: "on" as const,
+};
+
 export default defineConfig({
   timeout: 30_000,
   fullyParallel: false,
@@ -23,13 +30,21 @@ export default defineConfig({
     {
       name: "e2e",
       testDir: "./tests/e2e",
-      use: {
-        ...devices["Desktop Chrome"],
-        baseURL: process.env.POMIDORQA_BASE_URL ?? "https://aiqa.su",
-        trace: "on",
-        screenshot: "on",
-        video: "on",
-      },
+      // Сквозной сценарий с несколькими аккаунтами на живом стенде не укладывается в общий лимит.
+      timeout: 90_000,
+      use: { ...devices["Desktop Chrome"], ...e2eUse },
+    },
+    {
+      name: "e2e-safari",
+      testDir: "./tests/e2e",
+      timeout: 90_000,
+      use: { ...devices["Desktop Safari"], ...e2eUse },
+    },
+    {
+      name: "e2e-edge",
+      testDir: "./tests/e2e",
+      timeout: 90_000,
+      use: { ...devices["Desktop Edge"], channel: "msedge", ...e2eUse },
     },
   ],
 });

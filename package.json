@@ -4,10 +4,13 @@
   "private": true,
   "description": "Официальный репозиторий марафона «Автоматизация на Playwright + TypeScript» — эталонные тесты PomidorQA (aiqa.su/pomidorqa) для чтения на уроках и площадка для домашних заданий студентов",
   "scripts": {
-    "test": "playwright test",
+    "test": "playwright test --project=unit --project=api --project=e2e",
     "test:unit": "playwright test --project=unit",
     "test:api": "playwright test --project=api",
     "test:e2e": "playwright test --project=e2e",
+    "test:e2e:safari": "playwright test --project=e2e-safari",
+    "test:e2e:edge": "playwright test --project=e2e-edge",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint tests",
     "report": "playwright show-report"
   },

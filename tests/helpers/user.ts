@@ -1,19 +1,15 @@
-import { expect, type Page } from "@playwright/test";
-
-const registerNameInput = (page: Page) => page.locator('#pomidorqa-register-name')
-const registerEmailInput = (page: Page) => page.locator('#pomidorqa-register-email')
-const registerPasswordInput = (page: Page) => page.locator('#pomidorqa-register-password')
-const registerSubmitButton = (page: Page) => page.getByRole('button', { name: 'Зарегистрироваться' })
+import { expect, type APIRequestContext, type BrowserContext, type Page } from "@playwright/test";
 
 const bokingCalendarDay = (page: Page) => page.getByRole("group", { name: "Дни со слотами" }).getByRole("button")
 const bokingCalendarTime = (page: Page) => page.getByRole("group", { name: "Время слотов" }).getByRole("button")
 const bokingModal = (page: Page) => page.getByRole("dialog")
 
+const TEST_ACCOUNTS_ENDPOINT = "/api/pomidorqa/test/accounts";
+
 export const ROUTES = {
   profile: "/pomidorqa/profile",
   mySlots: "/pomidorqa/profile/slots",
   bookings: "/pomidorqa/bookings",
-  register: "/pomidorqa/auth/register",
   pomidorqa: "/pomidorqa",
 }
 
@@ -32,13 +28,45 @@ export type TestUser = {
     };
   }  
 
-  export async function registerUser(page: Page, user: TestUser) {
-    await page.goto(ROUTES.register);
-    await registerNameInput(page).fill(user.name);
-    await registerEmailInput(page).fill(user.email);
-    await registerPasswordInput(page).fill(user.password);
-    await registerSubmitButton(page).click();
-    await expect(page).toHaveURL(/\/pomidorqa\/?$/);
+  // Сервер ставит сессию в cookie того же браузерного контекста, что и page.
+  export async function registerUserViaApi(page: Page, user: TestUser) {
+    const response = await page.request.post(TEST_ACCOUNTS_ENDPOINT, {
+      data: {
+        name: user.name,
+        email: user.email,
+        password: user.password,
+      },
+    });
+    if (response.status() !== 201) {
+      throw new Error(`Регистрация не удалась: ${response.status()} ${await response.text()}`);
+    }
+    await page.goto(ROUTES.pomidorqa);
+  }
+
+  // Сессия берётся из cookie того же контекста, который регистрировал пользователя.
+  // Вместе с аккаунтом сервер удаляет навыки, слоты и бронирования.
+  export async function deleteUserViaApi(request: APIRequestContext): Promise<void> {
+    const response = await request.delete(TEST_ACCOUNTS_ENDPOINT);
+    if (response.status() !== 200) {
+      throw new Error(`Удаление аккаунта не удалось: ${response.status()} ${await response.text()}`);
+    }
+  }
+
+  export async function cleanupUsersViaApi(contexts: BrowserContext[]): Promise<void> {
+    await Promise.all(
+      contexts.map(async (context) => {
+        try {
+          await deleteUserViaApi(context.request);
+        } catch (reason) {
+          console.warn("Не удалось удалить тестового участника:", reason);
+        }
+        try {
+          await context.close();
+        } catch (reason) {
+          console.warn("Браузерный контекст уже закрыт:", reason);
+        }
+      })
+    );
   }
 
   export function changeUserName(oldName: string) {

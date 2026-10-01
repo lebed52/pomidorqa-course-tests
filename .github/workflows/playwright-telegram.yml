@@ -1,0 +1,218 @@
+# Сначала typecheck и lint. Потом unit, API и E2E на Chrome, Safari и Edge.
+# В Telegram каждый блок — отдельная строка.
+name: Playwright Telegram
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: playwright-telegram-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  typecheck:
+    name: Typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Lint tests
+        run: npm run lint
+
+  tests:
+    name: ${{ matrix.title }}
+    needs: [typecheck, lint]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: unit
+            title: Unit
+            command: npm run test:unit
+            browser: ""
+          - id: api
+            title: API
+            command: npm run test:api
+            browser: ""
+          - id: e2e-chrome
+            title: E2E Chrome
+            command: npm run test:e2e
+            browser: chromium
+          - id: e2e-safari
+            title: E2E Safari
+            command: npm run test:e2e:safari
+            browser: webkit
+          - id: e2e-edge
+            title: E2E Edge
+            command: npm run test:e2e:edge
+            browser: msedge
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Cache Playwright browser
+        if: matrix.browser != ''
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ matrix.browser }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install browser
+        if: matrix.browser != '' && steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps ${{ matrix.browser }}
+
+      - name: Install browser system libraries
+        if: matrix.browser != '' && steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps ${{ matrix.browser }}
+
+      - name: Run tests
+        run: ${{ matrix.command }}
+        env:
+          CI: true
+
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report-${{ matrix.id }}
+          path: playwright-report/
+          retention-days: 14
+          if-no-files-found: ignore
+
+  notify:
+    name: Summary
+    needs: [typecheck, lint, tests]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Send Telegram summary
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          REPO: ${{ github.repository }}
+          BRANCH: ${{ github.ref_name }}
+          SHA: ${{ github.sha }}
+          ACTOR: ${{ github.actor }}
+          RUN_ID: ${{ github.run_id }}
+          SERVER_URL: ${{ github.server_url }}
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
+            echo "В репозитории нет секретов TELEGRAM_BOT_TOKEN и TELEGRAM_CHAT_ID"
+            exit 1
+          fi
+
+          jobs_tsv=$(gh api "repos/${REPO}/actions/runs/${RUN_ID}/jobs" --paginate --jq '.jobs[] | [.name, (.conclusion // "unknown")] | @tsv')
+          artifacts_tsv=$(gh api "repos/${REPO}/actions/runs/${RUN_ID}/artifacts" --jq '.artifacts[] | [.name, .id] | @tsv')
+
+          conclusion_of() {
+            printf '%s\n' "$jobs_tsv" | awk -F '\t' -v n="$1" '$1 == n || $1 == "tests (" n ")" || $1 ~ ("/ " n "$") { print $2; exit }'
+          }
+
+          lines=""
+          failed=""
+          missing=""
+          for block in "Typecheck" "Lint" "Unit" "API" "E2E Chrome" "E2E Safari" "E2E Edge"; do
+            case "$(conclusion_of "$block")" in
+              success)
+                lines="${lines}🟩 ${block} — прошёл"$'\n'
+                ;;
+              failure)
+                lines="${lines}🟥 ${block} — упал"$'\n'
+                failed="${failed}${failed:+, }${block}"
+                ;;
+              *)
+                lines="${lines}⬜ ${block} — не запускался"$'\n'
+                missing="${missing}${missing:+, }${block}"
+                ;;
+            esac
+          done
+
+          if [ -n "$failed" ]; then
+            summary="🟥 Упало: ${failed}"
+          elif [ -n "$missing" ]; then
+            summary="⬜ Нет результата: ${missing}"
+          else
+            summary="🟩 Все блоки прошли"
+          fi
+
+          reports=""
+          while IFS="$(printf '\t')" read -r name id; do
+            case "$name" in
+              playwright-report-unit) reports="${reports}Unit — ${SERVER_URL}/${REPO}/actions/runs/${RUN_ID}/artifacts/${id}"$'\n' ;;
+              playwright-report-api) reports="${reports}API — ${SERVER_URL}/${REPO}/actions/runs/${RUN_ID}/artifacts/${id}"$'\n' ;;
+              playwright-report-e2e-chrome) reports="${reports}E2E Chrome — ${SERVER_URL}/${REPO}/actions/runs/${RUN_ID}/artifacts/${id}"$'\n' ;;
+              playwright-report-e2e-safari) reports="${reports}E2E Safari — ${SERVER_URL}/${REPO}/actions/runs/${RUN_ID}/artifacts/${id}"$'\n' ;;
+              playwright-report-e2e-edge) reports="${reports}E2E Edge — ${SERVER_URL}/${REPO}/actions/runs/${RUN_ID}/artifacts/${id}"$'\n' ;;
+            esac
+          done <<EOF
+          $artifacts_tsv
+          EOF
+
+          if [ -z "$reports" ]; then
+            reports="отчёты не собраны"$'\n'
+          fi
+
+          text=$(printf '%s\n%s\nРепозиторий: %s\nВетка: %s\nКоммит: %s\nАвтор: %s\nПрогон: %s/%s/actions/runs/%s\nОтчёты:\n%s' \
+            "$lines" \
+            "$summary" \
+            "$REPO" "$BRANCH" "${SHA:0:7}" "$ACTOR" \
+            "$SERVER_URL" "$REPO" "$RUN_ID" \
+            "$reports")
+
+          curl -fsS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text=${text}" \
+            --data-urlencode "disable_web_page_preview=true"

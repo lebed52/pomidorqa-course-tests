@@ -1,11 +1,18 @@
-import { test, expect } from "@playwright/test";
-import { makeUser, registerUser, openBookingModal, ROUTES } from "../helpers/user";
+import { test, expect, type BrowserContext } from "@playwright/test";
+import { makeUser, registerUserViaApi, openBookingModal, cleanupUsersViaApi, ROUTES } from "../helpers/user";
 import { ProfilePage } from "../Pages/profile-page";
 import { BookingPage } from "../Pages/booking-page";
 import { MySlotsPage } from "../Pages/my-slots-page";
 
 
 test.describe("Отмену бронирования видят и хост и гость", () => {
+    const accountContexts: BrowserContext[] = [];
+
+    test.afterEach(async () => {
+        await cleanupUsersViaApi(accountContexts);
+        accountContexts.length = 0;
+    });
+
     test("Отмену бронирования видят и хост и гость", async ({ browser }) => { 
   const runId = Date.now();
   const skillTag = `Korozia-metal-${runId}`;
@@ -13,7 +20,10 @@ test.describe("Отмену бронирования видят и хост и �
   const guest = makeUser("Normis", runId);
 
   const hostContext = await browser.newContext();
+  accountContexts.push(hostContext);
   const normisContext = await browser.newContext();
+  accountContexts.push(normisContext);
+
   const hostPage = await hostContext.newPage();
   const normisPage = await normisContext.newPage();
 
@@ -24,7 +34,7 @@ test.describe("Отмену бронирования видят и хост и �
   const hostMySlotsPage = new MySlotsPage(hostPage);
 
     await test.step("Хост: регистрируется в PomidorQA", async () => {
-        await registerUser(hostPage, host);
+        await registerUserViaApi(hostPage, host);
       });
     
     
@@ -51,7 +61,7 @@ test.describe("Отмену бронирования видят и хост и �
       });
     
       await test.step("Гость: регистрируется отдельным аккаунтом", async () => {
-        await registerUser(normisPage, guest);
+        await registerUserViaApi(normisPage, guest);
       });
     
       await test.step("Гость: ищет хоста в каталоге по навыку (сценарий 9)", async () => {
@@ -95,8 +105,10 @@ test.describe("Отмену бронирования видят и хост и �
         await expect(hostBookingPage.bookingsUpcomingSection.first()).toBeVisible();
       });
     
-      await test.step("Гость переходит в «Мои встречи» и видит карточку бронирования", async () => {
+      await test.step("Гость переходит в «Мои встречи»", async () => {
         await normisPage.goto(ROUTES.bookings)
+      });
+      await test.step("Гость: Видит карточку бронирования", async () => {
         await expect(normisBookingPage.bookingsUpcomingSection.first()).toBeVisible();
       });
       await test.step("Гость: Отменяет бронирование", async () => {
@@ -105,8 +117,10 @@ test.describe("Отмену бронирования видят и хост и �
       await test.step("Гость: Видит 0 бронирования", async () => {
         await expect(normisBookingPage.bookingsCard).toHaveCount(0);
       });
-      await test.step("Хост: переходит в «Мои встречи» и 0 бронирования", async () => {
+      await test.step("Хост: Переходит в «Мои встречи»", async () => {
         await hostPage.goto(ROUTES.bookings);
+      });
+      await test.step("Хост: Не видит бронирования с гостём", async () => {
         await expect(hostBookingPage.bookingsCard).toHaveCount(0);
       });
     });
