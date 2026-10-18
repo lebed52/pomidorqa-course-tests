@@ -8,8 +8,8 @@ type TestUser = {
 
 function makeUser(role: string, runID: number): TestUser {
     return {
-        name: `${role}_${runID}Автотест`,
-        email: `${role}_${runID}@example.com`,
+        name: `${role}${runID}QA`,
+        email: `${role}${runID}@example.com`,
         password: "testpass123",
     };
 }
@@ -48,17 +48,21 @@ test.describe("свой мир на каждый тест", () => {
   test("смена имени в профиле", async ({ page }) => {
     const newName = `NewName+${Date.now()}`;
     const loc = locators(page);
+
     await loc.getProfileNameInput().click();
     await loc.getProfileNameInput().fill(newName);
+
     await expect(loc.getProfileNameInput()).toHaveValue(newName);
   });
 
   test("смена информации о себе в профиле", async ({ page }) => {
     const about = `Я сегодня съел +${Date.now()}+печенек`;
     const loc = locators(page);
+    
     await loc.getProfileAboutInput().click();
     await loc.getProfileAboutInput().fill(about);
     await loc.getProfileSaveButton().click();
+
     await expect(loc.getProfileAboutInput()).toHaveValue(about);
   });
 });
