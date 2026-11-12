@@ -31,6 +31,8 @@ const locators = (page: Page) => ({
     getProfileSkillTypeSelect: () => page.locator("#pomidorqa-profile-skill-type"),
     getProfileSkilladdButton: () => page.getByRole("button", { name: "Добавить"}),
     getProfileSkillTag: (tag: string) => page.locator(`[data-skill-tag="${tag}"]`),
+    getProfileSkillSectionType: (type: "can_help" | "want_to_learn") => page.locator(`[data-skills="${type}"] p`),
+    getProfileSkillRemoveButton: (tag: string) => page.locator(`[data-skill-tag="${tag}"]`).getByRole("button"),
 
 });
 
@@ -88,20 +90,16 @@ test.describe("свой мир на каждый тест", () => {
 
   test("Смена часового пояса в профиле", async ({ page }) => {
     const select = loc.getProfileTimezoneSelect();
-    const options = select.locator("option");
-    const count = await options.count();
-    const randomIndex = Math.floor(Math.random() * count);
-    const randomOption = options.nth(randomIndex);
-    const randomValue = await randomOption.getAttribute("value");
-
-    await select.selectOption(randomValue!);
+    const timezone = "Asia/Yekaterinburg";
+    await expect(select).not.toHaveValue(timezone);
+    await select.selectOption(timezone);
     await Promise.all([
       page.waitForResponse(response => response.status() === 200), // ждем любой успешный ответ 200
       loc.getProfileSaveButton().click(),
     ]);
     await page.reload();
 
-    await expect(select).toHaveValue(randomValue!);
+    await expect(select).toHaveValue(timezone);
   })
 
   test("Смена информации о себе в профиле", async ({ page }) => {
@@ -131,4 +129,44 @@ test.describe("свой мир на каждый тест", () => {
 
     await expect(loc.getProfileSkillTag(skillTag)).toContainText(skillTag);
   })
+
+  test("Удаление навыка в профиле", async () => {
+    const skillTag = `Playwright-demo-${runId}`;
+
+    await loc.getProfileSkillInput().fill(skillTag);
+    await loc.getProfileSkillTypeSelect().selectOption("want_to_learn");
+    await loc.getProfileSkilladdButton().click();
+    await expect(loc.getProfileSkillTag(skillTag)).toBeVisible();
+    await loc.getProfileSkillRemoveButton(skillTag).click();
+
+    await expect(loc.getProfileSkillTag(skillTag)).toHaveCount(0);
+  })
+
+  test("Не добавляется навык с уже существующим названием", async () => {
+    const skillTag = `Playwright-demo-${runId}`;
+
+    await loc.getProfileSkillInput().fill(skillTag);
+    await loc.getProfileSkillTypeSelect().selectOption("want_to_learn");
+    await loc.getProfileSkilladdButton().click();
+    await loc.getProfileSkillInput().fill(skillTag);
+    await loc.getProfileSkillTypeSelect().selectOption("want_to_learn");
+    await loc.getProfileSkilladdButton().click();
+
+    await expect(loc.getProfileSkillTag(skillTag)).toHaveCount(1);
+  })
+
+  test("Негатив: Исчезает текст с типом навыка при их удалении", async () => {
+    const skillTag = `Playwright-demo-${runId}`;
+
+    await loc.getProfileSkillInput().fill(skillTag);
+    await loc.getProfileSkillTypeSelect().selectOption("want_to_learn");
+    await loc.getProfileSkilladdButton().click();
+    await expect(loc.getProfileSkillTag(skillTag)).toBeVisible();
+    const section = loc.getProfileSkillSectionType("want_to_learn");
+    await expect(section).toBeVisible();
+    await loc.getProfileSkillRemoveButton(skillTag).click();
+
+    await expect(section).not.toBeVisible();
+  })
+
 });
